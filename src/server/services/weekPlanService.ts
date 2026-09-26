@@ -69,7 +69,7 @@ function goalContext(h: DbHandles, tacticId: number) {
   if (!tactic) return null;
   const goal = planRepo.getGoal(h, tactic.goalId);
   if (!goal) return null;
-  return { id: goal.id, title: goal.title, why: goal.why, lagMetricName: goal.lagMetricName, lagUnit: goal.lagUnit };
+  return { id: goal.id, title: goal.title, why: goal.why };
 }
 
 export function weekScoreFor(h: DbHandles, cycleId: number, week: number, today = todayIso()) {

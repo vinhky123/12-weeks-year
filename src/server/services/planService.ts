@@ -73,7 +73,7 @@ export function addTactic(h: DbHandles, goalId: number, input: TacticInput, toda
   if (!goal) throw notFound("Goal");
   const errors = validateNewTactic(input);
   if (errors.length > 0) throw invalid(errors.map((e) => e.message).join(" "), { errors });
-  return planRepo.createTactic(h, {
+  const row = planRepo.createTactic(h, {
     goalId,
     text: input.text.trim(),
     duePattern: JSON.stringify(input.duePattern),
@@ -82,6 +82,12 @@ export function addTactic(h: DbHandles, goalId: number, input: TacticInput, toda
     deactivatedAtWeek: null,
     createdAt: today,
   });
+  return toTacticDto(row);
+}
+
+/** DB row (JSON-string pattern, int keystone) -> contract DTO (parsed, boolean). */
+export function toTacticDto(row: planRepo.TacticRow) {
+  return { ...row, keystone: !!row.keystone, duePattern: parseDuePattern(row.duePattern) };
 }
 
 export function updateTactic(h: DbHandles, id: number, patch: { text?: string; duePattern?: TacticInput["duePattern"]; keystone?: boolean }) {
@@ -107,8 +113,8 @@ export function updateTactic(h: DbHandles, id: number, patch: { text?: string; d
     if (errors.length > 0) throw invalid("The due pattern doesn't meet the book's rules.", { errors });
     updates.duePattern = JSON.stringify(patch.duePattern);
   }
-  if (Object.keys(updates).length === 0) return tactic;
-  return planRepo.updateTactic(h, id, updates);
+  if (Object.keys(updates).length === 0) return toTacticDto(tactic);
+  return toTacticDto(planRepo.updateTactic(h, id, updates));
 }
 
 /** Plan-change integrity: deactivating applies from `fromWeek` (default: current week). */
@@ -118,7 +124,7 @@ export function deactivateTactic(h: DbHandles, id: number, fromWeek?: number, to
   const goal = planRepo.getGoal(h, tactic.goalId);
   const effective = fromWeek ?? currentWeekOfCycle(h, goal!.cycleId, today);
   if (effective < 1 || effective > 12) throw invalid("fromWeek must be between 1 and 12.");
-  return planRepo.updateTactic(h, id, { deactivatedAtWeek: effective });
+  return toTacticDto(planRepo.updateTactic(h, id, { deactivatedAtWeek: effective }));
 }
 
 // --- internals ---

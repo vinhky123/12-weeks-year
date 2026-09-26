@@ -72,7 +72,7 @@ describe("plan builder rules", () => {
   it("round-trips due patterns and respects deactivation windows in scoring", () => {
     const { cycle, goal } = makeActiveCycleWithGoal();
     const t = planService.addTactic(h, goal.id, { text: "Perform 30-min strength training", duePattern: { type: "EVERY_WEEK", timesPerWeek: 3 } }, TODAY);
-    expect(t.duePattern).toBe(JSON.stringify({ type: "EVERY_WEEK", timesPerWeek: 3 }));
+    expect(t.duePattern).toEqual({ type: "EVERY_WEEK", timesPerWeek: 3 });
     planService.deactivateTactic(h, t.id, 3, TODAY); // counts through week 3 inclusive
     const scores = scoringService.getCycleScores(h, cycle.id, "2026-10-19"); // week 3
     expect(scores.weeks[0]?.due).toBe(3); // week 1

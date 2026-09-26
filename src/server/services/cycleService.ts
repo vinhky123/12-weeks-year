@@ -75,7 +75,11 @@ export function getCycleDetail(h: DbHandles, id: number) {
   const cycle = getCycle(h, id);
   const goals = planRepo.listGoals(h, id).map((goal) => ({
     ...goal,
-    tactics: planRepo.listTacticsByGoal(h, goal.id),
+    tactics: planRepo.listTacticsByGoal(h, goal.id).map((t) => ({
+      ...t,
+      keystone: !!t.keystone,
+      duePattern: parseDuePattern(t.duePattern),
+    })),
   }));
   return { cycle, goals };
 }

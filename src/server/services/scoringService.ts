@@ -88,20 +88,23 @@ function resultFor(h: DbHandles, cycleId: number, tacticId: number, weekNumber: 
   return { tacticId, weekNumber, done, due, projectedScore: weekScoreFor(h, cycleId, weekNumber, today) };
 }
 
-/** Weeks 1-12 with scores (null when nothing due), closed flags, average. */
+/** Weeks 1-12 with scores (null when nothing due or week not yet reached), closed flags, average. */
 export function getCycleScores(h: DbHandles, cycleId: number, today = todayIso()) {
   const cycle = cyclesRepo.getCycle(h, cycleId);
   if (!cycle) throw notFound("Cycle");
   const tacticLikes: TacticLike[] = planRepo.listTacticsByCycle(h, cycleId).map(toTacticLike);
-  const completions = new Map<number, number>();
+  const completionsByWeek = new Map<number, Map<number, number>>();
   for (const c of executionRepo.listCycleCompletions(h, cycleId)) {
-    completions.set(c.tacticId, (completions.get(c.tacticId) ?? 0) + 1);
+    const weekMap = completionsByWeek.get(c.cycleWeek) ?? new Map<number, number>();
+    weekMap.set(c.tacticId, (weekMap.get(c.tacticId) ?? 0) + 1);
+    completionsByWeek.set(c.cycleWeek, weekMap);
   }
   const plans = executionRepo.listWeekPlans(h, cycleId);
   const currentWeek = cycleWeekNumber(today, cycle.startDate);
   const weeks = Array.from({ length: WEEKS_IN_CYCLE }, (_, i) => {
     const week = i + 1;
-    const score = weekScore(tacticLikes, completions, week);
+    if (week > currentWeek) return null; // future weeks never score
+    const score = weekScore(tacticLikes, completionsByWeek.get(week) ?? new Map(), week);
     const plan = plans.find((p) => p.weekNumber === week);
     return score
       ? { ...score, closed: plan?.status === "closed", projected: week === currentWeek && plan?.status !== "closed" }
@@ -114,7 +117,7 @@ export function getCycleScores(h: DbHandles, cycleId: number, today = todayIso()
     goals: planRepo.listGoals(h, cycleId).map((goal) => ({
       goalId: goal.id,
       title: goal.title,
-      currentWeekScore: goalScore(tacticLikes, completions, Math.min(Math.max(currentWeek, 1), 12), goal.id),
+      currentWeekScore: goalScore(tacticLikes, completionsByWeek.get(Math.min(Math.max(currentWeek, 1), 12)) ?? new Map(), Math.min(Math.max(currentWeek, 1), 12), goal.id),
     })),
   };
 }
