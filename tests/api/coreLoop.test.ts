@@ -143,7 +143,7 @@ describe("core loop happy path (the Phase 1 exit criteria)", () => {
   });
 
   it("enforces the book's invariants (negatives)", async () => {
-    const list = await json(await cyclesRoute.GET(req("GET", "/api/cycles")));
+    const list = await json(await cyclesRoute.GET());
     const cycleId = list[list.length - 1].id;
 
     // 4th goal rejected

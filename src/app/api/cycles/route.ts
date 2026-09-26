@@ -2,7 +2,7 @@ import { body, handle } from "@/server/apiHelpers";
 import { CYCLE_CREATE_SCHEMA } from "@/lib/contracts";
 import * as cycleService from "@/server/services/cycleService";
 
-export async function GET(_req?: Request) {
+export async function GET() {
   return handle((h) => cycleService.listCycles(h));
 }
 
