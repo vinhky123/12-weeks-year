@@ -79,3 +79,15 @@ export const weekPlanItems = sqliteTable("week_plan_items", {
   plannedCount: integer("planned_count").notNull().default(1),
   sortOrder: integer("sort_order").notNull().default(0),
 });
+
+export const lagLogs = sqliteTable(
+  "lag_logs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    goalId: integer("goal_id").notNull().references(() => goals.id),
+    weekNumber: integer("week_number").notNull(), // 1-12
+    value: real("value").notNull(),
+    loggedAt: text("logged_at").notNull(),
+  },
+  (t) => [uniqueIndex("lag_logs_goal_week_idx").on(t.goalId, t.weekNumber)],
+);

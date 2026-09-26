@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   generateWeekPlanItems, nextRitual, tacticsDueInWeek, validateNewGoal, validateNewTactic,
+  type RitualState,
 } from "./planRules";
-import type { TacticLike } from "./scoring";
+import type { DuePattern, TacticLike } from "./scoring";
 
 function tactic(partial: Partial<TacticLike> & { id: number }): TacticLike {
   return {
@@ -93,12 +94,12 @@ describe("validateNewTactic", () => {
     expect(validateNewTactic({ text: "Do it", duePattern: { type: "EVERY_WEEK", timesPerWeek: 0 } })).toEqual([expect.objectContaining({ field: "duePattern" })]);
     expect(validateNewTactic({ text: "Do it", duePattern: { type: "SPECIFIC_WEEKS", weeks: [] } })).toEqual([expect.objectContaining({ field: "duePattern" })]);
     expect(validateNewTactic({ text: "Do it", duePattern: { type: "SPECIFIC_WEEKS", weeks: [13] } })).toEqual([expect.objectContaining({ field: "duePattern" })]);
-    expect(validateNewTactic({ text: "Do it", duePattern: { type: "NOPE" as never } })).toEqual([expect.objectContaining({ field: "duePattern" })]);
+    expect(validateNewTactic({ text: "Do it", duePattern: { type: "NOPE" } as unknown as DuePattern })).toEqual([expect.objectContaining({ field: "duePattern" })]);
   });
 });
 
 describe("nextRitual", () => {
-  const mk = (o: Partial<Parameters<typeof nextRitual>[0]>) => ({
+  const mk = (o: Partial<RitualState>): RitualState => ({
     hasActiveCycle: false, cycleStatus: "active", currentWeek: 1, hasCurrentWeekPlan: false,
     lastWeekPlanClosed: true, reviewWeek: false, ...o,
   });
