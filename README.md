@@ -29,16 +29,25 @@ Everything lives in a single local SQLite file: **`data/app.db`** (gitignored).
 |---|---|
 | `npm run dev` | Dev server on :3000 |
 | `npm run build` / `npm start` | Production build / serve |
-| `npm test` | Unit tests (domain rules — cycle math & scoring) |
+| `npm test` | Unit + API contract tests (domain rules — cycle math, scoring, core loop) |
 | `npm run db:generate` | Generate SQL migrations after schema changes |
 | `npm run db:migrate` | Apply migrations to the local DB |
+| `npm run db:seed` | **Wipe & seed demo data** — the book's worked example on live dates (week 1 closed at 92%, week 2 in progress) |
+
+## Try the demo
+
+```bash
+npm install
+npm run db:seed
+npm run dev   # then: curl http://localhost:3000/api/dashboard
+```
 
 ## Roadmap
 
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Foundations: scaffold, pure domain engine (cycle math + scoring), schema, app shell, Antigravity kit | ✅ done |
-| 1 | Core loop: cycles, goals & tactics, weekly plan, Today, execution scoring, dashboard | ⏳ next |
+| 1 | Core loop backend: cycles, goals & tactics, weekly plans, completions, scoring, dashboard — 20 tested API endpoints + FE specs | ✅ backend done — **UI with Antigravity next** |
 | 2 | Vision, measures & charts, model week / time blocking | planned |
 | 3 | WAM, week-13 review wizard, guardrails, history | planned |
 | 4 | Backup/export, PWA, themes, EN/VI, print | planned |
