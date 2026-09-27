@@ -175,7 +175,7 @@ The **domain layer is pure TypeScript with no I/O** — this is where the book's
 | Book methodology, product ideas, business rules | This repo (book doc + this plan + domain modules) |
 | DB schema, domain logic (`cycleMath`/`scoring`/`planRules`), `/api` routes, seed & backup scripts, all backend tests | This repo's agents |
 | API contract — endpoints, request/response types (`src/lib/contracts.ts`) | This repo (single source of truth; UI may not invent endpoints) |
-| **UI implementation** — `src/app/**` pages, `src/components/**` | **Antigravity**, built strictly from `docs/fe-specs/**` |
+| **UI implementation & UI testing** — `src/app/**` pages, `src/components/**`, `tests/e2e/**` (Playwright E2E tests) | **Antigravity**, built strictly from `docs/fe-specs/**` |
 | Design system baseline (Tailwind + shadcn tokens, layout shell) | This repo sets it in Phase 0; Antigravity follows it |
 
 **Per-feature workflow — repeats for every feature in every phase:**
@@ -184,7 +184,7 @@ The **domain layer is pure TypeScript with no I/O** — this is where the book's
 2. **Backend** — schema + pure domain module + `/api` route + tests, TDD (this repo)
 3. **FE function spec** — write `docs/fe-specs/phase-N/<feature>.md` using the template below (this repo)
 4. **Handoff** — Antigravity implements the UI from the spec + `contracts.ts` against the real local API
-5. **Integration checkpoint** — wire-up review, contract fixes land in this repo, Playwright e2e runs on the real UI
+5. **Integration checkpoint** — Antigravity implements and runs Playwright e2e on the real UI; wire-up review and Appendix B fidelity check close the phase
 
 **FE spec template** — every spec file contains ALL of these sections, no placeholders:
 
@@ -222,12 +222,12 @@ The **domain layer is pure TypeScript with no I/O** — this is where the book's
 When dispatched for a phase, Antigravity executes through a parallel, disciplined lifecycle:
 1. **Structure** — scaffold UI component and page files per `docs/fe-specs/phase-N/` and import types from `src/lib/contracts.ts`.
 2. **Implement** — build UI components (`src/components/**`) and route pages (`src/app/**`) strictly against specs, handling all states (empty, loading, error, edge) and verbatim copy.
-3. **Test** — test component behavior and interactions (component tests with Testing Library; interaction & layout checks).
+3. **Test (UI & E2E)** — author and run Playwright E2E tests in `tests/e2e/` testing the complete user workflows on the real UI against the local server; all tests must pass green.
 4. **Refine** — polish styling, layout responsiveness, accessibility, remove dead code, and ensure zero linter errors/TODOs.
 5. **Escalate contract adjustments (if needed)** — if any contract conflict or omission is encountered, halt and notify the user immediately so the functional agent can resolve it.
-6. **Deliver** — submit a structured UI delivery report to the user summarizing delivered screens, tests, and readiness for the phase integration checkpoint (Playwright E2E).
+6. **Deliver** — submit a structured UI delivery report to the user summarizing delivered screens, passing Playwright E2E test suite, and completed integration checkpoint.
 
-**Cadence rule:** phases never block on UI delivery — backend + specs keep advancing; each phase closes at its integration checkpoint when Antigravity's UI lands.
+**Cadence rule:** phases never block on UI delivery — backend + specs keep advancing; each phase closes at its integration checkpoint when Antigravity's UI lands and tests pass.
 
 ## 7. Data Model (v1 schema)
 
@@ -407,7 +407,7 @@ Post-v1 candidates (parking lot): Tauri wrapper, profiles, calendar (.ics) expor
 | D5 | AI features | **Deferred** — parking lot; must stay local to honor the ethos |
 | D8 | UI implementation delegated to the **Antigravity agent** | **Decided (user, 2026-09-27)** — this repo owns idea/rules/backend/API/contracts/tests **and writes the functional FE spec for every feature** (`docs/fe-specs/`, template §6.4); Antigravity owns `src/app/**` pages + `src/components/**` and builds only from those specs; integration checkpoints close each phase |
 | D9 | Phase delivery protocol | **Decided (user, 2026-09-27)** — each phase: structure → implement with unit tests → refine code → write FE specs → delivery report that **explicitly tells the user to call Antigravity** for that phase's specs (or states "no UI handoff this phase"); backend of the next phase starts without waiting for the UI |
-| D10 | UI delivery protocol & contract escalation | **Decided (user, 2026-09-27)** — Antigravity mirrors structured delivery: structure → implement → test → refine → contract escalation if needed → deliver; contract conflicts are escalated directly to the user for functional agent refinement |
+| D10 | UI delivery protocol & UI testing ownership | **Decided (user, 2026-09-27)** — Antigravity owns UI implementation AND UI testing (Playwright E2E in `tests/e2e/`); follows structured delivery: structure → implement → test (Playwright E2E) → refine → contract escalation if needed → deliver; contract conflicts are escalated directly to the user for functional agent refinement |
 | D6 | No PIN lock / lock screen | **Decided (user, 2026-09-27)** — dropped; local single-user app needs no lock |
 | D7 | Vision editable mid-cycle | **Decided (user, 2026-09-27)** — yes, refinements apply immediately to the active cycle; an immutable snapshot is still written at archive time so archived cycles keep the vision that ended them |
 
