@@ -599,6 +599,49 @@ export const INSIGHTS_DTO = z.object({
 });
 export type InsightsDto = z.infer<typeof INSIGHTS_DTO>;
 
+// --- Phase 4: settings, backup & portability ---
+
+export const THEMES = ["system", "light", "dark"] as const;
+export type Theme = (typeof THEMES)[number];
+export const THEME_SCHEMA = z.enum(THEMES);
+
+export const SETTINGS_LOCALES = ["en", "vi"] as const;
+export type AppLocale = (typeof SETTINGS_LOCALES)[number];
+export const LOCALE_SCHEMA = z.enum(SETTINGS_LOCALES);
+
+export const SETTINGS_DTO = z.object({
+  id: z.number().int(),
+  currentCycleId: z.number().int().nullable(),
+  weekStartsOn: z.number().int().min(0).max(6),
+  theme: THEME_SCHEMA,
+  locale: LOCALE_SCHEMA,
+  createdAt: z.string(),
+});
+export type SettingsDto = z.infer<typeof SETTINGS_DTO>;
+
+export const SETTINGS_UPDATE_SCHEMA = z.object({
+  theme: THEME_SCHEMA.optional(),
+  locale: LOCALE_SCHEMA.optional(),
+  weekStartsOn: z.number().int().min(0).max(6).optional(),
+});
+export type SettingsUpdate = z.infer<typeof SETTINGS_UPDATE_SCHEMA>;
+
+export const BACKUP_FORMAT = "12-week-year-local-backup";
+export const BACKUP_VERSION = 1;
+
+export const BACKUP_META_DTO = z.object({
+  file: z.string(),
+  sizeBytes: z.number().int(),
+  createdAt: z.string(),
+});
+export type BackupMetaDto = z.infer<typeof BACKUP_META_DTO>;
+
+export const IMPORT_SCHEMA = z.object({
+  payload: z.unknown(),
+  confirm: z.boolean(),
+});
+export type ImportBody = z.infer<typeof IMPORT_SCHEMA>;
+
 // --- book constants surfaced for the UI (values mirror src/server modules) ---
 
 export const ON_TRACK_THRESHOLD = 85;
