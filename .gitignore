@@ -22,3 +22,6 @@ playwright-report/
 # os
 Thumbs.db
 .DS_Store
+
+# ui screenshots
+ui-shots/
