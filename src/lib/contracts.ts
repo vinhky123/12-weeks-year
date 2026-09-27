@@ -298,6 +298,134 @@ export const LAG_LOG_CREATE_SCHEMA = z.object({
   value: z.number(),
 });
 
+// --- Phase 2: vision, model week, lead measures ---
+
+export const LIFE_DOMAIN_DTO = z.object({ area: z.string(), note: z.string() });
+export type LifeDomainDto = z.infer<typeof LIFE_DOMAIN_DTO>;
+
+export const VISION_DTO = z.object({
+  id: z.number().int(),
+  longTerm: z.string(),
+  threeYear: z.string(),
+  cycleConnection: z.string(),
+  lifeDomains: z.array(LIFE_DOMAIN_DTO),
+  cycleId: z.number().int().nullable(),
+  updatedAt: z.string(),
+});
+export type VisionDto = z.infer<typeof VISION_DTO>;
+
+export const VISION_UPDATE_SCHEMA = z.object({
+  longTerm: z.string().optional(),
+  threeYear: z.string().optional(),
+  cycleConnection: z.string().optional(),
+  lifeDomains: z.array(LIFE_DOMAIN_DTO).optional(),
+});
+export type VisionUpdate = z.infer<typeof VISION_UPDATE_SCHEMA>;
+
+export const BLOCK_TYPES = ["STRATEGIC", "BUFFER", "BREAKOUT", "PLANNING", "WAM"] as const;
+export type BlockType = (typeof BLOCK_TYPES)[number];
+export const BLOCK_TYPE_SCHEMA = z.enum(BLOCK_TYPES);
+
+export const BLOCK_TEMPLATE_DTO = z.object({
+  id: z.number().int(),
+  cycleId: z.number().int().nullable(),
+  type: BLOCK_TYPE_SCHEMA,
+  dayOfWeek: z.number().int().min(0).max(6),
+  startMinute: z.number().int().min(0).max(1439),
+  durationMinutes: z.number().int().min(15).max(480),
+  label: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type BlockTemplateDto = z.infer<typeof BLOCK_TEMPLATE_DTO>;
+
+export const BLOCK_CREATE_SCHEMA = z.object({
+  type: BLOCK_TYPE_SCHEMA,
+  dayOfWeek: z.number().int().min(0).max(6),
+  startMinute: z.number().int().min(0).max(1439),
+  durationMinutes: z.number().int().min(15).max(480),
+  label: z.string().optional(),
+});
+export type BlockCreate = z.infer<typeof BLOCK_CREATE_SCHEMA>;
+
+export const BLOCK_UPDATE_SCHEMA = BLOCK_CREATE_SCHEMA.partial();
+export type BlockUpdate = z.infer<typeof BLOCK_UPDATE_SCHEMA>;
+
+export const WARNING_DTO = z.object({ field: z.string(), message: z.string() });
+export type WarningDto = z.infer<typeof WARNING_DTO>;
+
+export const MODEL_WEEK_DTO = z.object({
+  blocks: z.array(BLOCK_TEMPLATE_DTO),
+  warnings: z.array(WARNING_DTO),
+});
+export type ModelWeekDto = z.infer<typeof MODEL_WEEK_DTO>;
+
+export const LEAD_MEASURE_DTO = z.object({
+  id: z.number().int(),
+  goalId: z.number().int(),
+  name: z.string(),
+  weeklyTarget: z.number().int(),
+  createdAt: z.string(),
+});
+export type LeadMeasureDto = z.infer<typeof LEAD_MEASURE_DTO>;
+
+export const LEAD_MEASURE_CREATE_SCHEMA = z.object({
+  name: z.string().min(1),
+  weeklyTarget: z.number().int().min(1),
+});
+export type LeadMeasureCreate = z.infer<typeof LEAD_MEASURE_CREATE_SCHEMA>;
+
+export const LEAD_LOG_DTO = z.object({
+  id: z.number().int(),
+  leadMeasureId: z.number().int(),
+  weekNumber: z.number().int().min(1).max(12),
+  value: z.number(),
+  loggedAt: z.string(),
+});
+export type LeadLogDto = z.infer<typeof LEAD_LOG_DTO>;
+
+export const LEAD_LOG_CREATE_SCHEMA = z.object({
+  leadMeasureId: z.number().int(),
+  weekNumber: z.number().int().min(1).max(12),
+  value: z.number().min(0),
+});
+export type LeadLogCreate = z.infer<typeof LEAD_LOG_CREATE_SCHEMA>;
+
+export const DIAGNOSIS_SCHEMA = z.enum(["STRATEGY_PROBLEM", "EXECUTION_PROBLEM"]);
+
+export const MEASURES_OVERVIEW_DTO = z.object({
+  cycleId: z.number().int(),
+  currentWeek: z.number().int(),
+  averageScore: z.number().int().nullable(),
+  weeks: z.array(WEEK_SCORE_DTO.nullable()),
+  goals: z.array(
+    z.object({
+      goal: z.object({
+        id: z.number().int(),
+        title: z.string(),
+        lagMetricName: z.string(),
+        lagUnit: z.string(),
+        lagStart: z.number(),
+        lagTarget: z.number(),
+      }),
+      lagSeries: z.array(z.object({ week: z.number().int(), value: z.number() }).nullable()),
+      lagProgress: z.number().nullable(),
+      latestLag: z.number().nullable(),
+      leadMeasures: z.array(
+        z.object({
+          id: z.number().int(),
+          name: z.string(),
+          weeklyTarget: z.number().int(),
+          series: z.array(z.object({ week: z.number().int(), value: z.number() })),
+          thisWeek: z.number().nullable(),
+        }),
+      ),
+      currentWeekScore: GOAL_SCORE_DTO.nullable(),
+      diagnosis: DIAGNOSIS_SCHEMA.nullable(),
+    }),
+  ),
+});
+export type MeasuresOverviewDto = z.infer<typeof MEASURES_OVERVIEW_DTO>;
+
 // --- book constants surfaced for the UI (values mirror src/server modules) ---
 
 export const ON_TRACK_THRESHOLD = 85;
