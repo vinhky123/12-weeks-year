@@ -6,6 +6,7 @@ import * as cyclesRepo from "../db/repositories/cycles";
 import * as planRepo from "../db/repositories/plan";
 import { RuleError, invalid, notFound } from "../ruleError";
 import type { DuePattern } from "../scoring";
+import { snapshotVisionForArchive } from "./visionService";
 
 export type CyclePhase = "pre" | "execution" | "review" | "post";
 
@@ -43,6 +44,7 @@ export function startCycle(h: DbHandles, id: number) {
 export function archiveCycle(h: DbHandles, id: number, today = todayIso()) {
   const cycle = getCycle(h, id);
   const archived = cyclesRepo.updateCycle(h, id, { status: "archived", archivedAt: cycle.archivedAt ?? today });
+  snapshotVisionForArchive(h, id, today);
   const settingsRow = h.db.select().from(settingsTable).where(eq(settingsTable.id, 1)).get();
   if (settingsRow?.currentCycleId === id) {
     h.db.update(settingsTable).set({ currentCycleId: null }).where(eq(settingsTable.id, 1)).run();
