@@ -12,6 +12,7 @@ import { apiFetch, ClientApiError } from "@/components/common/api";
 import CycleBar from "@/components/plan/CycleBar";
 import GoalCard from "@/components/plan/GoalCard";
 import GoalModal from "@/components/plan/GoalModal";
+import { CommitmentCard } from "@/components/plan/CommitmentCard";
 
 export default function PlanPage() {
   const [cycle, setCycle] = useState<CycleDto | null>(null);
@@ -230,6 +231,14 @@ export default function PlanPage() {
         onCreateCycle={handleCreateCycle}
         onStartCycle={handleStartCycle}
       />
+
+      {/* Commitment Card */}
+      {cycle && (
+        <CommitmentCard
+          cycleId={cycle.id}
+          cycleStatus={cycle.status}
+        />
+      )}
 
       {cycle && (
         <>

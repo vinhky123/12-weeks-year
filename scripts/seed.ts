@@ -36,6 +36,21 @@ import fs from "node:fs";
 
 const h: DbHandles = createDb(target);
 
+// Cleanly truncate all application tables if file could not be unlinked (e.g. Windows lock)
+const tables = h.sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '__drizzle%'")
+  .all() as { name: string }[];
+h.sqlite.pragma("foreign_keys = OFF");
+for (const { name } of tables) {
+  h.sqlite.prepare(`DELETE FROM "${name}"`).run();
+}
+try {
+  h.sqlite.prepare("DELETE FROM sqlite_sequence").run();
+} catch {
+  // sqlite_sequence might not exist yet if no autoincrement table was created
+}
+h.sqlite.pragma("foreign_keys = ON");
+
 function lastMonday(from: string): string {
   const d = new Date(`${from}T00:00:00Z`);
   const dow = d.getUTCDay(); // 0 = Sunday

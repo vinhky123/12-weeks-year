@@ -43,9 +43,16 @@ export function todayFrom(req: Request): string {
   return req.headers.get("x-twy-today") ?? todayIso();
 }
 
-export async function numericParam(params: Promise<{ id: string }>, label = "id"): Promise<number> {
-  const { id } = await params;
-  const n = Number(id);
-  if (!Number.isInteger(n) || n < 1) throw new RuleError(400, `Invalid ${label}: ${id}`);
+export async function numericParam(
+  params: Promise<Record<string, string>>,
+  paramNameOrLabel = "id",
+  explicitLabel?: string,
+): Promise<number> {
+  const resolved = await params;
+  const key = paramNameOrLabel in resolved ? paramNameOrLabel : "id";
+  const raw = resolved[key];
+  const label = explicitLabel ?? paramNameOrLabel;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1) throw new RuleError(400, `Invalid ${label}: ${raw}`);
   return n;
 }

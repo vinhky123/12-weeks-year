@@ -9,10 +9,11 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "tsx scripts/seed.ts && playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "audit": "node scripts/system-audit.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",

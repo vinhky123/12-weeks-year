@@ -41,7 +41,7 @@ test.describe("Phase 2 E2E (Antigravity UI Verification)", () => {
 
     // 7. Add suggested life domain chip
     const socialChip = page.getByRole("button", { name: "+ Social" });
-    if (await socialChip.isVisible()) {
+    if (await socialChip.isVisible() && await socialChip.isEnabled()) {
       await socialChip.click();
     }
 

@@ -7,8 +7,8 @@ import * as weekPlanService from "@/server/services/weekPlanService";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string; itemId: string }> }) {
   return handle(async (h) => {
-    const planId = await numericParam(params, "plan id");
-    const itemId = await numericParam(params, "item id");
+    const planId = await numericParam(params, "id", "plan id");
+    const itemId = await numericParam(params, "itemId", "item id");
     weekPlanService.moveItem(h, planId, itemId, await body(req, ITEM_PATCH_SCHEMA));
     return detailFor(h, planId, todayFrom(req));
   });
@@ -16,8 +16,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string; itemId: string }> }) {
   return handle(async (h) => {
-    const planId = await numericParam(params, "plan id");
-    const itemId = await numericParam(params, "item id");
+    const planId = await numericParam(params, "id", "plan id");
+    const itemId = await numericParam(params, "itemId", "item id");
     weekPlanService.removeItem(h, planId, itemId);
     return detailFor(h, planId, todayFrom(req));
   });

@@ -8,6 +8,7 @@ import NextRitualCard from "@/components/dashboard/NextRitualCard";
 import ScorePanel from "@/components/dashboard/ScorePanel";
 import ScoreHistoryStrip from "@/components/dashboard/ScoreHistoryStrip";
 import GoalCard from "@/components/dashboard/GoalCard";
+import { ValleyBanner } from "@/components/dashboard/ValleyBanner";
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardDto | null>(null);
@@ -114,7 +115,10 @@ export default function DashboardPage() {
             <span>Week 13 — the year is complete. Celebrate, review, reload.</span>
           </div>
           <p className="mt-1 text-xs text-purple-700">
-            Take time to celebrate what was accomplished. The full review wizard arrives in Phase 3.
+            Take time to celebrate what was accomplished.{" "}
+            <Link href="/review" className="font-semibold underline">
+              Open the Week 13 Review Wizard &rarr;
+            </Link>
           </p>
         </div>
       )}
@@ -154,6 +158,9 @@ export default function DashboardPage() {
           &ldquo;{dailyPrinciple}&rdquo;
         </div>
       )}
+
+      {/* Valley of Despair Banner (weeks 3–6 with avg < 70) */}
+      <ValleyBanner valleyGuidance={data.valleyGuidance} />
 
       {/* Next Ritual Callout */}
       <NextRitualCard
