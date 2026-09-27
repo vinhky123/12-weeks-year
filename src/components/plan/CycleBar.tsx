@@ -99,7 +99,7 @@ export default function CycleBar({
           <button
             type="submit"
             disabled={creating || !name.trim()}
-            className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 disabled:opacity-50 transition shrink-0"
+            className="no-print rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 disabled:opacity-50 transition shrink-0"
           >
             {creating ? "Creating..." : "Create cycle"}
           </button>
@@ -134,7 +134,7 @@ export default function CycleBar({
             type="button"
             onClick={handleStart}
             disabled={starting}
-            className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-emerald-500 disabled:opacity-50 transition shrink-0"
+            className="no-print rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-emerald-500 disabled:opacity-50 transition shrink-0"
           >
             {starting ? "Starting..." : "Start the year"}
           </button>

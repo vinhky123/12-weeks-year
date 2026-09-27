@@ -50,7 +50,7 @@ npm run dev   # then: curl http://localhost:3000/api/dashboard
 | 1 | Core loop backend: cycles, goals & tactics, weekly plans, completions, scoring, dashboard — 20 tested API endpoints + FE specs | ✅ backend done — **UI with Antigravity next** |
 | 2 | Vision, measures & charts, model week / time blocking | ✅ done (backend + UI + e2e) |
 | 3 | WAM, week-13 review wizard, guardrails, history | ✅ done (backend + UI + e2e) |
-| 4 | Backup/export, PWA, themes, EN/VI, print | ✅ backend done — **UI with Antigravity next** |
+| 4 | Backup/export, PWA, themes, EN/VI, print | ✅ done (backend + UI + e2e) — **v1 complete** |
 
 ## Backup & your data
 

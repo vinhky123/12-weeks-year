@@ -7,10 +7,13 @@ import { apiFetch, ClientApiError } from "@/components/common/api";
 import PrincipleLine from "@/components/today/PrincipleLine";
 import DaySection from "@/components/today/DaySection";
 import ProjectedScoreBar from "@/components/today/ProjectedScoreBar";
+import { useSettings } from "@/context/SettingsContext";
+import { t } from "@/lib/i18n";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function TodayPage() {
+  const { locale } = useSettings();
   const [data, setData] = useState<TodayDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -278,7 +281,9 @@ export default function TodayPage() {
             Daily Execution &middot; ~5 minutes
           </span>
           <div className="mt-1 flex items-baseline gap-3">
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Today</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+              {t(locale, "nav.today")}
+            </h1>
             <span className="text-lg font-bold text-slate-600">
               {weekLabel ?? `Week ${weekNumber}`}
             </span>

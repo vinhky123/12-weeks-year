@@ -1,19 +1,28 @@
 import type { ScoreBand } from "@/lib/contracts";
+import { t, type Locale } from "@/lib/i18n";
 
 export const BENCHMARK_LINE = "85% weekly execution is the benchmark — below 65, revise the plan.";
 export const ACHIEVEMENTS_LINE = "The score measures achievements, not effort or intentions.";
 export const REVISE_PLAN_GUIDANCE = "Two weeks below 65? Cut tactics down to the vital few you will actually execute.";
 
-export function getBandVerdict(band: ScoreBand | null | undefined): string {
+export function getBandVerdict(band: ScoreBand | null | undefined, locale: Locale = "en"): string {
   if (!band) return "No score";
   switch (band) {
     case "ON_TRACK":
-      return "Executing at a high level";
+      return t(locale, "score.on_track");
     case "AT_RISK":
-      return "Goals at risk";
+      return t(locale, "score.at_risk");
     case "REVISE_PLAN":
-      return "Revise the plan — this is diagnosis, not judgment.";
+      return t(locale, "score.revise");
   }
+}
+
+export function getBenchmarkLine(locale: Locale = "en"): string {
+  return t(locale, "score.benchmark");
+}
+
+export function getAchievementsLine(locale: Locale = "en"): string {
+  return t(locale, "score.achievements_only");
 }
 
 export function getBandBadgeStyles(band: ScoreBand | null | undefined): {

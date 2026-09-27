@@ -117,7 +117,7 @@ export function CommitmentCard({ cycleId, cycleStatus }: CommitmentCardProps) {
             setStatement(commitment.statement);
             setIsEditing(true);
           }}
-          className="ml-3 shrink-0 rounded px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          className="no-print ml-3 shrink-0 rounded px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800"
         >
           Edit
         </button>

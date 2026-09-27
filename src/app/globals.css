@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@media print {
+  @page {
+    margin: 2cm;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import type { NextRitual, CycleDto } from "@/lib/contracts";
+import { useSettings } from "@/context/SettingsContext";
+import { t } from "@/lib/i18n";
 
 interface NextRitualCardProps {
   nextRitual: NextRitual;
@@ -18,17 +20,19 @@ export default function NextRitualCard({
   onStartCycle,
   isStarting,
 }: NextRitualCardProps) {
+  const { locale } = useSettings();
+
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <span className="inline-block text-xs font-semibold tracking-wider text-slate-500 uppercase">
+          <span className="inline-block text-xs font-semibold tracking-wider text-slate-500 uppercase dark:text-slate-400">
             Next Ritual
           </span>
-          <h2 className="mt-1 text-lg font-bold text-slate-900">
+          <h2 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">
             {getTitle(nextRitual, currentWeekNumber)}
           </h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             {getDescription(nextRitual, currentWeekNumber)}
           </p>
         </div>
@@ -37,9 +41,9 @@ export default function NextRitualCard({
           {nextRitual === "create_cycle" && (
             <Link
               href="/plan"
-              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition"
+              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
             >
-              Create your first 12 weeks
+              {t(locale, "ritual.create_cycle")}
             </Link>
           )}
 
@@ -49,16 +53,16 @@ export default function NextRitualCard({
               disabled={isStarting || !cycle}
               className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-emerald-500 disabled:opacity-50 transition"
             >
-              {isStarting ? "Starting..." : "Start the year"}
+              {isStarting ? "Starting..." : t(locale, "ritual.start_cycle")}
             </button>
           )}
 
           {nextRitual === "plan_week" && (
             <Link
               href="/week"
-              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition"
+              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
             >
-              Plan week {currentWeekNumber}
+              {t(locale, "ritual.plan_week", { n: currentWeekNumber })}
             </Link>
           )}
 
@@ -67,28 +71,28 @@ export default function NextRitualCard({
               href="/week?close=1"
               className="inline-flex items-center justify-center rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-amber-500 transition"
             >
-              Close week {Math.max(1, currentWeekNumber - 1)}
+              {t(locale, "ritual.close_last_week", { n: Math.max(1, currentWeekNumber - 1) })}
             </Link>
           )}
 
           {nextRitual === "execute_today" && (
             <Link
               href="/today"
-              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition"
+              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
             >
-              Execute today (5 minutes)
+              {t(locale, "ritual.execute_today")}
             </Link>
           )}
 
           {nextRitual === "review_mode" && (
-            <div className="rounded-lg bg-purple-50 border border-purple-200 px-4 py-2 text-sm font-medium text-purple-700">
-              Week 13 Review Mode
+            <div className="rounded-lg bg-purple-50 border border-purple-200 px-4 py-2 text-sm font-medium text-purple-700 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300">
+              {t(locale, "ritual.review_mode")}
             </div>
           )}
 
           {nextRitual === "await_week_end" && (
-            <div className="rounded-lg bg-slate-100 border border-slate-200 px-4 py-2 text-sm text-slate-600">
-              Week closed. Execute, or wait for the week to end.
+            <div className="rounded-lg bg-slate-100 border border-slate-200 px-4 py-2 text-sm text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
+              {t(locale, "ritual.await_week_end")}
             </div>
           )}
         </div>
@@ -129,7 +133,7 @@ function getDescription(ritual: NextRitual, week: number): string {
     case "execute_today":
       return "Review today's tactics and mark completed achievements.";
     case "review_mode":
-      return "Celebrate, review, reload. The full review wizard arrives in Phase 3.";
+      return "Celebrate, review, reload. The full review wizard is available.";
     case "await_week_end":
       return "All tactics for this closed week are finalized. Prepare for the next cycle week.";
   }

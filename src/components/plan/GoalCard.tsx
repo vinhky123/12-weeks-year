@@ -101,7 +101,7 @@ export default function GoalCard({
             type="button"
             onClick={handleDrop}
             disabled={dropping}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition shrink-0"
+            className="no-print rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition shrink-0"
           >
             {dropping ? "Dropping..." : "Drop Goal"}
           </button>
@@ -118,7 +118,7 @@ export default function GoalCard({
             <button
               type="button"
               onClick={() => setShowTacticForm(true)}
-              className="text-xs font-semibold text-slate-700 hover:text-slate-900 transition"
+              className="no-print text-xs font-semibold text-slate-700 hover:text-slate-900 transition"
             >
               + Add Tactic
             </button>
@@ -191,7 +191,7 @@ export default function GoalCard({
 
                   {/* Actions on active tactics */}
                   {!isDeactivated && !isDropped && editingTacticId !== tactic.id && (
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="no-print flex items-center gap-2 shrink-0">
                       <button
                         type="button"
                         onClick={() => handleStartEdit(tactic)}

@@ -109,7 +109,7 @@ export function WamView({ cycleId, initialWeek }: WamViewProps) {
   return (
     <div className="space-y-6">
       {/* Week Selector Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+      <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div>
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
             Select Week
@@ -182,7 +182,7 @@ export function WamView({ cycleId, initialWeek }: WamViewProps) {
             />
 
             {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100">
+            <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100">
               <a
                 href={exportUrl}
                 download

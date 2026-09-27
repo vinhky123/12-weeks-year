@@ -253,7 +253,7 @@ export default function PlanPage() {
               </p>
             </div>
 
-            <div className="relative group">
+            <div className="relative group no-print">
               <button
                 type="button"
                 disabled={isMaxGoals}
