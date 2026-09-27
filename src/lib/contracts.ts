@@ -212,6 +212,7 @@ export const DASHBOARD_DTO = z.object({
     }),
   ),
   nextRitual: NEXT_RITUAL_SCHEMA,
+  valleyGuidance: z.object({ headline: z.string(), body: z.string() }).nullable(),
   dailyPrinciple: z.string(),
 });
 export type DashboardDto = z.infer<typeof DASHBOARD_DTO>;
@@ -425,6 +426,178 @@ export const MEASURES_OVERVIEW_DTO = z.object({
   ),
 });
 export type MeasuresOverviewDto = z.infer<typeof MEASURES_OVERVIEW_DTO>;
+
+// --- Phase 3: WAM, week-13 review, commitment, history ---
+
+export const WEEK_SCORE_CORE_DTO = z.object({
+  week: z.number().int(),
+  due: z.number().int(),
+  completed: z.number().int(),
+  scorePct: z.number().int(),
+  band: SCORE_BAND_SCHEMA,
+});
+
+export const WAM_AUTO_DTO = z.object({
+  cycleName: z.string(),
+  weekNumber: z.number().int(),
+  weekScore: WEEK_SCORE_CORE_DTO.nullable(),
+  averageScore: z.number().int().nullable(),
+  goals: z.array(
+    z.object({
+      title: z.string(),
+      lagLatest: z.number().nullable(),
+      lagUnit: z.string(),
+      leadThisWeek: z.array(z.object({ name: z.string(), thisWeek: z.number().nullable(), weeklyTarget: z.number().int() })),
+    }),
+  ),
+  nextWeekCommitments: z.array(z.string()),
+});
+export type WamAutoDto = z.infer<typeof WAM_AUTO_DTO>;
+
+export const WAM_REPORT_DTO = z.object({
+  report: z
+    .object({
+      id: z.number().int(),
+      cycleId: z.number().int(),
+      weekNumber: z.number().int(),
+      auto: z.unknown(),
+      blockers: z.string().nullable(),
+      whatWorked: z.string().nullable(),
+      encouragement: z.string().nullable(),
+      updatedAt: z.string(),
+    })
+    .nullable(),
+  auto: WAM_AUTO_DTO,
+});
+export type WamReportDto = z.infer<typeof WAM_REPORT_DTO>;
+
+export const WAM_SAVE_SCHEMA = z.object({
+  blockers: z.string().max(2000).optional(),
+  whatWorked: z.string().max(2000).optional(),
+  encouragement: z.string().max(2000).optional(),
+});
+export type WamSave = z.infer<typeof WAM_SAVE_SCHEMA>;
+
+export const CYCLE_REVIEW_DTO = z.object({
+  id: z.number().int(),
+  cycleId: z.number().int(),
+  results: z.array(
+    z.object({
+      goalId: z.number().int(),
+      title: z.string(),
+      percentComplete: z.number().int().nullable(),
+      avgScore: z.number().int().nullable(),
+      grade: z.number().int().min(1).max(10),
+      note: z.string().optional(),
+    }),
+  ),
+  qol: z.array(
+    z.object({
+      area: z.string(),
+      rating: z.number().int().min(1).max(10),
+      anchor1: z.string().optional(),
+      anchor10: z.string().optional(),
+    }),
+  ),
+  disciplines: z.array(z.object({ name: z.string(), rating: z.number().int().min(1).max(10) })),
+  breakthroughs: z.string().nullable(),
+  nextCycleNotes: z.string().nullable(),
+  updatedAt: z.string(),
+});
+export type CycleReviewDto = z.infer<typeof CYCLE_REVIEW_DTO>;
+
+export const REVIEW_SAVE_SCHEMA = z.object({
+  results: z
+    .array(
+      z.object({
+        goalId: z.number().int(),
+        title: z.string().optional(),
+        percentComplete: z.number().nullable().optional(),
+        avgScore: z.number().nullable().optional(),
+        grade: z.number().int().min(1).max(10).optional(),
+        note: z.string().optional(),
+      }),
+    )
+    .optional(),
+  qol: z
+    .array(
+      z.object({
+        area: z.string(),
+        rating: z.number().int().min(1).max(10),
+        anchor1: z.string().optional(),
+        anchor10: z.string().optional(),
+      }),
+    )
+    .optional(),
+  disciplines: z.array(z.object({ name: z.string(), rating: z.number().int().min(1).max(10) })).optional(),
+  breakthroughs: z.string().optional(),
+  nextCycleNotes: z.string().optional(),
+});
+export type ReviewSave = z.infer<typeof REVIEW_SAVE_SCHEMA>;
+
+export const CELEBRATION_DTO = z.object({
+  cycleId: z.number().int(),
+  cycleName: z.string(),
+  bestWeek: z.object({ week: z.number().int(), scorePct: z.number().int() }).nullable(),
+  scoredWeeks: z.number().int(),
+  averageScore: z.number().int().nullable(),
+  goalsCompleted: z.number().int(),
+  goalsTotal: z.number().int(),
+});
+export type CelebrationDto = z.infer<typeof CELEBRATION_DTO>;
+
+export const COMMITMENT_DTO = z.object({
+  id: z.number().int(),
+  cycleId: z.number().int(),
+  costs: z.string(),
+  statement: z.string(),
+  createdAt: z.string(),
+});
+export type CommitmentDto = z.infer<typeof COMMITMENT_DTO>;
+
+export const COMMITMENT_SCHEMA = z.object({ costs: z.string().min(1), statement: z.string().min(1) });
+export type Commitment = z.infer<typeof COMMITMENT_SCHEMA>;
+
+export const NEXT_CYCLE_CREATE_SCHEMA = z.object({
+  name: z.string().optional(),
+  startDate: z.string().optional(),
+  carryoverGoalIds: z.array(z.number().int()).max(3).optional(),
+});
+export type NextCycleCreate = z.infer<typeof NEXT_CYCLE_CREATE_SCHEMA>;
+
+export const HISTORY_ENTRY_DTO = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  status: CYCLE_STATUS_SCHEMA,
+  startDate: z.string(),
+  archivedAt: z.string().nullable(),
+  averageScore: z.number().int().nullable(),
+  scoredWeeks: z.number().int(),
+  goalsCompleted: z.number().int(),
+  goalsTotal: z.number().int(),
+  hasReview: z.boolean(),
+});
+export type HistoryEntryDto = z.infer<typeof HISTORY_ENTRY_DTO>;
+
+export const INSIGHTS_DTO = z.object({
+  cycles: z.array(
+    z.object({
+      cycleId: z.number().int(),
+      name: z.string(),
+      status: CYCLE_STATUS_SCHEMA,
+      averageScore: z.number().int().nullable(),
+      goalsCompleted: z.number().int(),
+      goalsTotal: z.number().int(),
+    }),
+  ),
+  bestCycle: z
+    .object({ cycleId: z.number().int(), name: z.string(), averageScore: z.number().int().nullable() })
+    .partial({ averageScore: true })
+    .nullable(),
+  totalGoalsAchieved: z.number().int(),
+  qualityOfLifeMovement: z.object({ first: z.number().int(), latest: z.number().int() }).nullable(),
+});
+export type InsightsDto = z.infer<typeof INSIGHTS_DTO>;
 
 // --- book constants surfaced for the UI (values mirror src/server modules) ---
 

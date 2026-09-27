@@ -14,9 +14,9 @@ export type CycleReviewRow = typeof cycleReviews.$inferSelect;
 
 export interface ResultEntry {
   goalId: number;
-  title: string;
-  percentComplete: number | null;
-  avgScore: number | null;
+  title?: string;
+  percentComplete?: number | null;
+  avgScore?: number | null;
   grade?: number;
   note?: string;
 }
@@ -92,6 +92,7 @@ export function saveReview(h: DbHandles, cycleId: number, patch: ReviewInput, to
     const suggestion = auto.find((a) => a.goalId === r.goalId);
     return {
       ...r,
+      title: r.title ?? suggestion?.title ?? planRepo.getGoal(h, r.goalId)?.title ?? `Goal ${r.goalId}`,
       percentComplete: r.percentComplete ?? suggestion?.percentComplete ?? null,
       avgScore: r.avgScore ?? suggestion?.avgScore ?? null,
       grade: r.grade ?? suggestion?.grade ?? 1,
