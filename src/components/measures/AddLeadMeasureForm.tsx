@@ -22,11 +22,11 @@ export function AddLeadMeasureForm({ goalId, onAdded }: AddLeadMeasureFormProps)
     const targetNum = parseInt(target, 10);
 
     if (!trimmed) {
-      setError("Lead measure name is required.");
+      setError("Tên chỉ số dẫn dắt không được để trống.");
       return;
     }
     if (isNaN(targetNum) || targetNum < 1) {
-      setError("Weekly target must be an integer ≥ 1.");
+      setError("Mục tiêu hàng tuần phải là số nguyên ≥ 1.");
       return;
     }
 
@@ -50,7 +50,7 @@ export function AddLeadMeasureForm({ goalId, onAdded }: AddLeadMeasureFormProps)
       if (err instanceof ClientApiError) {
         setError(err.message);
       } else {
-        setError("Failed to create lead measure.");
+        setError("Không thể tạo chỉ số dẫn dắt.");
       }
     } finally {
       setSaving(false);
@@ -62,31 +62,31 @@ export function AddLeadMeasureForm({ goalId, onAdded }: AddLeadMeasureFormProps)
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 hover:text-slate-900"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:border-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
       >
-        <span className="font-bold">+</span> Add lead indicator
+        <span className="font-bold">+</span> Thêm chỉ số dẫn dắt
       </button>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg border border-slate-200 bg-slate-50 p-3.5">
+    <form onSubmit={handleSubmit} className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3.5">
       <div className="flex items-center justify-between mb-2">
-        <span className="font-semibold text-xs text-slate-800">Add Lead Measure</span>
+        <span className="font-semibold text-xs text-zinc-800 dark:text-zinc-200">Thêm chỉ số dẫn dắt</span>
         <button
           type="button"
           onClick={() => {
             setOpen(false);
             setError(null);
           }}
-          className="text-slate-400 hover:text-slate-600 text-xs"
+          className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 text-xs"
         >
-          Cancel
+          Hủy
         </button>
       </div>
 
       {error && (
-        <p className="mb-2 rounded bg-rose-50 p-2 text-xs font-medium text-rose-700">{error}</p>
+        <p className="mb-2 rounded border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 p-2 text-xs font-medium text-rose-700 dark:text-rose-300">{error}</p>
       )}
 
       <div className="flex flex-col gap-2 sm:flex-row">
@@ -94,24 +94,24 @@ export function AddLeadMeasureForm({ goalId, onAdded }: AddLeadMeasureFormProps)
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Activity name (e.g. Prospecting calls, Gym sessions)"
-          className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-slate-800 focus:outline-none"
+          placeholder="Tên hoạt động (VD: Cuộc gọi khách hàng, Tập gym)"
+          className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 focus:border-zinc-900 dark:focus:border-zinc-100 focus:outline-none placeholder:text-zinc-400"
         />
         <div className="flex items-center gap-2">
-          <label className="text-xs text-slate-500 whitespace-nowrap">Target/wk:</label>
+          <label className="text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">Mục tiêu/tuần:</label>
           <input
             type="number"
             min="1"
             value={target}
             onChange={(e) => setTarget(e.target.value)}
-            className="w-16 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900 focus:border-slate-800 focus:outline-none"
+            className="w-16 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 focus:border-zinc-900 dark:focus:border-zinc-100 focus:outline-none"
           />
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+            className="rounded-lg bg-zinc-900 dark:bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50"
           >
-            {saving ? "Adding..." : "Add"}
+            {saving ? "Đang thêm..." : "Thêm"}
           </button>
         </div>
       </div>

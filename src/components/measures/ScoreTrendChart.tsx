@@ -24,33 +24,33 @@ export function ScoreTrendChart({ weeks, currentWeek }: ScoreTrendChartProps) {
   });
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm">
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Execution Score Trend</h2>
-          <p className="text-xs text-slate-500">12-week trajectory towards the 85% benchmark</p>
+          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Xu hướng điểm thực thi</h2>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Quỹ đạo 12 tuần hướng tới chuẩn 85%</p>
         </div>
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded bg-emerald-600" />
-            <span className="text-slate-600">Closed</span>
+            <span className="h-3 w-3 rounded bg-zinc-900 dark:bg-zinc-100" />
+            <span className="text-zinc-600 dark:text-zinc-400">Đã đóng</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded border border-dashed border-slate-400 bg-slate-200" />
-            <span className="text-slate-600">Projected</span>
+            <span className="h-3 w-3 rounded border border-dashed border-zinc-400 dark:border-zinc-600 bg-zinc-200 dark:bg-zinc-800" />
+            <span className="text-zinc-600 dark:text-zinc-400">Dự kiến</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="h-0.5 w-4 bg-emerald-500" />
-            <span className="font-semibold text-emerald-700">85% benchmark</span>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">Chuẩn 85%</span>
           </div>
         </div>
       </div>
 
       {!hasAnyData ? (
-        <div className="mt-8 flex h-48 flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-6 text-center">
-          <p className="text-sm font-medium text-slate-500">No data yet — close a week first.</p>
-          <p className="mt-1 text-xs text-slate-400">
-            Scores appear as each 7-day cycle is executed and closed.
+        <div className="mt-8 flex h-48 flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-6 text-center">
+          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Chưa có dữ liệu — hãy đóng một tuần trước.</p>
+          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+            Điểm số sẽ xuất hiện sau khi từng chu kỳ 7 ngày được thực thi và đóng tuần.
           </p>
         </div>
       ) : (
@@ -60,17 +60,17 @@ export function ScoreTrendChart({ weeks, currentWeek }: ScoreTrendChartProps) {
             className="absolute left-6 right-0 z-10 flex items-center border-b-2 border-dashed border-emerald-500 pointer-events-none"
             style={{ bottom: "calc(2rem + (10rem * 0.85))" }}
           >
-            <span className="absolute -top-3 right-0 rounded bg-emerald-50 px-1 text-[10px] font-bold text-emerald-700">
+            <span className="absolute -top-3 right-0 rounded bg-emerald-50 dark:bg-emerald-950 px-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
               85%
             </span>
           </div>
 
           {/* 65% Revise-Plan Line (65% height of 160px chart = 104px from bottom) */}
           <div
-            className="absolute left-6 right-0 z-10 flex items-center border-b border-dashed border-rose-300 pointer-events-none opacity-60"
+            className="absolute left-6 right-0 z-10 flex items-center border-b border-dashed border-rose-300 dark:border-rose-700 pointer-events-none opacity-60"
             style={{ bottom: "calc(2rem + (10rem * 0.65))" }}
           >
-            <span className="absolute -top-3 right-0 rounded bg-rose-50 px-1 text-[10px] font-bold text-rose-600">
+            <span className="absolute -top-3 right-0 rounded bg-rose-50 dark:bg-rose-950 px-1 text-[10px] font-bold text-rose-600 dark:text-rose-400">
               65%
             </span>
           </div>
@@ -83,7 +83,6 @@ export function ScoreTrendChart({ weeks, currentWeek }: ScoreTrendChartProps) {
               const isClosed = data?.closed ?? false;
               const isProjected = data?.projected ?? false;
               const band = data?.band;
-              const styles = getBandBadgeStyles(band);
 
               // Height in % (max 100%)
               const heightPct = Math.min(100, Math.max(0, score));
@@ -92,8 +91,8 @@ export function ScoreTrendChart({ weeks, currentWeek }: ScoreTrendChartProps) {
                 <div key={week} className="group relative flex flex-1 flex-col items-center h-full justify-end">
                   {/* Tooltip on hover */}
                   {hasScore && (
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:flex z-20 rounded bg-slate-900 px-2 py-1 text-[11px] font-semibold text-white whitespace-nowrap shadow">
-                      W{week}: {score}% {isProjected ? "(Projected)" : "(Closed)"}
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:flex z-20 rounded bg-zinc-900 dark:bg-zinc-100 px-2 py-1 text-[11px] font-semibold text-white dark:text-zinc-900 whitespace-nowrap shadow">
+                      T{week}: {score}% {isProjected ? "(Dự kiến)" : "(Đã đóng)"}
                     </div>
                   )}
 
@@ -103,20 +102,20 @@ export function ScoreTrendChart({ weeks, currentWeek }: ScoreTrendChartProps) {
                       className={`w-full max-w-[28px] rounded-t transition-all ${
                         isClosed
                           ? band === "ON_TRACK"
-                            ? "bg-emerald-600"
+                            ? "bg-zinc-900 dark:bg-zinc-100"
                             : band === "AT_RISK"
-                            ? "bg-amber-500"
-                            : "bg-rose-500"
-                          : "border-2 border-dashed border-slate-400 bg-slate-200"
+                            ? "bg-zinc-500 dark:bg-zinc-400"
+                            : "bg-zinc-400 dark:bg-zinc-500"
+                          : "border-2 border-dashed border-zinc-400 dark:border-zinc-600 bg-zinc-200 dark:bg-zinc-800"
                       }`}
                       style={{ height: `${heightPct}%` }}
                     >
-                      <div className="w-full text-center text-[10px] font-bold text-white pt-1 hidden sm:block">
+                      <div className="w-full text-center text-[10px] font-bold text-white dark:text-zinc-900 pt-1 hidden sm:block">
                         {score >= 20 ? `${score}%` : ""}
                       </div>
                     </div>
                   ) : (
-                    <div className="h-1 w-full max-w-[28px] rounded bg-slate-100" />
+                    <div className="h-1 w-full max-w-[28px] rounded bg-zinc-100 dark:bg-zinc-800" />
                   )}
 
                   {/* Week label */}
@@ -124,11 +123,11 @@ export function ScoreTrendChart({ weeks, currentWeek }: ScoreTrendChartProps) {
                     <span
                       className={`text-xs font-semibold ${
                         isCurrent
-                          ? "rounded-full bg-slate-900 px-1.5 py-0.5 text-white"
-                          : "text-slate-500"
+                          ? "rounded-full bg-zinc-900 dark:bg-zinc-100 px-1.5 py-0.5 text-white dark:text-zinc-900"
+                          : "text-zinc-500 dark:text-zinc-400"
                       }`}
                     >
-                      W{week}
+                      T{week}
                     </span>
                   </div>
                 </div>

@@ -1,9 +1,12 @@
 "use client";
 
+import React from "react";
 import type { WeekPlanItemDto } from "@/lib/contracts";
 import DayColumn from "./DayColumn";
+import { useSettings } from "@/context/SettingsContext";
 
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const EN_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const VI_DAYS = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
 
 interface WeekBoardProps {
   weekStart: string;
@@ -22,7 +25,7 @@ export default function WeekBoard({
   onRename,
   onRemove,
 }: WeekBoardProps) {
-  // Compute date strings for each day of the week from weekStart
+  const { locale } = useSettings();
   const startDate = new Date(weekStart);
 
   const getDayDate = (dayOffset: number): string => {
@@ -32,16 +35,20 @@ export default function WeekBoard({
     return `${d.getMonth() + 1}/${d.getDate()}`;
   };
 
+  const days = locale === "vi" ? VI_DAYS : EN_DAYS;
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs text-slate-500">
+      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
         <span className="italic">
-          Items start on Monday — move them to the days you&rsquo;ll do them.
+          {locale === "vi"
+            ? "Các đầu việc bắt đầu từ Thứ Hai — hãy chuyển sang các ngày bạn dự định thực hiện (Items start on Monday — move them to the days you’ll do them)."
+            : "Items start on Monday — move them to the days you’ll do them."}
         </span>
       </div>
 
       <div className="flex gap-3 overflow-x-auto pb-4 pt-1">
-        {DAYS.map((dayName, dayIndex) => {
+        {days.map((dayName, dayIndex) => {
           const dayItems = items.filter((i) => i.dayOfWeek === dayIndex);
           return (
             <DayColumn

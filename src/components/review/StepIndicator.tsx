@@ -1,12 +1,12 @@
 "use client";
 
 const STEPS = [
-  "Celebrate",
-  "Results",
-  "Quality of Life",
-  "Disciplines",
-  "Breakthroughs",
-  "Reload",
+  "Ăn mừng",
+  "Kết quả",
+  "Chất lượng sống",
+  "Kỷ luật",
+  "Đột phá",
+  "Tái khởi động",
 ];
 
 interface StepIndicatorProps {
@@ -30,19 +30,19 @@ export function StepIndicator({ currentStep, onStepClick }: StepIndicatorProps) 
               onClick={() => onStepClick?.(stepNum)}
               className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
                 isCurrent
-                  ? "bg-slate-900 text-white shadow-xs"
+                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-xs"
                   : isCompleted
-                  ? "text-slate-700 hover:bg-slate-100"
-                  : "text-slate-400 cursor-not-allowed"
+                  ? "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  : "text-zinc-400 dark:text-zinc-600 cursor-not-allowed"
               }`}
             >
               <span
                 className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
                   isCurrent
-                    ? "bg-white text-slate-900 font-bold"
+                    ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 font-bold"
                     : isCompleted
-                    ? "bg-emerald-100 text-emerald-800"
-                    : "bg-slate-200 text-slate-500"
+                    ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 font-bold"
+                    : "bg-zinc-200 dark:bg-zinc-800 text-zinc-500"
                 }`}
               >
                 {isCompleted ? "✓" : stepNum}
@@ -52,7 +52,7 @@ export function StepIndicator({ currentStep, onStepClick }: StepIndicatorProps) 
             {idx < STEPS.length - 1 && (
               <div
                 className={`mx-1 h-0.5 w-3 sm:w-6 ${
-                  isCompleted ? "bg-emerald-400" : "bg-slate-200"
+                  isCompleted ? "bg-zinc-900 dark:bg-zinc-100" : "bg-zinc-200 dark:bg-zinc-800"
                 }`}
               />
             )}

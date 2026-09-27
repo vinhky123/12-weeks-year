@@ -22,7 +22,7 @@ export function createDb(dbPath = process.env.TWY_DB_PATH ?? DEFAULT_DB_PATH): D
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: "drizzle" });
   db.insert(schema.settings)
-    .values({ id: 1, createdAt: todayIso() })
+    .values({ id: 1, locale: "vi", createdAt: todayIso() })
     .onConflictDoNothing()
     .run();
   return { sqlite, db };

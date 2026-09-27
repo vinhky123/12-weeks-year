@@ -95,18 +95,18 @@ export default function ReviewPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+      <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Week 13 Review &amp; Reload
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Tuần 13: Đánh giá &amp; Tái khởi động
           </h1>
-          <p className="mt-1 text-xs text-slate-500">
-            Close the year with honest measurement, reflection, and celebration before launching the next cycle.
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Khép lại năm làm việc với sự đo lường trung thực, tự phản tư và ăn mừng trước khi bước vào chu kỳ tiếp theo.
           </p>
         </div>
 
         {cycle && (
-          <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
+          <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
             {cycle.name}
           </span>
         )}
@@ -114,27 +114,27 @@ export default function ReviewPage({
 
       {loading ? (
         <div className="space-y-4">
-          <div className="h-10 animate-pulse rounded-xl bg-slate-200" />
-          <div className="h-64 animate-pulse rounded-xl bg-slate-200" />
+          <div className="h-10 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+          <div className="h-64 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
         </div>
       ) : notFound ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-xs">
-          <h2 className="text-base font-bold text-slate-900">No cycle found</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Create a cycle first before conducting a 12-week review.
+        <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-12 text-center shadow-xs">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Không tìm thấy chu kỳ nào</h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Hãy tạo một chu kỳ trước khi tiến hành đánh giá 12 tuần.
           </p>
           <div className="mt-5">
             <Link
               href="/plan"
-              className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+              className="inline-flex items-center rounded-lg bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
             >
-              Go to 12-Week Plan →
+              Đi tới Kế hoạch 12 tuần →
             </Link>
           </div>
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-800">
-          <p className="font-semibold">Unable to load review</p>
+        <div className="rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 p-6 text-center text-rose-800 dark:text-rose-200">
+          <p className="font-semibold">Không thể tải dữ liệu đánh giá</p>
           <p className="mt-1 text-sm">{error}</p>
         </div>
       ) : cycle && celebration ? (

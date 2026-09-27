@@ -9,15 +9,15 @@ describe("settings service", () => {
   it("bootstraps defaults and updates individual fields", () => {
     const base = getSettings(h);
     expect(base.theme).toBe("system");
-    expect(base.locale).toBe("en");
+    expect(base.locale).toBe("vi");
     expect(base.weekStartsOn).toBe(1);
 
     const themed = updateSettings(h, { theme: "dark" });
     expect(themed.theme).toBe("dark");
-    expect(themed.locale).toBe("en"); // untouched
+    expect(themed.locale).toBe("vi"); // untouched
 
-    const localized = updateSettings(h, { locale: "vi", weekStartsOn: 0 });
-    expect(localized.locale).toBe("vi");
+    const localized = updateSettings(h, { locale: "en", weekStartsOn: 0 });
+    expect(localized.locale).toBe("en");
     expect(localized.weekStartsOn).toBe(0);
     expect(localized.theme).toBe("dark");
   });

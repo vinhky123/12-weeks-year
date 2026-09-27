@@ -37,7 +37,7 @@ CREATE TABLE `settings` (
 	`current_cycle_id` integer,
 	`week_starts_on` integer DEFAULT 1 NOT NULL,
 	`theme` text DEFAULT 'system' NOT NULL,
-	`locale` text DEFAULT 'en' NOT NULL,
+	`locale` text DEFAULT 'vi' NOT NULL,
 	`created_at` text NOT NULL
 );
 --> statement-breakpoint

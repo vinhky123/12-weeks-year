@@ -3,8 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 import type { BackupMetaDto } from "@/lib/contracts";
 import { apiFetch } from "@/components/common/api";
+import { useSettings } from "@/context/SettingsContext";
 
 export function BackupsList({ refreshTrigger }: { refreshTrigger?: number }) {
+  const { t, locale } = useSettings();
   const [backups, setBackups] = useState<BackupMetaDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,39 +18,39 @@ export function BackupsList({ refreshTrigger }: { refreshTrigger?: number }) {
       const res = await apiFetch<{ backups: BackupMetaDto[] }>("/api/backups");
       setBackups(res.backups);
     } catch {
-      setError("Failed to load automatic checkpoints.");
+      setError(locale === "vi" ? "Không thể tải các bản sao lưu tự động." : "Failed to load automatic checkpoints.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     fetchBackups();
   }, [fetchBackups, refreshTrigger]);
 
   return (
-    <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
+    <div className="mt-6 border-t border-zinc-100 pt-6 dark:border-zinc-800">
       <div className="flex items-baseline justify-between">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Automatic Backups
+        <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          {t("settings.automatic_backups")}
         </h4>
         <button
           type="button"
           onClick={fetchBackups}
-          className="text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+          className="text-[11px] font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 transition"
         >
-          Refresh
+          {locale === "vi" ? "Làm mới" : "Refresh"}
         </button>
       </div>
 
-      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-        A checkpoint is saved automatically every time you close a week. The newest 5 are kept.
+      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        {t("settings.backups_desc")}
       </p>
 
       {loading && (
         <div className="mt-3 space-y-2">
-          <div className="h-9 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
-          <div className="h-9 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
+          <div className="h-9 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+          <div className="h-9 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
         </div>
       )}
 
@@ -59,31 +61,31 @@ export function BackupsList({ refreshTrigger }: { refreshTrigger?: number }) {
       )}
 
       {!loading && !error && backups.length === 0 && (
-        <div className="mt-3 rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
-          No checkpoints yet — close a week first.
+        <div className="mt-3 rounded-xl border border-dashed border-zinc-200 p-4 text-center text-xs text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
+          {t("settings.no_backups")}
         </div>
       )}
 
       {!loading && backups.length > 0 && (
-        <ul className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50/50 dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/50">
+        <ul className="mt-3 divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-zinc-50/50 dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900/50">
           {backups.map((b) => (
             <li
               key={b.file}
               className="flex items-center justify-between px-3.5 py-2.5 text-xs"
             >
               <div className="flex items-center gap-2 overflow-hidden">
-                <span className="truncate font-mono font-medium text-slate-800 dark:text-slate-200">
+                <span className="truncate font-mono font-medium text-zinc-800 dark:text-zinc-200">
                   {b.file}
                 </span>
-                <span className="shrink-0 rounded bg-slate-200/70 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                <span className="shrink-0 rounded bg-zinc-200/70 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
                   {(b.sizeBytes / 1024).toFixed(1)} KB
                 </span>
               </div>
               <time
                 dateTime={b.createdAt}
-                className="shrink-0 text-[11px] text-slate-400 dark:text-slate-500"
+                className="shrink-0 text-[11px] text-zinc-400 dark:text-zinc-500"
               >
-                {new Date(b.createdAt).toLocaleString(undefined, {
+                {new Date(b.createdAt).toLocaleString(locale === "vi" ? "vi-VN" : undefined, {
                   month: "short",
                   day: "numeric",
                   hour: "2-digit",

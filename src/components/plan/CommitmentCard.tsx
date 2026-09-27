@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { CommitmentDto } from "@/lib/contracts";
 import { apiFetch, ClientApiError } from "@/components/common/api";
+import { useSettings } from "@/context/SettingsContext";
 
 interface CommitmentCardProps {
   cycleId: number;
@@ -10,6 +11,7 @@ interface CommitmentCardProps {
 }
 
 export function CommitmentCard({ cycleId, cycleStatus }: CommitmentCardProps) {
+  const { locale } = useSettings();
   const [commitment, setCommitment] = useState<CommitmentDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -35,7 +37,7 @@ export function CommitmentCard({ cycleId, cycleStatus }: CommitmentCardProps) {
             setStatement(res.commitment.statement);
           }
         }
-      } catch (err) {
+      } catch {
         // Ignore 404 or cycle fetch errors gracefully
       } finally {
         if (active) setLoading(false);
@@ -58,7 +60,7 @@ export function CommitmentCard({ cycleId, cycleStatus }: CommitmentCardProps) {
   }
 
   if (loading) {
-    return <div className="h-16 animate-pulse rounded-xl bg-slate-100" />;
+    return <div className="h-16 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />;
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -66,7 +68,11 @@ export function CommitmentCard({ cycleId, cycleStatus }: CommitmentCardProps) {
     if (!costs.trim() || !statement.trim()) {
       setError(
         !costs.trim()
-          ? "Count the costs — what will this commitment cost you in comfort and pleasure?"
+          ? locale === "vi"
+            ? "Hãy tính toán cái giá phải trả — sự thoải mái, thú vui nào bạn sẽ phải hy sinh?"
+            : "Count the costs — what will this commitment cost you in comfort and pleasure?"
+          : locale === "vi"
+          ? 'Hãy viết tuyên ngôn cam kết: "Tôi chọn…".'
           : 'Write your commitment: "I choose to…".'
       );
       return;
@@ -92,7 +98,7 @@ export function CommitmentCard({ cycleId, cycleStatus }: CommitmentCardProps) {
       if (err instanceof ClientApiError) {
         setError(err.message);
       } else {
-        setError("Failed to save commitment.");
+        setError(locale === "vi" ? "Không thể lưu cam kết." : "Failed to save commitment.");
       }
     } finally {
       setSaving(false);
@@ -104,11 +110,13 @@ export function CommitmentCard({ cycleId, cycleStatus }: CommitmentCardProps) {
     return (
       <div
         data-testid="commitment-card"
-        className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-xs"
+        className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-xs dark:border-zinc-800 dark:bg-zinc-900"
       >
-        <div className="flex items-center gap-2 overflow-hidden text-xs text-slate-700">
-          <span className="font-semibold text-slate-900 shrink-0">Your commitment:</span>
-          <span className="truncate italic text-slate-600">“{commitment.statement}”</span>
+        <div className="flex items-center gap-2 overflow-hidden text-xs text-zinc-700 dark:text-zinc-300">
+          <span className="font-semibold text-zinc-900 dark:text-zinc-100 shrink-0">
+            {locale === "vi" ? "Lời cam kết (Your commitment):" : "Your commitment:"}
+          </span>
+          <span className="truncate italic text-zinc-600 dark:text-zinc-400">“{commitment.statement}”</span>
         </div>
         <button
           type="button"
@@ -117,9 +125,9 @@ export function CommitmentCard({ cycleId, cycleStatus }: CommitmentCardProps) {
             setStatement(commitment.statement);
             setIsEditing(true);
           }}
-          className="no-print ml-3 shrink-0 rounded px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          className="no-print ml-3 shrink-0 rounded px-2.5 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
         >
-          Edit
+          {locale === "vi" ? "Chỉnh sửa (Edit)" : "Edit"}
         </button>
       </div>
     );
@@ -127,54 +135,68 @@ export function CommitmentCard({ cycleId, cycleStatus }: CommitmentCardProps) {
 
   // If null or editing: show form
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-      <div className="flex items-baseline justify-between border-b border-slate-100 pb-2 mb-3">
-        <h3 className="font-bold text-sm text-slate-900">Make it a commitment.</h3>
+    <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-baseline justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2 mb-3">
+        <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+          {locale === "vi" ? "Thiết lập lời cam kết (Make it a commitment)." : "Make it a commitment."}
+        </h3>
         {commitment && isEditing && (
           <button
             type="button"
             onClick={() => setIsEditing(false)}
-            className="text-xs text-slate-400 hover:text-slate-600"
+            className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
           >
-            Cancel
+            {locale === "vi" ? "Hủy" : "Cancel"}
           </button>
         )}
       </div>
 
-      <p className="text-xs text-slate-500 mb-4">
-        Commitment is keeping a promise long after the mood has passed. Count the sacrifices up front so you aren&apos;t surprised in the valley.
+      <p className="text-xs text-zinc-500 mb-4 dark:text-zinc-400">
+        {locale === "vi"
+          ? "Cam kết là việc giữ lời hứa ngay cả khi cảm hứng ban đầu đã tan biến. Hãy tính trước những hy sinh để bạn không bất ngờ khi bước vào thung lũng."
+          : "Commitment is keeping a promise long after the mood has passed. Count the sacrifices up front so you aren't surprised in the valley."}
       </p>
 
       {error && (
-        <div className="mb-3 rounded-lg bg-rose-50 p-2.5 text-xs font-medium text-rose-700">
+        <div className="mb-3 rounded-lg bg-rose-50 border border-rose-200 p-2.5 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSave} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">
-            Count the costs — comfort, pleasure, some opportunities.
+          <label className="block text-xs font-semibold text-zinc-700 mb-1 dark:text-zinc-300">
+            {locale === "vi"
+              ? "Tính toán cái giá phải trả (Count the costs — comfort, pleasure, some opportunities):"
+              : "Count the costs — comfort, pleasure, some opportunities."}
           </label>
           <textarea
             value={costs}
             onChange={(e) => setCosts(e.target.value)}
             rows={2}
-            placeholder="What will you have to give up? (e.g. late night TV, impulsive spending, saying yes to extra projects...)"
-            className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:outline-none"
+            placeholder={
+              locale === "vi"
+                ? "Bạn sẵn sàng từ bỏ điều gì? (Ví dụ: xem TV khuya, mua sắm tùy hứng, nhận thêm việc ngoài luồng...)"
+                : "What will you have to give up? (e.g. late night TV, impulsive spending, saying yes to extra projects...)"
+            }
+            className="w-full rounded-lg border border-zinc-300 p-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-800 focus:outline-hidden dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">
-            &ldquo;I choose to…&rdquo;
+          <label className="block text-xs font-semibold text-zinc-700 mb-1 dark:text-zinc-300">
+            {locale === "vi" ? "Tuyên ngôn “Tôi chọn…” (“I choose to…”):" : "“I choose to…”"}
           </label>
           <textarea
             value={statement}
             onChange={(e) => setStatement(e.target.value)}
             rows={2}
-            placeholder="I choose to execute my tactics daily regardless of mood or feeling, because..."
-            className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:outline-none"
+            placeholder={
+              locale === "vi"
+                ? "Tôi chọn thực thi các hành động mỗi ngày bất kể cảm xúc, bởi vì..."
+                : "I choose to execute my tactics daily regardless of mood or feeling, because..."
+            }
+            className="w-full rounded-lg border border-zinc-300 p-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-800 focus:outline-hidden dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
         </div>
 
@@ -183,17 +205,17 @@ export function CommitmentCard({ cycleId, cycleStatus }: CommitmentCardProps) {
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
-              Cancel
+              {locale === "vi" ? "Hủy" : "Cancel"}
             </button>
           )}
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+            className="rounded-lg bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
           >
-            {saving ? "Saving..." : "Commit"}
+            {saving ? (locale === "vi" ? "Đang lưu..." : "Saving...") : (locale === "vi" ? "Cam kết (Commit)" : "Commit")}
           </button>
         </div>
       </form>

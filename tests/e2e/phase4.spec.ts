@@ -5,26 +5,26 @@ test.describe("Phase 4 E2E (Antigravity UI Verification)", () => {
     await page.goto("/settings");
 
     // 1. Header & Section Headings
-    await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Data Portability" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Appearance" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Language" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /(Settings|Cài đặt)/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /(Data Portability|Tính di động dữ liệu)/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /(Appearance|Giao diện)/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /(Language|Ngôn ngữ)/ })).toBeVisible();
 
     // 2. Verbatim Intro Copy
     await expect(
-      page.getByText("Your data is yours — one file, one folder, no cloud.")
+      page.getByText(/(Your data is yours — one file, one folder, no cloud\.|Dữ liệu là của bạn — một tệp tin, một thư mục, không máy chủ đám mây\.)/)
     ).toBeVisible();
 
     // 3. Export Link
-    const exportLink = page.getByRole("link", { name: "Download backup" });
+    const exportLink = page.getByRole("link", { name: /(Download backup|Tải bản sao lưu)/ });
     await expect(exportLink).toBeVisible();
     await expect(exportLink).toHaveAttribute("href", "/api/export");
     await expect(exportLink).toHaveAttribute("download");
 
     // 4. Backups List
-    await expect(page.getByText("Automatic Backups")).toBeVisible();
+    await expect(page.getByText(/(Automatic Backups|Bản sao lưu tự động)/)).toBeVisible();
     await expect(
-      page.getByText("A checkpoint is saved automatically every time you close a week. The newest 5 are kept.")
+      page.getByText(/(A checkpoint is saved automatically every time you close a week\. The newest 5 are kept\.|Bản sao lưu được tạo tự động mỗi khi bạn chốt một tuần\. Giữ lại 5 bản mới nhất\.)/)
     ).toBeVisible();
   });
 
@@ -41,7 +41,7 @@ test.describe("Phase 4 E2E (Antigravity UI Verification)", () => {
 
     // Upload via file input
     const fileChooserPromise = page.waitForEvent("filechooser");
-    await page.getByText("Import backup").click();
+    await page.getByText(/(Import backup|Nhập bản sao lưu)/).click();
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles({
       name: "test-backup.json",
@@ -51,15 +51,15 @@ test.describe("Phase 4 E2E (Antigravity UI Verification)", () => {
 
     // Modal appears with verbatim copy
     await expect(page.getByRole("dialog")).toBeVisible();
-    await expect(page.getByText("Confirm Database Import")).toBeVisible();
+    await expect(page.getByText(/(Confirm Database Import|Xác nhận nhập dữ liệu)/)).toBeVisible();
     await expect(
       page.getByText(
-        "Importing replaces EVERYTHING — cycles, goals, scores, reviews. An automatic backup of the current data is saved first. Import now?"
+        /(Importing replaces EVERYTHING|Nhập tệp sẽ thay thế TOÀN BỘ)/
       )
     ).toBeVisible();
 
     // Cancel closes the modal
-    await page.getByRole("button", { name: "Cancel" }).click();
+    await page.getByRole("button", { name: /(Cancel|Hủy)/ }).click();
     await expect(page.getByRole("dialog")).not.toBeVisible();
   });
 
@@ -67,15 +67,15 @@ test.describe("Phase 4 E2E (Antigravity UI Verification)", () => {
     await page.goto("/settings");
 
     // Select Dark
-    await page.getByRole("button", { name: "Dark" }).click();
+    await page.getByRole("button", { name: /(Dark|Tối)/ }).click();
     await expect(page.locator("html")).toHaveClass(/dark/);
 
     // Select Light
-    await page.getByRole("button", { name: "Light" }).click();
+    await page.getByRole("button", { name: /(Light|Sáng)/ }).click();
     await expect(page.locator("html")).not.toHaveClass(/dark/);
 
     // Restore System
-    await page.getByRole("button", { name: "System" }).click();
+    await page.getByRole("button", { name: /(System|Hệ thống)/ }).click();
   });
 
   test("Language switch flips navigation and UI labels between English and Vietnamese", async ({ page }) => {

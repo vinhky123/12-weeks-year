@@ -1,14 +1,16 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import type { SettingsDto, Theme, AppLocale } from "@/lib/contracts";
 import { apiFetch } from "@/components/common/api";
+import { t as translate } from "@/lib/i18n";
 
 interface SettingsContextValue {
   settings: SettingsDto | null;
   theme: Theme;
   locale: AppLocale;
   loading: boolean;
+  t: (key: string, params?: Record<string, string | number>) => string;
   setTheme: (theme: Theme) => Promise<void>;
   setLocale: (locale: AppLocale) => Promise<void>;
   refreshSettings: () => Promise<void>;
@@ -19,8 +21,9 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(undefine
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<SettingsDto | null>(null);
   const [theme, setThemeState] = useState<Theme>("system");
-  const [locale, setLocaleState] = useState<AppLocale>("en");
+  const [locale, setLocaleState] = useState<AppLocale>("vi");
   const [loading, setLoading] = useState(true);
+  const mutatingRef = useRef(false);
 
   // Apply theme to document.documentElement
   const applyTheme = useCallback((currentTheme: Theme) => {
@@ -46,13 +49,17 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       const res = await apiFetch<{ settings: SettingsDto }>("/api/settings");
-      setSettings(res.settings);
-      setThemeState(res.settings.theme);
-      setLocaleState(res.settings.locale);
-      applyTheme(res.settings.theme);
+      if (!mutatingRef.current) {
+        setSettings(res.settings);
+        setThemeState(res.settings.theme);
+        setLocaleState(res.settings.locale);
+        applyTheme(res.settings.theme);
+      }
     } catch {
       // Graceful fallback to default system/en
-      applyTheme("system");
+      if (!mutatingRef.current) {
+        applyTheme("system");
+      }
     } finally {
       setLoading(false);
     }
@@ -76,6 +83,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, [theme, applyTheme]);
 
   const setTheme = async (newTheme: Theme) => {
+    mutatingRef.current = true;
     const prevTheme = theme;
     setThemeState(newTheme);
     applyTheme(newTheme);
@@ -95,6 +103,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const setLocale = async (newLocale: AppLocale) => {
+    mutatingRef.current = true;
     const prevLocale = locale;
     setLocaleState(newLocale);
 
@@ -111,6 +120,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const t = useCallback(
+    (key: string, params?: Record<string, string | number>) => translate(locale, key, params),
+    [locale]
+  );
+
   return (
     <SettingsContext.Provider
       value={{
@@ -118,6 +132,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         theme,
         locale,
         loading,
+        t,
         setTheme,
         setLocale,
         refreshSettings,
@@ -135,12 +150,17 @@ export function useSettings(): SettingsContextValue {
     return {
       settings: null,
       theme: "system",
-      locale: "en",
+      locale: "vi",
       loading: false,
+      t: (key: string, params?: Record<string, string | number>) => translate("vi", key, params),
       setTheme: async () => {},
       setLocale: async () => {},
       refreshSettings: async () => {},
     };
   }
   return context;
+}
+
+export function useI18n(): SettingsContextValue {
+  return useSettings();
 }

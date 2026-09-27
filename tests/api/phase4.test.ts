@@ -32,9 +32,9 @@ async function json(res: Response) {
 describe("phase 4: settings", () => {
   it("defaults and partial updates", async () => {
     const base = await json(await settingsRoute.GET());
-    expect(base.settings).toMatchObject({ theme: "system", locale: "en", weekStartsOn: 1 });
-    const patched = await json(await settingsRoute.PATCH(req("PATCH", { theme: "dark", locale: "vi" })));
-    expect(patched.settings).toMatchObject({ theme: "dark", locale: "vi", weekStartsOn: 1 });
+    expect(base.settings).toMatchObject({ theme: "system", locale: "vi", weekStartsOn: 1 });
+    const patched = await json(await settingsRoute.PATCH(req("PATCH", { theme: "dark", locale: "en" })));
+    expect(patched.settings).toMatchObject({ theme: "dark", locale: "en", weekStartsOn: 1 });
     const bad = await settingsRoute.PATCH(req("PATCH", { theme: "neon" }));
     expect(bad.status).toBe(400);
   });

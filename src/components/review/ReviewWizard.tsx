@@ -177,8 +177,8 @@ export function ReviewWizard({
     <div className="space-y-6 pb-28">
       {/* Gentle banner if running outside week 13 */}
       {!isWeek13 && !isArchived && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-3.5 text-xs text-blue-900">
-          <span>Week 13 is the natural time for this. You&apos;re in week {currentWeekNumber}.</span>
+        <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-3.5 text-xs text-zinc-700 dark:text-zinc-300">
+          <span>Tuần 13 là thời điểm tự nhiên cho việc này. Bạn hiện đang ở tuần {currentWeekNumber}.</span>
         </div>
       )}
 
@@ -186,7 +186,7 @@ export function ReviewWizard({
       <StepIndicator currentStep={step} onStepClick={(s) => setStep(s)} />
 
       {stepError && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs font-medium text-rose-800">
+        <div className="rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 p-4 text-xs font-medium text-rose-800 dark:text-rose-200">
           {stepError}
         </div>
       )}
@@ -223,31 +223,31 @@ export function ReviewWizard({
       </div>
 
       {/* Sticky Navigation Footer */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-slate-200 bg-white/95 px-8 py-3.5 backdrop-blur shadow-md">
+      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 px-8 py-3.5 backdrop-blur shadow-md">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <button
             type="button"
             disabled={step === 1 || savingStep}
             onClick={handleBack}
-            className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            ← Back
+            ← Quay lại
           </button>
 
-          <span className="text-xs text-slate-500 font-medium">Step {step} of 6</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Bước {step} / 6</span>
 
           {step < 6 ? (
             <button
               type="button"
               disabled={savingStep}
               onClick={handleNext}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 px-5 py-2 text-xs font-semibold text-white dark:text-zinc-900 shadow-xs hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50"
             >
               {savingStep ? (
-                "Saving..."
+                "Đang lưu..."
               ) : (
                 <>
-                  <span>Next</span>
+                  <span>Tiếp tục</span>
                   <span>→</span>
                 </>
               )}

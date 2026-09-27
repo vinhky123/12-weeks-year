@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import type { NextRitual, CycleDto } from "@/lib/contracts";
 import { useSettings } from "@/context/SettingsContext";
@@ -23,17 +24,17 @@ export default function NextRitualCard({
   const { locale } = useSettings();
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <span className="inline-block text-xs font-semibold tracking-wider text-slate-500 uppercase dark:text-slate-400">
-            Next Ritual
+          <span className="inline-block text-xs font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+            {t(locale, "ritual.next_ritual")}
           </span>
-          <h2 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">
-            {getTitle(nextRitual, currentWeekNumber)}
+          <h2 className="mt-1 text-lg font-bold text-zinc-900 dark:text-zinc-100">
+            {getTitle(nextRitual, currentWeekNumber, locale)}
           </h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            {getDescription(nextRitual, currentWeekNumber)}
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            {getDescription(nextRitual, currentWeekNumber, locale)}
           </p>
         </div>
 
@@ -41,7 +42,7 @@ export default function NextRitualCard({
           {nextRitual === "create_cycle" && (
             <Link
               href="/plan"
-              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+              className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-zinc-800 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
             >
               {t(locale, "ritual.create_cycle")}
             </Link>
@@ -51,16 +52,16 @@ export default function NextRitualCard({
             <button
               onClick={onStartCycle}
               disabled={isStarting || !cycle}
-              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-emerald-500 disabled:opacity-50 transition"
+              className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-zinc-800 disabled:opacity-50 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
             >
-              {isStarting ? "Starting..." : t(locale, "ritual.start_cycle")}
+              {isStarting ? (locale === "vi" ? "Đang bắt đầu..." : "Starting...") : t(locale, "ritual.start_cycle")}
             </button>
           )}
 
           {nextRitual === "plan_week" && (
             <Link
               href="/week"
-              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+              className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-zinc-800 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
             >
               {t(locale, "ritual.plan_week", { n: currentWeekNumber })}
             </Link>
@@ -69,7 +70,7 @@ export default function NextRitualCard({
           {nextRitual === "close_last_week" && (
             <Link
               href="/week?close=1"
-              className="inline-flex items-center justify-center rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-amber-500 transition"
+              className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-zinc-800 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
             >
               {t(locale, "ritual.close_last_week", { n: Math.max(1, currentWeekNumber - 1) })}
             </Link>
@@ -78,20 +79,20 @@ export default function NextRitualCard({
           {nextRitual === "execute_today" && (
             <Link
               href="/today"
-              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+              className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-zinc-800 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
             >
               {t(locale, "ritual.execute_today")}
             </Link>
           )}
 
           {nextRitual === "review_mode" && (
-            <div className="rounded-lg bg-purple-50 border border-purple-200 px-4 py-2 text-sm font-medium text-purple-700 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300">
+            <div className="rounded-lg bg-zinc-100 border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100">
               {t(locale, "ritual.review_mode")}
             </div>
           )}
 
           {nextRitual === "await_week_end" && (
-            <div className="rounded-lg bg-slate-100 border border-slate-200 px-4 py-2 text-sm text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
+            <div className="rounded-lg bg-zinc-100 border border-zinc-200 px-4 py-2 text-sm text-zinc-600 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300">
               {t(locale, "ritual.await_week_end")}
             </div>
           )}
@@ -101,7 +102,26 @@ export default function NextRitualCard({
   );
 }
 
-function getTitle(ritual: NextRitual, week: number): string {
+function getTitle(ritual: NextRitual, week: number, locale: string): string {
+  if (locale === "vi") {
+    switch (ritual) {
+      case "create_cycle":
+        return "Bắt đầu hành trình 12 tuần của bạn";
+      case "start_cycle":
+        return "Kế hoạch đã sẵn sàng — bắt đầu năm mới";
+      case "plan_week":
+        return `Lập kế hoạch Tuần ${week}`;
+      case "close_last_week":
+        return `Chốt Tuần ${Math.max(1, week - 1)}`;
+      case "execute_today":
+        return "Thực thi hôm nay";
+      case "review_mode":
+        return "Tuần 13 — năm đã hoàn thành";
+      case "await_week_end":
+        return "Tuần đã chốt";
+    }
+  }
+
   switch (ritual) {
     case "create_cycle":
       return "Begin your 12-week journey";
@@ -120,7 +140,26 @@ function getTitle(ritual: NextRitual, week: number): string {
   }
 }
 
-function getDescription(ritual: NextRitual, week: number): string {
+function getDescription(ritual: NextRitual, week: number, locale: string): string {
+  if (locale === "vi") {
+    switch (ritual) {
+      case "create_cycle":
+        return "Xác định 1–3 mục tiêu và các hành động chiến lược để kích hoạt chu kỳ.";
+      case "start_cycle":
+        return "Kích hoạt chu kỳ để bắt đầu ngày đầu tiên và theo dõi thực thi.";
+      case "plan_week":
+        return "Tái thiết lập kế hoạch tuần mới từ Kế hoạch 12 tuần (~15 phút).";
+      case "close_last_week":
+        return `Xem lại điểm số thực thi Tuần ${Math.max(1, week - 1)}, ghi nhận số liệu kết quả và đóng tuần.`;
+      case "execute_today":
+        return "Xem các hành động hôm nay và đánh dấu thành tựu đã hoàn thành.";
+      case "review_mode":
+        return "Ăn mừng, nhìn lại, khởi động lại. Mở toàn bộ trình hướng dẫn đánh giá.";
+      case "await_week_end":
+        return "Mọi hành động trong tuần đã được khóa. Chuẩn bị cho tuần tiếp theo.";
+    }
+  }
+
   switch (ritual) {
     case "create_cycle":
       return "Define your 2–3 goals and vital tactics to establish the active cycle.";

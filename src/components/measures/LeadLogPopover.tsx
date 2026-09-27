@@ -29,7 +29,7 @@ export function LeadLogPopover({
     e.preventDefault();
     const num = Number(val);
     if (isNaN(num) || num < 0) {
-      setError("Please enter a valid number (≥ 0).");
+      setError("Vui lòng nhập một số hợp lệ (≥ 0).");
       return;
     }
 
@@ -52,37 +52,37 @@ export function LeadLogPopover({
       if (err instanceof ClientApiError) {
         setError(err.message);
       } else {
-        setError("Failed to log value.");
+        setError("Không thể lưu giá trị.");
       }
       setSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-5 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+      <div className="w-full max-w-sm rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-xl text-zinc-900 dark:text-zinc-100">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-sm text-slate-900">Log Lead Activity</h3>
+          <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Ghi nhận hoạt động dẫn dắt</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 rounded p-1"
+            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded p-1"
           >
             ✕
           </button>
         </div>
 
-        <p className="mt-1 text-xs text-slate-500">
-          Week {currentWeek} activity for <strong className="text-slate-700">{leadMeasureName}</strong>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Hoạt động Tuần {currentWeek} cho <strong className="text-zinc-800 dark:text-zinc-200">{leadMeasureName}</strong>
         </p>
 
         {error && (
-          <p className="mt-2 rounded bg-rose-50 p-2 text-xs font-medium text-rose-700">{error}</p>
+          <p className="mt-2 rounded border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 p-2 text-xs font-medium text-rose-700 dark:text-rose-300">{error}</p>
         )}
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700">Completed count</label>
+            <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">Số lần đã hoàn thành</label>
             <input
               type="number"
               min="0"
@@ -90,8 +90,8 @@ export function LeadLogPopover({
               autoFocus
               value={val}
               onChange={(e) => setVal(e.target.value)}
-              placeholder="e.g. 3"
-              className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm text-slate-900 focus:border-slate-800 focus:outline-none"
+              placeholder="VD: 3"
+              className="mt-1 w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-zinc-900 dark:focus:border-zinc-100 focus:outline-none"
             />
           </div>
 
@@ -99,16 +99,16 @@ export function LeadLogPopover({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
             >
-              Cancel
+              Hủy
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="rounded-lg bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+              className="rounded-lg bg-zinc-900 dark:bg-zinc-100 px-4 py-1.5 text-xs font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Log value"}
+              {saving ? "Đang lưu..." : "Ghi nhận"}
             </button>
           </div>
         </form>

@@ -28,18 +28,18 @@ export function WeekPicker({
             onClick={() => onSelectWeek(w)}
             className={`flex flex-col items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
               isSelected
-                ? "bg-slate-900 text-white shadow-xs"
-                : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+                ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-xs"
+                : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
             }`}
           >
-            <span>W{w}</span>
+            <span>T{w}</span>
             {isCurrent && (
               <span
                 className={`text-[9px] font-normal ${
-                  isSelected ? "text-slate-300" : "text-slate-400"
+                  isSelected ? "text-zinc-300 dark:text-zinc-600" : "text-zinc-400 dark:text-zinc-500"
                 }`}
               >
-                current
+                hiện tại
               </span>
             )}
           </button>

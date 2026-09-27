@@ -32,44 +32,44 @@ export function LagChart({
     .sort((a, b) => a.week - b.week);
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/60 p-4">
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-baseline">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Lag Indicator (The Result)
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            Chỉ số kết quả (Kết quả cuối)
           </span>
-          <p className="font-bold text-sm text-slate-800">
+          <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
             {lagMetricName}: {lagStart} → {lagTarget} {lagUnit}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <span className="text-xs text-slate-500">Latest: </span>
-            <span className="font-bold text-sm text-slate-900">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">Hiện tại: </span>
+            <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
               {hasLagValue ? `${latestLag} ${lagUnit}` : "—"}
             </span>
           </div>
           <Link
             href="/week?close=1"
-            className="text-xs font-medium text-slate-600 hover:text-slate-900 hover:underline"
+            className="text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline"
           >
-            Log lag at week close →
+            Cập nhật kết quả khi đóng tuần →
           </Link>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="mt-3">
-        <div className="flex justify-between text-xs text-slate-500 mb-1">
-          <span>Progress toward target</span>
-          <span className="font-semibold text-slate-700">
+        <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-1">
+          <span>Tiến độ hướng tới mục tiêu</span>
+          <span className="font-semibold text-zinc-800 dark:text-zinc-200">
             {hasLagValue ? `${progressPct}%` : "—"}
           </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
           <div
-            className="h-full bg-slate-800 transition-all duration-300"
+            className="h-full bg-zinc-900 dark:bg-zinc-100 transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -77,21 +77,21 @@ export function LagChart({
 
       {/* Weekly History Series */}
       {!hasLagValue ? (
-        <p className="mt-3 text-xs italic text-slate-400">
-          Log your first lag value at week close.
+        <p className="mt-3 text-xs italic text-zinc-400 dark:text-zinc-500">
+          Ghi nhận giá trị kết quả đầu tiên khi đóng tuần.
         </p>
       ) : validPoints.length === 0 ? (
-        <p className="mt-3 text-xs italic text-slate-400">No weekly entries recorded yet.</p>
+        <p className="mt-3 text-xs italic text-zinc-400 dark:text-zinc-500">Chưa có bản ghi tuần nào được lưu.</p>
       ) : (
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pt-2">
-          <span className="text-[11px] font-medium text-slate-400">History:</span>
+          <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">Lịch sử:</span>
           {validPoints.map((pt) => (
             <div
               key={pt.week}
-              className="flex items-center gap-1 rounded bg-white px-2 py-0.5 border border-slate-200 text-xs shadow-xs"
+              className="flex items-center gap-1 rounded bg-white dark:bg-zinc-800 px-2 py-0.5 border border-zinc-200 dark:border-zinc-700 text-xs shadow-xs"
             >
-              <span className="font-semibold text-slate-500">W{pt.week}:</span>
-              <span className="font-bold text-slate-800">
+              <span className="font-semibold text-zinc-500 dark:text-zinc-400">T{pt.week}:</span>
+              <span className="font-bold text-zinc-900 dark:text-zinc-100">
                 {pt.value} {lagUnit}
               </span>
             </div>

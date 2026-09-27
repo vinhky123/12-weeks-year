@@ -8,7 +8,7 @@ export const settings = sqliteTable("settings", {
   currentCycleId: integer("current_cycle_id"),
   weekStartsOn: integer("week_starts_on").notNull().default(1), // 1 = Monday
   theme: text("theme").notNull().default("system"),
-  locale: text("locale").notNull().default("en"),
+  locale: text("locale").notNull().default("vi"),
   createdAt: text("created_at").notNull(),
 });
 

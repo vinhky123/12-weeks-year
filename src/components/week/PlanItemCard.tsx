@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import type { WeekPlanItemDto } from "@/lib/contracts";
+import { useSettings } from "@/context/SettingsContext";
 
-const DAY_NAMES_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const EN_DAY_NAMES_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const VI_DAY_NAMES_SHORT = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
 interface PlanItemCardProps {
   item: WeekPlanItemDto;
@@ -20,12 +22,14 @@ export default function PlanItemCard({
   onRename,
   onRemove,
 }: PlanItemCardProps) {
+  const { locale } = useSettings();
   const [isEditing, setIsEditing] = useState(false);
   const [label, setLabel] = useState(item.label);
   const [isMoving, setIsMoving] = useState(false);
 
   const isComplete = item.done >= item.plannedCount;
   const isPlanRevision = item.tacticId === null;
+  const daysShort = locale === "vi" ? VI_DAY_NAMES_SHORT : EN_DAY_NAMES_SHORT;
 
   const handleSaveRename = async () => {
     if (!label.trim()) return;
@@ -43,8 +47,8 @@ export default function PlanItemCard({
     <div
       className={`rounded-xl border p-3 shadow-2xs transition space-y-2 ${
         isComplete
-          ? "border-emerald-200 bg-emerald-50/40 text-slate-700"
-          : "border-slate-200 bg-white text-slate-900 hover:border-slate-300"
+          ? "border-zinc-200 bg-zinc-100/60 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400"
+          : "border-zinc-200 bg-white text-zinc-900 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-700"
       }`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -54,28 +58,28 @@ export default function PlanItemCard({
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              className="flex-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-900"
+              className="flex-1 rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               autoFocus
             />
             <button
               type="button"
               onClick={handleSaveRename}
-              className="rounded bg-slate-900 px-2 py-1 text-xs font-semibold text-white"
+              className="rounded bg-zinc-900 px-2 py-1 text-xs font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900"
             >
-              Save
+              {locale === "vi" ? "Lưu" : "Save"}
             </button>
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600"
+              className="rounded bg-zinc-100 px-2 py-1 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
             >
-              Cancel
+              {locale === "vi" ? "Hủy" : "Cancel"}
             </button>
           </div>
         ) : (
           <span
             className={`text-xs font-semibold leading-snug break-words ${
-              isComplete ? "text-slate-600 line-through" : "text-slate-900"
+              isComplete ? "text-zinc-400 line-through dark:text-zinc-500" : "text-zinc-900 dark:text-zinc-100"
             }`}
           >
             {item.label}
@@ -85,52 +89,52 @@ export default function PlanItemCard({
         <span
           className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${
             isComplete
-              ? "bg-emerald-100 text-emerald-800"
-              : "bg-slate-100 text-slate-700"
+              ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+              : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
           }`}
         >
           {item.done}/{item.plannedCount}
         </span>
       </div>
 
-      <div className="flex items-center justify-between gap-1 text-[11px] text-slate-500 flex-wrap">
+      <div className="flex items-center justify-between gap-1 text-[11px] text-zinc-500 flex-wrap dark:text-zinc-400">
         {item.goal ? (
-          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 truncate max-w-[140px]">
+          <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 truncate max-w-[140px] dark:bg-zinc-800 dark:text-zinc-400">
             {item.goal.title}
           </span>
         ) : isPlanRevision ? (
-          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
-            plan revision
+          <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
+            {locale === "vi" ? "điều chỉnh kế hoạch" : "plan revision"}
           </span>
         ) : null}
 
         {!isClosed && !isEditing && (
-          <div className="flex items-center gap-2 text-slate-400">
+          <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500">
             {/* Move Day Trigger */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsMoving(!isMoving)}
-                className="hover:text-slate-700 text-[10px] font-semibold transition"
-                title="Move to another day"
+                className="hover:text-zinc-700 dark:hover:text-zinc-200 text-[10px] font-semibold transition"
+                title={locale === "vi" ? "Chuyển sang ngày khác" : "Move to another day"}
               >
-                Move ▼
+                {locale === "vi" ? "Chuyển ▼" : "Move ▼"}
               </button>
 
               {isMoving && (
-                <div className="absolute right-0 top-full mt-1 z-30 w-28 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
-                  <div className="text-[10px] font-bold text-slate-400 px-2 py-1 uppercase">
-                    Move to
+                <div className="absolute right-0 top-full mt-1 z-30 w-28 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+                  <div className="text-[10px] font-bold text-zinc-400 px-2 py-1 uppercase dark:text-zinc-500">
+                    {locale === "vi" ? "Chuyển tới" : "Move to"}
                   </div>
-                  {DAY_NAMES_SHORT.map((day, dIdx) => (
+                  {daysShort.map((day, dIdx) => (
                     <button
                       key={day}
                       type="button"
                       onClick={() => handleSelectDay(dIdx)}
                       className={`w-full rounded px-2 py-1 text-left text-xs transition ${
                         dIdx === item.dayOfWeek
-                          ? "bg-slate-100 font-bold text-slate-900"
-                          : "hover:bg-slate-50 text-slate-600"
+                          ? "bg-zinc-100 font-bold text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100"
+                          : "hover:bg-zinc-50 text-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-700/50"
                       }`}
                     >
                       {day}
@@ -143,16 +147,16 @@ export default function PlanItemCard({
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="hover:text-slate-700 text-[10px] transition"
+              className="hover:text-zinc-700 dark:hover:text-zinc-200 text-[10px] transition"
               title="Rename item"
             >
-              Rename
+              {locale === "vi" ? "Đổi tên" : "Rename"}
             </button>
 
             <button
               type="button"
               onClick={() => onRemove(item.id)}
-              className="hover:text-rose-600 text-[10px] transition"
+              className="hover:text-rose-600 text-[10px] transition dark:hover:text-rose-400"
               title="Remove item"
             >
               &times;

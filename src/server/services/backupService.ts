@@ -122,7 +122,7 @@ export function listBackups(h: DbHandles): { file: string; sizeBytes: number; cr
         const stat = fs.statSync(path.join(dir, f));
         return { file: f, sizeBytes: stat.size, createdAt: stat.mtime.toISOString() };
       })
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.file.localeCompare(a.file));
   } catch {
     return [];
   }

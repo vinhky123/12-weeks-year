@@ -50,6 +50,7 @@ try {
   // sqlite_sequence might not exist yet if no autoincrement table was created
 }
 h.sqlite.pragma("foreign_keys = ON");
+h.sqlite.prepare("INSERT INTO settings (id, current_cycle_id, week_starts_on, theme, locale, created_at) VALUES (1, NULL, 1, 'system', 'vi', ?)").run(today);
 
 function lastMonday(from: string): string {
   const d = new Date(`${from}T00:00:00Z`);
@@ -201,15 +202,10 @@ if (currentWeek >= 2) {
 
 // --- vision (living, per D7) ---
 visionService.updateVision(h, {
-  longTerm: "Own my time: work because I choose to, from anywhere, with the people I love.",
-  threeYear: "Independent income covering our life, earned in focused 20-hour weeks.",
-  cycleConnection: "This cycle proves the system: one healthy body and the first $1,000 earned independently.",
-  lifeDomains: [
-    { area: "Health", note: "Strong, rested, energetic" },
-    { area: "Family", note: "Present at dinner, every day" },
-    { area: "Business", note: "Independent income streams" },
-    { area: "Personal", note: "Writing and guitar weekly" },
-  ],
+  longTerm: "Làm chủ thời gian: Tự do làm việc từ bất cứ đâu, tạo ra nguồn thu nhập độc lập và trọn vẹn dành thời gian cho gia đình và những người yêu thương.",
+  threeYear: "Làm chủ thời gian: Tự do làm việc từ bất cứ đâu, tạo ra nguồn thu nhập độc lập và trọn vẹn dành thời gian cho gia đình và những người yêu thương.",
+  cycleConnection: "Làm chủ thời gian: Tự do làm việc từ bất cứ đâu, tạo ra nguồn thu nhập độc lập và trọn vẹn dành thời gian cho gia đình và những người yêu thương.",
+  lifeDomains: [],
 }, today);
 
 // --- model week (the book's quantities -> zero warnings) ---

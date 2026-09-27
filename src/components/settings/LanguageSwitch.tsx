@@ -9,13 +9,17 @@ const LOCALE_OPTIONS: { id: AppLocale; label: string }[] = [
 ];
 
 export function LanguageSwitch() {
-  const { locale, setLocale } = useSettings();
+  const { locale, setLocale, t } = useSettings();
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-      <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Language</h3>
-      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-        Select your display language for the navigation, ritual guidance, and scoring verdicts.
+    <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+      <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+        {t("settings.language")}
+      </h3>
+      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        {locale === "vi"
+          ? "Chọn ngôn ngữ hiển thị cho điều hướng, hướng dẫn nghi thức và đánh giá điểm số."
+          : "Select your display language for the navigation, ritual guidance, and scoring verdicts."}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -26,10 +30,10 @@ export function LanguageSwitch() {
               key={option.id}
               type="button"
               onClick={() => setLocale(option.id)}
-              className={`rounded-xl px-4 py-2 text-xs font-semibold transition ${
+              className={`rounded-md px-4 py-2 text-xs font-semibold transition ${
                 isSelected
-                  ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  ? "bg-zinc-900 text-white shadow-xs dark:bg-zinc-100 dark:text-zinc-900"
+                  : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               }`}
             >
               {option.label}

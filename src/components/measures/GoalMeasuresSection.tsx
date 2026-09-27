@@ -67,19 +67,19 @@ export function GoalMeasuresSection({ goalData, currentWeek }: GoalMeasuresSecti
   };
 
   return (
-    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="space-y-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm">
       {/* Goal Header */}
-      <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-baseline border-b border-slate-100 pb-4">
+      <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-baseline border-b border-zinc-100 dark:border-zinc-800 pb-4">
         <div>
-          <h3 className="text-lg font-bold text-slate-900">{goal.title}</h3>
-          <p className="text-xs text-slate-500">
-            Target: {goal.lagMetricName} ({goal.lagStart} → {goal.lagTarget} {goal.lagUnit})
+          <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{goal.title}</h3>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Chỉ số đích: {goal.lagMetricName} ({goal.lagStart} → {goal.lagTarget} {goal.lagUnit})
           </p>
         </div>
         {currentWeekScore && (
           <div className="text-xs">
-            <span className="text-slate-400">Tactics score: </span>
-            <span className="font-bold text-slate-700">{currentWeekScore.scorePct}%</span>
+            <span className="text-zinc-400 dark:text-zinc-500">Điểm chiến thuật: </span>
+            <span className="font-bold text-zinc-700 dark:text-zinc-300">{currentWeekScore.scorePct}%</span>
           </div>
         )}
       </div>
@@ -103,18 +103,18 @@ export function GoalMeasuresSection({ goalData, currentWeek }: GoalMeasuresSecti
       <div className="pt-2">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h4 className="font-bold text-sm text-slate-800">Lead Indicators</h4>
-            <p className="text-xs text-slate-500">
-              Lead indicators are the activities you control — the lag follows.
+            <h4 className="font-bold text-sm text-zinc-800 dark:text-zinc-200">Chỉ số dẫn dắt</h4>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Chỉ số dẫn dắt là những hành vi bạn trực tiếp kiểm soát — kết quả sẽ theo sau.
             </p>
           </div>
           <AddLeadMeasureForm goalId={goal.id} onAdded={handleLeadAdded} />
         </div>
 
         {leadMeasures.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center">
-            <p className="text-xs italic text-slate-400">
-              No lead indicators configured for this goal yet. Add activities that drive your lag result.
+          <div className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-4 text-center">
+            <p className="text-xs italic text-zinc-400 dark:text-zinc-500">
+              Chưa có chỉ số dẫn dắt nào cho mục tiêu này. Hãy thêm những hành động tạo ra kết quả của bạn.
             </p>
           </div>
         ) : (

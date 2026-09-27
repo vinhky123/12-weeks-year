@@ -1,3 +1,6 @@
+"use client";
+
+import React from "react";
 import type { WeekScoreDto } from "@/lib/contracts";
 import {
   BENCHMARK_LINE,
@@ -5,19 +8,26 @@ import {
   REVISE_PLAN_GUIDANCE,
   getBandBadgeStyles,
 } from "@/components/common/scoreUtils";
+import { useSettings } from "@/context/SettingsContext";
 
 interface ScoreVerdictProps {
   score: WeekScoreDto | null;
 }
 
 export default function ScoreVerdict({ score }: ScoreVerdictProps) {
+  const { locale } = useSettings();
+
   if (!score) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
-        <p className="text-sm font-semibold text-slate-700">
-          Nothing was due this week — no score. The week still closes.
+      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-6 text-center dark:border-zinc-800 dark:bg-zinc-900">
+        <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+          {locale === "vi"
+            ? "Không có việc nào đến hạn tuần này — không có điểm số. Tuần vẫn có thể chốt."
+            : "Nothing was due this week — no score. The week still closes."}
         </p>
-        <p className="mt-2 text-xs text-slate-500">{ACHIEVEMENTS_LINE}</p>
+        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+          {locale === "vi" ? "Điểm số đo lường thành tựu đạt được, không đo ý chí (The score measures achievements, not effort or intentions)." : ACHIEVEMENTS_LINE}
+        </p>
       </div>
     );
   }
@@ -27,18 +37,18 @@ export default function ScoreVerdict({ score }: ScoreVerdictProps) {
   const getCloseVerdict = () => {
     switch (score.band) {
       case "ON_TRACK":
-        return "Executing at a high level.";
+        return locale === "vi" ? "Đang thực hiện ở mức cao." : "Executing at a high level.";
       case "AT_RISK":
-        return "Goals at risk.";
+        return locale === "vi" ? "Mục tiêu có rủi ro." : "Goals at risk.";
       case "REVISE_PLAN":
-        return "Revise the plan — this is diagnosis, not judgment.";
+        return locale === "vi" ? "Hãy điều chỉnh kế hoạch — đây là chẩn đoán, không phán xét." : "Revise the plan — this is diagnosis, not judgment.";
     }
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs text-center space-y-4">
+    <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-xs text-center space-y-4 dark:border-zinc-800 dark:bg-zinc-900">
       <div>
-        <div className="text-6xl font-extrabold tracking-tight text-slate-900">
+        <div className="text-6xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
           <span className={bandStyles.text}>{score.scorePct}%</span>
         </div>
         <div className="mt-2 flex items-center justify-center gap-2">
@@ -49,17 +59,27 @@ export default function ScoreVerdict({ score }: ScoreVerdictProps) {
             {getCloseVerdict()}
           </span>
         </div>
-        <p className="mt-2 text-xs text-slate-600">
-          {score.completed} of {score.due} due tactics completed this week
+        <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+          {locale === "vi"
+            ? `Đã hoàn thành ${score.completed}/${score.due} hành động đến hạn tuần này`
+            : `${score.completed} of ${score.due} due tactics completed this week`}
         </p>
       </div>
 
-      <div className="border-t border-slate-100 pt-4 space-y-1.5 text-xs text-slate-600">
-        <p className="font-semibold text-slate-800">{BENCHMARK_LINE}</p>
-        <p className="text-slate-500 italic">{ACHIEVEMENTS_LINE}</p>
+      <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+        <p className="font-semibold text-zinc-800 dark:text-zinc-200">
+          {locale === "vi"
+            ? "85% thực thi hàng tuần là chuẩn — dưới 65, hãy sửa kế hoạch (85% weekly execution is the benchmark — below 65, revise the plan)."
+            : BENCHMARK_LINE}
+        </p>
+        <p className="text-zinc-500 italic dark:text-zinc-400">
+          {locale === "vi"
+            ? "Điểm số đo lường thành tựu, không đo ý chí (The score measures achievements, not effort or intentions)."
+            : ACHIEVEMENTS_LINE}
+        </p>
         {score.band === "REVISE_PLAN" && (
-          <p className="mt-2 font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2.5">
-            {REVISE_PLAN_GUIDANCE}
+          <p className="mt-2 font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2.5 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
+            {locale === "vi" ? "Hai tuần dưới 65%? Cắt giảm hành động chỉ còn số ít cốt lõi mà bạn thực sự sẽ làm." : REVISE_PLAN_GUIDANCE}
           </p>
         )}
       </div>

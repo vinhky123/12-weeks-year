@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import type {
   CycleDto,
   CycleDetailDto,
@@ -13,8 +13,10 @@ import CycleBar from "@/components/plan/CycleBar";
 import GoalCard from "@/components/plan/GoalCard";
 import GoalModal from "@/components/plan/GoalModal";
 import { CommitmentCard } from "@/components/plan/CommitmentCard";
+import { useSettings } from "@/context/SettingsContext";
 
 export default function PlanPage() {
+  const { locale } = useSettings();
   const [cycle, setCycle] = useState<CycleDto | null>(null);
   const [detail, setDetail] = useState<CycleDetailDto | null>(null);
   const [currentWeekNumber, setCurrentWeekNumber] = useState<number>(1);
@@ -67,12 +69,12 @@ export default function PlanPage() {
       if (err instanceof ClientApiError) {
         setError(err.message);
       } else {
-        setError("Failed to load 12-Week Plan.");
+        setError(locale === "vi" ? "Không thể tải Kế hoạch 12 tuần." : "Failed to load 12-Week Plan.");
       }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     fetchPlanData();
@@ -90,7 +92,7 @@ export default function PlanPage() {
       if (err instanceof ClientApiError) {
         setBannerError(err.message);
       } else {
-        setBannerError("Failed to create cycle.");
+        setBannerError(locale === "vi" ? "Không thể tạo chu kỳ." : "Failed to create cycle.");
       }
     }
   };
@@ -105,7 +107,7 @@ export default function PlanPage() {
       if (err instanceof ClientApiError) {
         setBannerError(err.message);
       } else {
-        setBannerError("Failed to start cycle.");
+        setBannerError(locale === "vi" ? "Không thể bắt đầu chu kỳ." : "Failed to start cycle.");
       }
     }
   };
@@ -184,23 +186,23 @@ export default function PlanPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-24 rounded-2xl bg-slate-200" />
-        <div className="h-64 rounded-2xl bg-slate-200" />
-        <div className="h-64 rounded-2xl bg-slate-200" />
+        <div className="h-24 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+        <div className="h-64 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+        <div className="h-64 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-rose-800">
-        <h3 className="font-bold">Error loading plan</h3>
+      <div className="rounded-lg border border-rose-200 bg-rose-50 p-6 text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
+        <h3 className="font-bold">{locale === "vi" ? "Lỗi tải kế hoạch" : "Error loading plan"}</h3>
         <p className="mt-1 text-sm">{error}</p>
         <button
           onClick={fetchPlanData}
-          className="mt-4 rounded-lg bg-rose-700 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-800 transition"
+          className="mt-4 rounded-lg bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
         >
-          Retry
+          {locale === "vi" ? "Thử lại" : "Retry"}
         </button>
       </div>
     );
@@ -214,13 +216,13 @@ export default function PlanPage() {
   return (
     <div className="space-y-6">
       {bannerError && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800 flex items-center justify-between">
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800 flex items-center justify-between dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
           <p className="text-sm font-medium">{bannerError}</p>
           <button
             onClick={() => setBannerError(null)}
-            className="text-xs font-bold text-rose-600 hover:text-rose-800"
+            className="text-xs font-bold text-rose-600 hover:text-rose-800 dark:text-rose-400"
           >
-            Dismiss
+            {locale === "vi" ? "Đóng" : "Dismiss"}
           </button>
         </div>
       )}
@@ -245,11 +247,13 @@ export default function PlanPage() {
           {/* Goals Header */}
           <div className="flex items-center justify-between pt-2">
             <div>
-              <h2 className="text-xl font-extrabold tracking-tight text-slate-900">
+              <h2 className="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
                 12-Week Goals ({activeGoals.length}/3)
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Focus on the vital few: 2–3 stretch goals that move your 3-year vision.
+              <p className="text-xs text-zinc-500 mt-0.5 dark:text-zinc-400">
+                {locale === "vi"
+                  ? "Tập trung vào số ít quan trọng: 2–3 mục tiêu bứt phá để thúc đẩy tầm nhìn 3 năm."
+                  : "Focus on the vital few: 2–3 stretch goals that move your 3-year vision."}
               </p>
             </div>
 
@@ -258,13 +262,15 @@ export default function PlanPage() {
                 type="button"
                 disabled={isMaxGoals}
                 onClick={() => setShowGoalModal(true)}
-                className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                className="inline-flex items-center justify-center rounded-md bg-zinc-900 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
               >
                 + Add Goal
               </button>
               {isMaxGoals && (
-                <div className="pointer-events-none absolute right-0 top-full mt-2 hidden rounded-md bg-slate-900 px-3 py-1.5 text-xs text-white shadow-lg group-hover:block whitespace-nowrap z-20">
-                  Max 3 active goals — the vital few.
+                <div className="pointer-events-none absolute right-0 top-full mt-2 hidden rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white shadow-lg group-hover:block whitespace-nowrap z-20 dark:bg-zinc-100 dark:text-zinc-900">
+                  {locale === "vi"
+                    ? "Tối đa 3 mục tiêu hoạt động — tập trung vào số ít quan trọng."
+                    : "Max 3 active goals — the vital few."}
                 </div>
               )}
             </div>
@@ -273,8 +279,10 @@ export default function PlanPage() {
           {/* Active Goals */}
           <div className="space-y-4">
             {activeGoals.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-                No active goals yet. Click &ldquo;+ Add Goal&rdquo; to define your first 12-week goal with its lag target and why.
+              <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+                {locale === "vi"
+                  ? "Chưa có mục tiêu nào đang hoạt động. Nhấn “+ Add Goal” để tạo mục tiêu 12 tuần đầu tiên cùng chỉ số kết quả và lý do vì sao."
+                  : "No active goals yet. Click “+ Add Goal” to define your first 12-week goal with its lag target and why."}
               </div>
             ) : (
               activeGoals.map((goal) => (
@@ -293,9 +301,9 @@ export default function PlanPage() {
 
           {/* Dropped Goals Section */}
           {droppedGoals.length > 0 && (
-            <div className="pt-6 border-t border-slate-200">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                Dropped Goals ({droppedGoals.length})
+            <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-3 dark:text-zinc-500">
+                {locale === "vi" ? `Mục tiêu đã hủy (${droppedGoals.length})` : `Dropped Goals (${droppedGoals.length})`}
               </h3>
               <div className="space-y-3">
                 {droppedGoals.map((goal) => (

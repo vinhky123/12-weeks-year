@@ -37,7 +37,7 @@ export function ReloadStep({
       setSelectedGoalIds(selectedGoalIds.filter((gid) => gid !== id));
     } else {
       if (selectedGoalIds.length >= 3) {
-        setError("Maximum 3 carryover goals allowed — the vital few.");
+        setError("Chỉ cho phép chuyển giao tối đa 3 mục tiêu — tập trung vào số ít quan trọng.");
         return;
       }
       setError(null);
@@ -64,7 +64,7 @@ export function ReloadStep({
       if (err?.message?.includes("Archive this cycle first") || err?.status === 409) {
         setNeedsArchiveFirst(true);
       }
-      setError(err?.message || "Failed to start next cycle.");
+      setError(err?.message || "Không thể khởi động chu kỳ tiếp theo.");
     } finally {
       setLoading(false);
     }
@@ -86,7 +86,7 @@ export function ReloadStep({
         setCreatedCycle(res);
       }
     } catch (err: any) {
-      setError(err?.message || "Failed to archive and start next cycle.");
+      setError(err?.message || "Không thể lưu trữ và khởi động chu kỳ tiếp theo.");
     } finally {
       setLoading(false);
     }
@@ -94,18 +94,18 @@ export function ReloadStep({
 
   if (createdCycle) {
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-white p-8 text-center shadow-md space-y-4">
+      <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center shadow-md space-y-4 text-zinc-900 dark:text-zinc-100">
         <span className="text-4xl">🚀</span>
-        <h3 className="text-2xl font-black text-slate-900">Your New Year Begins</h3>
-        <p className="text-sm text-slate-600 max-w-md mx-auto">
-          <strong>{createdCycle.name}</strong> is now created in planning mode. Your carried goals are ready; build fresh tactics in the Plan Builder.
+        <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">Năm Mới Của Bạn Bắt Đầu</h3>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-md mx-auto">
+          <strong>{createdCycle.name}</strong> đã được tạo ở chế độ lập kế hoạch. Các mục tiêu chuyển giao đã sẵn sàng; hãy xây dựng các chiến thuật mới trong Trình tạo kế hoạch.
         </p>
         <div className="pt-4">
           <Link
             href="/"
-            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition"
+            className="inline-flex items-center justify-center rounded-md bg-zinc-900 dark:bg-zinc-100 px-6 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-xs hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
           >
-            Open dashboard
+            Mở bảng điều khiển
           </Link>
         </div>
       </div>
@@ -115,59 +115,59 @@ export function ReloadStep({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-bold text-slate-900">Step 6: Reload</h3>
-        <p className="mt-1 text-xs text-slate-500">
-          Close out {cycleName}, archive its record, and carry your vital goals into the next 12 weeks.
+        <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Bước 6: Tái khởi động</h3>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Khép lại chu kỳ {cycleName}, lưu trữ dữ liệu và chuyển các mục tiêu quan trọng sang 12 tuần tiếp theo.
         </p>
       </div>
 
       {/* Verbatim Warning */}
-      <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900 font-medium">
-        <strong className="block text-amber-950 font-bold mb-0.5">Warning:</strong>
-        Archiving freezes this cycle forever — its scores, its review, its vision snapshot.
+      <div className="rounded-lg border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/20 p-4 text-xs text-amber-900 dark:text-amber-200 font-medium">
+        <strong className="block text-amber-950 dark:text-amber-100 font-bold mb-0.5">Lưu ý quan trọng:</strong>
+        Lưu trữ sẽ đóng băng chu kỳ này vĩnh viễn — bao gồm điểm số, bản đánh giá và ảnh chụp tầm nhìn.
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs font-medium text-rose-800 space-y-2">
+        <div className="rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 p-4 text-xs font-medium text-rose-800 dark:text-rose-200 space-y-2">
           <p>{error}</p>
           {needsArchiveFirst && (
             <button
               type="button"
               onClick={handleArchiveAndRetry}
               disabled={loading}
-              className="rounded-lg bg-rose-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-800"
+              className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
             >
-              {loading ? "Archiving..." : "Archive now & continue"}
+              {loading ? "Đang lưu trữ..." : "Lưu trữ ngay & tiếp tục"}
             </button>
           )}
         </div>
       )}
 
-      <form onSubmit={handleReloadSubmit} className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-5">
+      <form onSubmit={handleReloadSubmit} className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-xs space-y-5">
         {/* Next Cycle Info */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide mb-1">
-              Next Cycle Name (optional)
+            <label className="block text-xs font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wide mb-1">
+              Tên chu kỳ tiếp theo (tùy chọn)
             </label>
             <input
               type="text"
               value={nextName}
               onChange={(e) => setNextName(e.target.value)}
-              placeholder="e.g. Q1 2027 — Scaling"
-              className="w-full rounded-lg border border-slate-300 p-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:outline-none"
+              placeholder="VD: Quý 1 2027 — Bứt phá"
+              className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-zinc-900 dark:focus:border-zinc-100 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide mb-1">
-              Start Date (optional Monday)
+            <label className="block text-xs font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wide mb-1">
+              Ngày bắt đầu (thứ Hai, tùy chọn)
             </label>
             <input
               type="date"
               value={nextStartDate}
               onChange={(e) => setNextStartDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 p-2 text-xs text-slate-900 focus:border-slate-800 focus:outline-none"
+              className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2 text-xs text-zinc-900 dark:text-zinc-100 focus:border-zinc-900 dark:focus:border-zinc-100 focus:outline-none"
             />
           </div>
         </div>
@@ -175,16 +175,16 @@ export function ReloadStep({
         {/* Carryover Goals Picker */}
         <div>
           <div className="flex items-baseline justify-between mb-2">
-            <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Carry Forward Goals ({selectedGoalIds.length}/3)
+            <label className="block text-xs font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wide">
+              Chuyển tiếp mục tiêu ({selectedGoalIds.length}/3)
             </label>
-            <span className="text-[11px] text-slate-400">
-              Tactics are re-derived, not copied — reload the plan, not the baggage.
+            <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
+              Chiến thuật sẽ được thiết lập mới, không sao chép — làm mới kế hoạch, không mang gánh nặng cũ.
             </span>
           </div>
 
           {goals.length === 0 ? (
-            <p className="text-xs italic text-slate-400">No goals to carry forward.</p>
+            <p className="text-xs italic text-zinc-400 dark:text-zinc-500">Không có mục tiêu nào để chuyển tiếp.</p>
           ) : (
             <div className="space-y-2">
               {goals.map((g) => {
@@ -194,31 +194,31 @@ export function ReloadStep({
                     key={g.id}
                     className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition ${
                       checked
-                        ? "border-slate-800 bg-slate-50/80"
-                        : "border-slate-200 bg-white hover:bg-slate-50/50"
+                        ? "border-zinc-800 dark:border-zinc-200 bg-zinc-50 dark:bg-zinc-800/60"
+                        : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => handleToggleGoal(g.id)}
-                      className="mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-800"
+                      className="mt-0.5 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 focus:ring-zinc-800"
                     />
                     <div className="flex-1 text-xs">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900">{g.title}</span>
+                        <span className="font-bold text-zinc-900 dark:text-zinc-100">{g.title}</span>
                         <span
                           className={`rounded px-1.5 py-0.2 text-[10px] font-semibold uppercase ${
                             g.status === "achieved"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-slate-100 text-slate-600"
+                              ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200"
+                              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
                           }`}
                         >
-                          {g.status}
+                          {g.status === "achieved" ? "Đã đạt" : "Đang thực hiện"}
                         </span>
                       </div>
-                      <p className="text-slate-500 mt-0.5">
-                        Lag: {g.lagMetricName} ({g.lagStart} → {g.lagTarget} {g.lagUnit})
+                      <p className="text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        Kết quả: {g.lagMetricName} ({g.lagStart} → {g.lagTarget} {g.lagUnit})
                       </p>
                     </div>
                   </label>
@@ -229,13 +229,13 @@ export function ReloadStep({
         </div>
 
         {/* Submit */}
-        <div className="flex justify-end pt-3 border-t border-slate-100">
+        <div className="flex justify-end pt-3 border-t border-zinc-100 dark:border-zinc-800">
           <button
             type="submit"
             disabled={loading}
-            className="rounded-lg bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 disabled:opacity-50 transition"
+            className="rounded-lg bg-zinc-900 dark:bg-zinc-100 px-5 py-2.5 text-xs font-semibold text-white dark:text-zinc-900 shadow-xs hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 transition"
           >
-            {loading ? "Starting Next Cycle..." : "Archive this cycle & create the next"}
+            {loading ? "Đang khởi tạo chu kỳ tiếp theo..." : "Lưu trữ chu kỳ này & Bắt đầu chu kỳ mới"}
           </button>
         </div>
       </form>

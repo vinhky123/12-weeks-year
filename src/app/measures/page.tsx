@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { MeasuresOverviewDto, ScoreBand } from "@/lib/contracts";
 import { apiFetch, ClientApiError } from "@/components/common/api";
-import { getBandBadgeStyles, BENCHMARK_LINE } from "@/components/common/scoreUtils";
+import { useI18n } from "@/context/SettingsContext";
+import { getBandBadgeStyles, getBenchmarkLine } from "@/components/common/scoreUtils";
 import { ScoreTrendChart } from "@/components/measures/ScoreTrendChart";
 import { GoalMeasuresSection } from "@/components/measures/GoalMeasuresSection";
 
 export default function MeasuresPage() {
+  const { locale, t } = useI18n();
   const [data, setData] = useState<MeasuresOverviewDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -29,7 +31,7 @@ export default function MeasuresPage() {
           setError(err.message);
         }
       } else {
-        setError("Failed to load measures data.");
+        setError(t("common.error"));
       }
     } finally {
       setLoading(false);
@@ -53,16 +55,18 @@ export default function MeasuresPage() {
       <div>
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-baseline">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Measures</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Lag and lead indicators — keeping score, confronting the truth.
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              {t("nav.measures")}
+            </h1>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              Chỉ số kết quả (lag) và chỉ số dẫn dắt (lead) — ghi điểm, đối diện với sự thật.
             </p>
           </div>
 
           {data && (
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
-                Week {data.currentWeek} of 12
+              <span className="rounded-full bg-zinc-900 dark:bg-zinc-100 px-3 py-1 text-xs font-semibold text-white dark:text-zinc-900">
+                Tuần {data.currentWeek} / 12
               </span>
               {data.averageScore !== null && (
                 <span
@@ -72,7 +76,7 @@ export default function MeasuresPage() {
                     getBandBadgeStyles(getBandFromScore(data.averageScore)).border
                   }`}
                 >
-                  Avg {data.averageScore}%
+                  TB {data.averageScore}%
                 </span>
               )}
             </div>
@@ -80,9 +84,9 @@ export default function MeasuresPage() {
         </div>
 
         {/* Verbatim benchmark banner */}
-        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
-          <p className="text-xs font-medium text-slate-700">
-            <strong className="text-slate-900">{BENCHMARK_LINE}</strong>
+        <div className="mt-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3.5 shadow-xs">
+          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <strong className="text-zinc-900 dark:text-zinc-100">{getBenchmarkLine(locale)}</strong>
           </p>
         </div>
       </div>
@@ -90,34 +94,34 @@ export default function MeasuresPage() {
       {/* Main Content */}
       {loading ? (
         <div className="space-y-6">
-          <div className="h-56 animate-pulse rounded-xl bg-slate-200" />
-          <div className="h-64 animate-pulse rounded-xl bg-slate-200" />
+          <div className="h-56 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+          <div className="h-64 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
         </div>
       ) : notFound ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-xs">
-          <h2 className="text-base font-bold text-slate-900">Nothing to measure yet</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Create a cycle first to track execution scores, lead indicators, and lag progress.
+        <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-12 text-center shadow-xs">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Chưa có dữ liệu đo lường</h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Hãy tạo một chu kỳ trước để theo dõi điểm thực thi, chỉ số dẫn dắt và tiến độ kết quả.
           </p>
           <div className="mt-5">
             <Link
               href="/plan"
-              className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+              className="inline-flex items-center rounded-lg bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
             >
-              Go to 12-Week Plan →
+              Đi tới Kế hoạch 12 tuần →
             </Link>
           </div>
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-800">
-          <p className="font-semibold">Unable to load measures</p>
+        <div className="rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 p-6 text-center text-rose-800 dark:text-rose-200">
+          <p className="font-semibold">Không thể tải dữ liệu đo lường</p>
           <p className="mt-1 text-sm">{error}</p>
           <button
             type="button"
             onClick={fetchMeasures}
-            className="mt-4 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700"
+            className="mt-4 rounded-lg bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-xs font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
           >
-            Retry
+            {t("common.retry")}
           </button>
         </div>
       ) : data ? (
@@ -127,12 +131,12 @@ export default function MeasuresPage() {
 
           {/* Goals and Measures Sections */}
           <div className="space-y-6">
-            <h2 className="text-lg font-bold text-slate-900">Goals &amp; Indicators</h2>
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Mục tiêu &amp; Chỉ số đo lường</h2>
             {data.goals.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center">
-                <p className="text-sm text-slate-500">No active goals found in this cycle.</p>
-                <Link href="/plan" className="mt-2 inline-block text-xs font-semibold text-slate-900 underline">
-                  Add goals in the Plan Builder →
+              <div className="rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Chưa có mục tiêu nào trong chu kỳ này.</p>
+                <Link href="/plan" className="mt-2 inline-block text-xs font-semibold text-zinc-900 dark:text-zinc-100 underline">
+                  Thêm mục tiêu trong Trình tạo kế hoạch →
                 </Link>
               </div>
             ) : (

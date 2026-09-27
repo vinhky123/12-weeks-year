@@ -30,23 +30,23 @@ export function BlockCard({ block, onEdit, onDelete, disabled = false }: BlockCa
           >
             {config.name}
           </span>
-          <span className="text-[11px] font-semibold text-slate-500">{durationStr}</span>
+          <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">{durationStr}</span>
         </div>
 
-        <p className="mt-1.5 text-xs font-bold text-slate-900 leading-snug">
+        <p className="mt-1.5 text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
           {block.label || config.name}
         </p>
 
-        <p className="mt-1 text-[11px] font-medium text-slate-600">{timeRange}</p>
+        <p className="mt-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">{timeRange}</p>
       </div>
 
-      <div className="mt-2.5 flex items-center justify-end gap-1 border-t border-slate-200/60 pt-1.5 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+      <div className="mt-2.5 flex items-center justify-end gap-1 border-t border-zinc-200/60 dark:border-zinc-800 pt-1.5 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <button
           type="button"
           onClick={() => onEdit(block)}
           disabled={disabled}
-          className="rounded p-1 text-slate-500 hover:bg-white/80 hover:text-slate-800"
-          title="Edit block"
+          className="rounded p-1 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"
+          title="Chỉnh sửa khung giờ"
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -56,8 +56,8 @@ export function BlockCard({ block, onEdit, onDelete, disabled = false }: BlockCa
           type="button"
           onClick={() => onDelete(block.id)}
           disabled={disabled}
-          className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-          title="Delete block"
+          className="rounded p-1 text-zinc-400 dark:text-zinc-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400"
+          title="Xóa khung giờ"
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

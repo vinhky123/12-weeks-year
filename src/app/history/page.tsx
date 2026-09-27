@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { HistoryEntryDto, InsightsDto } from "@/lib/contracts";
 import { apiFetch, ClientApiError } from "@/components/common/api";
+import { useSettings } from "@/context/SettingsContext";
 import { HistoryTabs } from "@/components/history/HistoryTabs";
 import { CycleCard } from "@/components/history/CycleCard";
 import { CycleDetail } from "@/components/history/CycleDetail";
@@ -16,6 +17,7 @@ export default function HistoryPage({
   searchParams?: Promise<{ id?: string; tab?: string }>;
 }) {
   const router = useRouter();
+  const { t } = useSettings();
   const resolvedParams = searchParams ? use(searchParams) : undefined;
   const cycleIdParam = resolvedParams?.id ? Number(resolvedParams.id) : null;
   const tabParam = resolvedParams?.tab === "insights" ? "insights" : "cycles";
@@ -86,9 +88,11 @@ export default function HistoryPage({
       {/* Page Header */}
       {!cycleIdParam && (
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">History</h1>
-          <p className="mt-1 text-xs text-slate-500">
-            Four years a year — each one leaves a record.
+          <h1 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
+            {t("history.title")}
+          </h1>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            {t("history.subtitle")}
           </p>
         </div>
       )}
@@ -104,29 +108,29 @@ export default function HistoryPage({
           {/* Tab Content */}
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="h-44 animate-pulse rounded-xl bg-slate-200" />
-              <div className="h-44 animate-pulse rounded-xl bg-slate-200" />
+              <div className="h-44 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+              <div className="h-44 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
             </div>
           ) : error ? (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-800">
-              <p className="font-semibold">Unable to load history</p>
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200">
+              <p className="font-semibold">{t("history.load_error")}</p>
               <p className="mt-1 text-sm">{error}</p>
             </div>
           ) : activeTab === "cycles" ? (
             cycles.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-xs">
-                <h2 className="text-base font-bold text-slate-900">
-                  Your first 12 weeks will live here.
+              <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-12 text-center shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+                <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+                  {t("history.empty_title")}
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Create and start your first 12-week cycle to begin building your record.
+                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  {t("history.empty_desc")}
                 </p>
                 <div className="mt-5">
                   <Link
                     href="/plan"
-                    className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                    className="inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 transition"
                   >
-                    Go to 12-Week Plan →
+                    {t("history.go_to_plan")}
                   </Link>
                 </div>
               </div>

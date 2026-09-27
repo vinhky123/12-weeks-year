@@ -39,7 +39,7 @@ export function LeadMeasureRow({
     e.preventDefault();
     const targetNum = parseInt(editTarget, 10);
     if (!editName.trim() || isNaN(targetNum) || targetNum < 1) {
-      setError("Name is required and weekly target must be an integer ≥ 1.");
+      setError("Tên là bắt buộc và mục tiêu tuần phải là số nguyên ≥ 1.");
       return;
     }
 
@@ -56,7 +56,7 @@ export function LeadMeasureRow({
       if (err instanceof ClientApiError) {
         setError(err.message);
       } else {
-        setError("Failed to update lead measure.");
+        setError("Không thể cập nhật chỉ số dẫn dắt.");
       }
     } finally {
       setActionLoading(false);
@@ -64,7 +64,7 @@ export function LeadMeasureRow({
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Removes its logged history too.")) {
+    if (!window.confirm("Thao tác này cũng sẽ xóa toàn bộ lịch sử đã ghi nhận.")) {
       return;
     }
 
@@ -79,7 +79,7 @@ export function LeadMeasureRow({
       if (err instanceof ClientApiError) {
         setError(err.message);
       } else {
-        setError("Failed to delete lead measure.");
+        setError("Không thể xóa chỉ số dẫn dắt.");
       }
       setActionLoading(false);
     }
@@ -89,9 +89,9 @@ export function LeadMeasureRow({
   const isTargetMet = currentCount >= weeklyTarget;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-xs transition hover:border-slate-300">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 shadow-xs transition hover:border-zinc-300 dark:hover:border-zinc-700">
       {error && (
-        <div className="mb-2 rounded bg-rose-50 p-2 text-xs text-rose-700">{error}</div>
+        <div className="mb-2 rounded border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 p-2 text-xs text-rose-700 dark:text-rose-300">{error}</div>
       )}
 
       {isEditing ? (
@@ -100,26 +100,26 @@ export function LeadMeasureRow({
             type="text"
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
-            className="flex-1 min-w-[140px] rounded border border-slate-300 px-2.5 py-1 text-xs text-slate-900 focus:border-slate-800 focus:outline-none"
-            placeholder="Measure name"
+            className="flex-1 min-w-[140px] rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-xs text-zinc-900 dark:text-zinc-100 focus:border-zinc-900 dark:focus:border-zinc-100 focus:outline-none"
+            placeholder="Tên chỉ số"
           />
           <div className="flex items-center gap-1">
-            <span className="text-xs text-slate-500">Target/wk:</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">Mục tiêu/tuần:</span>
             <input
               type="number"
               min="1"
               value={editTarget}
               onChange={(e) => setEditTarget(e.target.value)}
-              className="w-16 rounded border border-slate-300 px-2 py-1 text-xs text-slate-900 focus:border-slate-800 focus:outline-none"
+              className="w-16 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 focus:border-zinc-900 dark:focus:border-zinc-100 focus:outline-none"
             />
           </div>
           <div className="flex items-center gap-1">
             <button
               type="submit"
               disabled={actionLoading}
-              className="rounded bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white hover:bg-slate-800"
+              className="rounded bg-zinc-900 dark:bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
             >
-              Save
+              Lưu
             </button>
             <button
               type="button"
@@ -128,9 +128,9 @@ export function LeadMeasureRow({
                 setEditName(name);
                 setEditTarget(String(weeklyTarget));
               }}
-              className="rounded border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+              className="rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
             >
-              Cancel
+              Hủy
             </button>
           </div>
         </form>
@@ -139,19 +139,19 @@ export function LeadMeasureRow({
           <div className="flex items-center gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm text-slate-900">{name}</span>
+                <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{name}</span>
                 <span
                   className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${
                     isTargetMet
-                      ? "bg-emerald-100 text-emerald-800"
-                      : "bg-slate-100 text-slate-700"
+                      ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
                   }`}
                 >
                   {thisWeek !== null ? `${thisWeek} / ${weeklyTarget}` : `0 / ${weeklyTarget}`}
-                  <span className="ml-1 font-normal text-[10px] text-slate-500">this wk</span>
+                  <span className="ml-1 font-normal text-[10px] opacity-75">tuần này</span>
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500">Target: {weeklyTarget}x / week</p>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Mục tiêu: {weeklyTarget} lần / tuần</p>
             </div>
           </div>
 
@@ -168,13 +168,13 @@ export function LeadMeasureRow({
                 return (
                   <div
                     key={w}
-                    title={`Week ${w}: ${val} / ${weeklyTarget}`}
-                    className="relative flex h-full w-2 items-end justify-center rounded-t bg-slate-100"
+                    title={`Tuần ${w}: ${val} / ${weeklyTarget}`}
+                    className="relative flex h-full w-2 items-end justify-center rounded-t bg-zinc-100 dark:bg-zinc-800"
                   >
                     {hasValue && val > 0 && (
                       <div
                         className={`w-full rounded-t ${
-                          val >= weeklyTarget ? "bg-emerald-500" : "bg-slate-400"
+                          val >= weeklyTarget ? "bg-zinc-900 dark:bg-zinc-100" : "bg-zinc-400 dark:bg-zinc-500"
                         }`}
                         style={{ height: `${Math.max(20, barHeight)}%` }}
                       />
@@ -189,15 +189,15 @@ export function LeadMeasureRow({
               <button
                 type="button"
                 onClick={() => setShowLogModal(true)}
-                className="rounded bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white shadow-xs hover:bg-slate-800"
+                className="rounded bg-zinc-900 dark:bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-white dark:text-zinc-900 shadow-xs hover:bg-zinc-800 dark:hover:bg-zinc-200"
               >
-                +log
+                +ghi nhận
               </button>
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                title="Edit lead measure"
+                className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-300"
+                title="Chỉnh sửa chỉ số"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -207,8 +207,8 @@ export function LeadMeasureRow({
                 type="button"
                 onClick={handleDelete}
                 disabled={actionLoading}
-                className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-                title="Remove lead measure"
+                className="rounded p-1 text-zinc-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400"
+                title="Xóa chỉ số"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

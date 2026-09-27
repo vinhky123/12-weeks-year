@@ -37,16 +37,18 @@ export function ModelWeekGrid({
           <div
             key={dayIndex}
             className={`flex flex-col rounded-xl border p-3 min-h-[380px] shadow-xs ${
-              isWeekend ? "border-slate-200 bg-slate-50/60" : "border-slate-200 bg-white"
+              isWeekend
+                ? "border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/60"
+                : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
             }`}
           >
             {/* Day Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 pb-2 mb-3">
               <div>
-                <span className="font-bold text-xs uppercase tracking-wider text-slate-800">
+                <span className="font-bold text-xs uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
                   {dayAbbr}
                 </span>
-                <span className="ml-1 text-[11px] text-slate-400 font-medium hidden sm:inline">
+                <span className="ml-1 text-[11px] text-zinc-400 dark:text-zinc-500 font-medium hidden sm:inline">
                   {dayName.slice(3)}
                 </span>
               </div>
@@ -54,8 +56,8 @@ export function ModelWeekGrid({
                 type="button"
                 onClick={() => onAddBlock(dayIndex)}
                 disabled={disabled}
-                className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50"
-                title={`Add block to ${dayName}`}
+                className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-50"
+                title={`Thêm khung giờ cho ${dayName}`}
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -66,15 +68,15 @@ export function ModelWeekGrid({
             {/* Block List */}
             <div className="flex-1 space-y-2.5">
               {dayBlocks.length === 0 ? (
-                <div className="flex h-32 flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 p-2 text-center">
-                  <span className="text-[11px] italic text-slate-400">Unallocated</span>
+                <div className="flex h-32 flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 p-2 text-center">
+                  <span className="text-[11px] italic text-zinc-400 dark:text-zinc-500">Chưa phân bổ</span>
                   <button
                     type="button"
                     onClick={() => onAddBlock(dayIndex)}
                     disabled={disabled}
-                    className="mt-1 text-[10px] font-semibold text-slate-600 hover:text-slate-900"
+                    className="mt-1 text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                   >
-                    + block
+                    + khung giờ
                   </button>
                 </div>
               ) : (
