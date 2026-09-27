@@ -91,3 +91,48 @@ export const lagLogs = sqliteTable(
   },
   (t) => [uniqueIndex("lag_logs_goal_week_idx").on(t.goalId, t.weekNumber)],
 );
+
+// --- Phase 2: vision, model week, lead measures ---
+
+/** Living vision: the singleton row with cycle_id NULL. Snapshots set cycle_id (immutable). */
+export const visions = sqliteTable("visions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  longTerm: text("long_term").notNull().default(""),
+  threeYear: text("three_year").notNull().default(""),
+  cycleConnection: text("cycle_connection").notNull().default(""),
+  lifeDomains: text("life_domains").notNull().default("[]"), // JSON [{area, note}]
+  cycleId: integer("cycle_id"), // null = living vision; set = archived snapshot
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const blockTemplates = sqliteTable("block_templates", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  cycleId: integer("cycle_id"), // null = global default template
+  type: text("type").notNull(), // STRATEGIC | BUFFER | BREAKOUT | PLANNING | WAM
+  dayOfWeek: integer("day_of_week").notNull(), // 0 = Monday .. 6 = Sunday
+  startMinute: integer("start_minute").notNull(), // minutes from midnight
+  durationMinutes: integer("duration_minutes").notNull(),
+  label: text("label"),
+  createdAt: text("created_at").notNull(),
+});
+
+export const leadMeasures = sqliteTable("lead_measures", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  goalId: integer("goal_id").notNull().references(() => goals.id),
+  name: text("name").notNull(),
+  weeklyTarget: integer("weekly_target").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
+export const leadLogs = sqliteTable(
+  "lead_logs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    leadMeasureId: integer("lead_measure_id").notNull().references(() => leadMeasures.id),
+    weekNumber: integer("week_number").notNull(), // 1-12
+    value: real("value").notNull(),
+    loggedAt: text("logged_at").notNull(),
+  },
+  (t) => [uniqueIndex("lead_logs_measure_week_idx").on(t.leadMeasureId, t.weekNumber)],
+);
