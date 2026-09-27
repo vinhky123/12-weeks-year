@@ -7,6 +7,7 @@ import * as planRepo from "../db/repositories/plan";
 import { generateWeekPlanItems } from "../planRules";
 import { conflict, invalid, notFound } from "../ruleError";
 import * as scoringModule from "../scoring";
+import { writeAutoBackup } from "./backupService";
 import { toTacticLike } from "./planService";
 
 /** The weekly plan is generated fresh from the 12-Week Plan — never copy-pasted. */
@@ -150,6 +151,8 @@ export function closeWeek(
     if (!Number.isFinite(lag.value)) throw invalid("Lag values must be numbers.");
     executionRepo.upsertLagLog(h, { goalId: lag.goalId, weekNumber: plan.weekNumber, value: lag.value, loggedAt: today });
   }
+  // durable local checkpoint after every closed week (best-effort, never fails the close)
+  writeAutoBackup(h, `week-${plan.weekNumber}-closed`);
   return closed;
 }
 
