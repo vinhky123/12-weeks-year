@@ -9,9 +9,14 @@ import fs from "node:fs";
 import { addDays, cycleWeekNumber, todayIso } from "../src/server/cycleMath";
 import { createDb, type DbHandles } from "../src/server/db";
 import * as cycleService from "../src/server/services/cycleService";
+import * as measuresService from "../src/server/services/measuresService";
+import * as modelWeekService from "../src/server/services/modelWeekService";
 import * as planService from "../src/server/services/planService";
 import * as scoringService from "../src/server/services/scoringService";
+import * as visionService from "../src/server/services/visionService";
 import * as weekPlanService from "../src/server/services/weekPlanService";
+
+const mk = modelWeekService;
 
 const target = process.env.TWY_DB_PATH ?? "data/app.db";
 const today = todayIso();
@@ -95,6 +100,40 @@ if (currentWeek >= 2) {
         break;
       }
     }
+  }
+}
+
+// --- Phase 2: vision (living, per D7) ---
+visionService.updateVision(h, {
+  longTerm: "Own my time: work because I choose to, from anywhere, with the people I love.",
+  threeYear: "Independent income covering our life, earned in focused 20-hour weeks.",
+  cycleConnection: "This cycle proves the system: one healthy body and the first $1,000 earned independently.",
+  lifeDomains: [
+    { area: "Health", note: "Strong, rested, energetic" },
+    { area: "Family", note: "Present at dinner, every day" },
+    { area: "Business", note: "Independent income streams" },
+    { area: "Personal", note: "Writing and guitar weekly" },
+  ],
+}, today);
+
+// --- Phase 2: model week (the book's quantities -> zero warnings) ---
+mk.addBlock(h, { type: "PLANNING", dayOfWeek: 0, startMinute: 510, durationMinutes: 20, label: "Score last week · plan this week" }, today);
+mk.addBlock(h, { type: "STRATEGIC", dayOfWeek: 2, startMinute: 540, durationMinutes: 180, label: "Deep work — 12-Week Plan tactics" }, today);
+mk.addBlock(h, { type: "STRATEGIC", dayOfWeek: 3, startMinute: 540, durationMinutes: 180, label: "Deep work — 12-Week Plan tactics" }, today);
+for (const day of [0, 1, 2, 3, 4]) {
+  mk.addBlock(h, { type: "BUFFER", dayOfWeek: day, startMinute: 660, durationMinutes: 45, label: "Email · admin · noise" }, today);
+}
+mk.addBlock(h, { type: "WAM", dayOfWeek: 0, startMinute: 1050, durationMinutes: 30, label: "Weekly Accountability Meeting" }, today);
+mk.addBlock(h, { type: "BREAKOUT", dayOfWeek: 5, startMinute: 480, durationMinutes: 240, label: "Off — fully away from work" }, today);
+
+// --- Phase 2: lead measure on goal 1 ---
+const workouts = measuresService.addLeadMeasure(h, g1.id, { name: "Workouts completed", weeklyTarget: 3 }, today);
+measuresService.logLead(h, { leadMeasureId: workouts.id, weekNumber: 1, value: 3 }, week2Start);
+if (currentWeek >= 2) {
+  try {
+    measuresService.logLead(h, { leadMeasureId: workouts.id, weekNumber: 2, value: 1 }, today);
+  } catch {
+    // week already logged differently — demo data only
   }
 }
 
