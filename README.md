@@ -49,7 +49,7 @@ npm run dev   # then: curl http://localhost:3000/api/dashboard
 | 0 | Foundations: scaffold, pure domain engine (cycle math + scoring), schema, app shell, Antigravity kit | ✅ done |
 | 1 | Core loop backend: cycles, goals & tactics, weekly plans, completions, scoring, dashboard — 20 tested API endpoints + FE specs | ✅ backend done — **UI with Antigravity next** |
 | 2 | Vision, measures & charts, model week / time blocking | ✅ done (backend + UI + e2e) |
-| 3 | WAM, week-13 review wizard, guardrails, history | ⏳ next |
+| 3 | WAM, week-13 review wizard, guardrails, history | ✅ backend done — **UI with Antigravity next** |
 | 4 | Backup/export, PWA, themes, EN/VI, print | planned |
 
 Full plan: [`PROJECT-PLAN.md`](./PROJECT-PLAN.md) · Methodology source: [`12-week-year-book-content.md`](./12-week-year-book-content.md)
