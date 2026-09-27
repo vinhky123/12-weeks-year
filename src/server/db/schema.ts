@@ -136,3 +136,49 @@ export const leadLogs = sqliteTable(
   },
   (t) => [uniqueIndex("lead_logs_measure_week_idx").on(t.leadMeasureId, t.weekNumber)],
 );
+
+// --- Phase 3: WAM reports, cycle reviews, commitments ---
+
+export const wamReports = sqliteTable(
+  "wam_reports",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    cycleId: integer("cycle_id").notNull().references(() => cycles.id),
+    weekNumber: integer("week_number").notNull(), // 1-12
+    autoJson: text("auto_json").notNull().default("{}"), // snapshot at save time
+    blockers: text("blockers"),
+    whatWorked: text("what_worked"),
+    encouragement: text("encouragement"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [uniqueIndex("wam_reports_cycle_week_idx").on(t.cycleId, t.weekNumber)],
+);
+
+export const cycleReviews = sqliteTable(
+  "cycle_reviews",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    cycleId: integer("cycle_id").notNull().references(() => cycles.id),
+    resultsJson: text("results_json").notNull().default("[]"),
+    qolJson: text("qol_json").notNull().default("[]"),
+    disciplinesJson: text("disciplines_json").notNull().default("[]"),
+    breakthroughs: text("breakthroughs"),
+    nextCycleNotes: text("next_cycle_notes"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [uniqueIndex("cycle_reviews_cycle_idx").on(t.cycleId)],
+);
+
+export const commitments = sqliteTable(
+  "commitments",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    cycleId: integer("cycle_id").notNull().references(() => cycles.id),
+    costs: text("costs").notNull(),
+    statement: text("statement").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [uniqueIndex("commitments_cycle_idx").on(t.cycleId)],
+);

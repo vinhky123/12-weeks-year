@@ -6,6 +6,7 @@ import * as cyclesRepo from "../db/repositories/cycles";
 import * as executionRepo from "../db/repositories/execution";
 import * as planRepo from "../db/repositories/plan";
 import { nextRitual } from "../planRules";
+import { valleyGuidance } from "../reviewRules";
 import { conflict, invalid, notFound } from "../ruleError";
 import { cycleAverageScore, goalScore, weekScore, type TacticLike } from "../scoring";
 import { getActiveCycleInfo, phaseFor } from "./cycleService";
@@ -236,6 +237,7 @@ export function buildDashboard(h: DbHandles, today = todayIso()) {
       currentWeekScore: scores.goals.find((g) => g.goalId === goal.id)?.currentWeekScore ?? null,
     })),
     nextRitual: ritual,
+    valleyGuidance: valleyGuidance(weekNumber, scores.averageScore),
     dailyPrinciple: DAILY_PRINCIPLES[Math.abs(diffDays(cycle.startDate, today)) % DAILY_PRINCIPLES.length]!,
   };
 }

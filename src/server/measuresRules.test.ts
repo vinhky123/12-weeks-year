@@ -15,8 +15,9 @@ describe("lagProgress", () => {
     expect(lagProgress(180, 170, 180)).toBe(0);
     expect(lagProgress(180, 170, 185)).toBe(0);
   });
-  it("null when target equals start (not measurable)", () => {
+  it("null when target equals start (not measurable) or no data yet", () => {
     expect(lagProgress(100, 100, 100)).toBeNull();
+    expect(lagProgress(0, 100, null)).toBeNull();
   });
 });
 

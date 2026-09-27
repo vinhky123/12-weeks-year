@@ -5,9 +5,11 @@ export type Diagnosis = "STRATEGY_PROBLEM" | "EXECUTION_PROBLEM" | null;
 
 /**
  * Signed progress toward the target, direction-agnostic (weight down, revenue
- * up), clamped to [0, 1]. Null when the goal isn't measurable (target = start).
+ * up), clamped to [0, 1]. Null when not measurable (target = start) or when
+ * there is no data yet (current = null).
  */
-export function lagProgress(start: number, target: number, current: number): number | null {
+export function lagProgress(start: number, target: number, current: number | null): number | null {
+  if (current === null) return null;
   const span = target - start;
   if (span === 0) return null;
   const raw = (current - start) / span;
