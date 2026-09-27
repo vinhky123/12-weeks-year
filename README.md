@@ -50,7 +50,13 @@ npm run dev   # then: curl http://localhost:3000/api/dashboard
 | 1 | Core loop backend: cycles, goals & tactics, weekly plans, completions, scoring, dashboard — 20 tested API endpoints + FE specs | ✅ backend done — **UI with Antigravity next** |
 | 2 | Vision, measures & charts, model week / time blocking | ✅ done (backend + UI + e2e) |
 | 3 | WAM, week-13 review wizard, guardrails, history | ✅ done (backend + UI + e2e) |
-| 4 | Backup/export, PWA, themes, EN/VI, print | ⏳ next |
+| 4 | Backup/export, PWA, themes, EN/VI, print | ✅ backend done — **UI with Antigravity next** |
+
+## Backup & your data
+
+- **Automatic**: closing a week writes a JSON checkpoint to `data/backups/` (newest 5 kept).
+- **Manual**: `Settings → Data` (or `GET /api/export`) downloads the full database as one versioned JSON file.
+- **Restore**: `Settings → Data → Import` (a pre-import snapshot is written automatically), or copy `data/app.db`.
 
 Full plan: [`PROJECT-PLAN.md`](./PROJECT-PLAN.md) · Methodology source: [`12-week-year-book-content.md`](./12-week-year-book-content.md)
 
