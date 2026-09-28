@@ -89,10 +89,11 @@ weeks 1–12 of a started cycle; `completion` from week 13 / status `review` / `
 - `nextAction` = the first unfinished step **within the active phase only**, skipping
   `wam_report`. Within execution the order is `close_week` > `plan_current_week` >
   `execute_today`, mirroring `nextRitual`'s proven ordering: close → plan → execute.
-- `nextAction` is `null` when the active phase has nothing unfinished (e.g. Monday
-  evening: last week closed, this week planned, execution ongoing — the FE renders
-  "all caught up, see you tomorrow"). It can never be a completion step while the cycle
-  is still in weeks 1–12.
+- `nextAction` is `null` when the active phase has nothing unfinished — the null
+  window is **after closing a week and before Monday's generate** (Sunday night:
+  week closed, nothing owed — the FE renders "all caught up, see you tomorrow").
+  Once the new week's plan exists, `nextAction` is `execute_today` again. It can
+  never be a completion step while the cycle is still in weeks 1–12.
 
 ### 3.3 Snapshot input (service assembles; rules stay pure)
 
@@ -213,8 +214,8 @@ tightened, not thrown away.
 | Active, Sunday of week 5, plan open | `close_week` |
 | Week 13, no review | `write_review` |
 | Archived, no successor | `start_next_cycle` |
-| Archived + successor active & caught up (week plan closed) | `null` |
-| Active, week 5, week plan closed (Monday evening) | `null` — never `write_review` |
+| Archived + successor active & caught up (week closed Sunday) | `null` |
+| Active, week 5, week plan closed (Sunday night, before next generate) | `null` — never `write_review` |
 | WAM missing but everything else current-week done | never `wam_report` |
 
 - **Contract test** — `GET /api/guide/journey` in ≥3 states (empty, mid-execution with
