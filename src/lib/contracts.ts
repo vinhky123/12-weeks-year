@@ -649,3 +649,31 @@ export const AT_RISK_THRESHOLD = 65;
 export const WEEKS_IN_CYCLE = 12;
 export const REVIEW_WEEK = 13;
 export const MAX_GOALS_PER_CYCLE = 3;
+
+// --- Phase 5: guide journey (server sends ids + statuses only; prose lives in FE STEP_META) ---
+// Must mirror src/server/journeyRules.ts JOURNEY_STEP_IDS exactly — sync-tested.
+export const JOURNEY_STEP_IDS = [
+  "write_vision", "create_cycle", "set_goals", "add_tactics", "design_model_week",
+  "write_commitment", "start_cycle", "plan_current_week", "execute_today", "close_week",
+  "wam_report", "write_review", "archive_cycle", "start_next_cycle",
+] as const;
+export const JOURNEY_STEP_ID_SCHEMA = z.enum(JOURNEY_STEP_IDS);
+export type JourneyStepId = (typeof JOURNEY_STEP_IDS)[number];
+
+export const JOURNEY_STEP_DTO = z.object({
+  id: JOURNEY_STEP_ID_SCHEMA,
+  status: z.enum(["done", "current", "todo"]),
+});
+export type JourneyStepDto = z.infer<typeof JOURNEY_STEP_DTO>;
+
+export const JOURNEY_DTO = z.object({
+  phase: z.enum(["foundation", "execution", "completion"]),
+  steps: z.array(JOURNEY_STEP_DTO),
+  nextAction: z.object({ id: JOURNEY_STEP_ID_SCHEMA }).nullable(),
+  context: z.object({
+    cycleName: z.string().nullable(),
+    weekNumber: z.number().int(),
+    unclosedWeek: z.number().int().nullable(),
+  }),
+});
+export type JourneyDto = z.infer<typeof JOURNEY_DTO>;

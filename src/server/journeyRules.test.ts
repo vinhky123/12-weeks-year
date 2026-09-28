@@ -165,3 +165,22 @@ describe("journey nextAction stays consistent with nextRitual", () => {
     expect(journeyToRitual[na]).toBe(expected);
   });
 });
+
+import { JOURNEY_DTO, JOURNEY_STEP_IDS as CONTRACT_STEP_IDS } from "../lib/contracts";
+
+describe("journey contracts stay in sync with the rules", () => {
+  it("step ids match between contracts.ts and journeyRules.ts", () => {
+    expect([...CONTRACT_STEP_IDS]).toEqual([...JOURNEY_STEP_IDS]);
+  });
+
+  it("journeyState output parses as JourneyDto (with service-level context added)", () => {
+    const r = journeyState(base);
+    const payload = {
+      ...r,
+      nextAction: r.nextAction ? { id: r.nextAction } : null,
+      context: { cycleName: null, weekNumber: 0, unclosedWeek: null },
+    };
+    expect(() => JOURNEY_DTO.parse(payload)).not.toThrow();
+    expect(JOURNEY_DTO.parse(payload).phase).toBe("foundation");
+  });
+});
