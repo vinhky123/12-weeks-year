@@ -205,7 +205,12 @@ visionService.updateVision(h, {
   longTerm: "Làm chủ thời gian: Tự do làm việc từ bất cứ đâu, tạo ra nguồn thu nhập độc lập và trọn vẹn dành thời gian cho gia đình và những người yêu thương.",
   threeYear: "Làm chủ thời gian: Tự do làm việc từ bất cứ đâu, tạo ra nguồn thu nhập độc lập và trọn vẹn dành thời gian cho gia đình và những người yêu thương.",
   cycleConnection: "Làm chủ thời gian: Tự do làm việc từ bất cứ đâu, tạo ra nguồn thu nhập độc lập và trọn vẹn dành thời gian cho gia đình và những người yêu thương.",
-  lifeDomains: [],
+  lifeDomains: [
+    { area: "Sức khỏe", note: "Khỏe mạnh, ngủ đủ giấc, tràn đầy năng lượng" },
+    { area: "Gia đình", note: "Có mặt ở bữa tối gia đình, mỗi ngày" },
+    { area: "Kinh doanh", note: "Dòng thu nhập độc lập đầu tiên" },
+    { area: "Cá nhân", note: "Viết lách và đàn guitar mỗi tuần" },
+  ],
 }, today);
 
 // --- model week (the book's quantities -> zero warnings) ---
