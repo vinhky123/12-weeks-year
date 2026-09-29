@@ -106,12 +106,14 @@ export const JOURNEY_DTO = z.object({
   nextAction: z.object({ id: JOURNEY_STEP_ID_SCHEMA }).nullable(),
   context: z.object({
     cycleName: z.string().nullable(),
-    weekNumber: z.number().int(),                // 0 pre-start, 1–12 execution, 13 review
+    weekNumber: z.number().int(),                // 0 pre-start, 1–12 execution, 13 review, 14 after the year
     unclosedWeek: z.number().int().nullable(),   // set → "Week N is waiting."
   }),
 });
 export type JourneyDto = z.infer<typeof JOURNEY_DTO>;
 ```
+
+> **`weekNumber: 14` note** — the value can be `14` once the cycle is past its review week but not yet archived. Label that state "after the year" in the UI rather than "Week 14".
 
 Types: import `JourneyDto`, `JourneyStepId` from `@/lib/contracts`; `ExampleGoal`, `Bi` etc. from `@/lib/example-plan`; `apiFetch` from `@/components/common/api`; locale from `@/context/SettingsContext`. Never import from `src/server/**`.
 
@@ -182,3 +184,6 @@ Plus a locale pass: flip to Vietnamese and verify the rail titles, hero card, ca
 ## Feedback
 
 (notes from Antigravity; answered in the next spec revision)
+
+- `unclosedWeek` is the **latest** unclosed week with a plan (the server scans backward), not just week − 1 — do not encode W−1-only behavior in the UI (never assume the waiting week is `weekNumber - 1`).
+- For the `close_week` CTA, consider honoring the legacy `/week?close=1` deep link so the button lands on the close flow, not the board default.
