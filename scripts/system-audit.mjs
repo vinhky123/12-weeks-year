@@ -64,7 +64,12 @@ console.log("A. Foundations (dashboard, cycle, vision, model week, measures)");
   const elapsed = Math.round((todayMs - startMs) / 86_400_000);
   check("days remaining consistent with cycle math", active.json.daysRemaining === Math.max(0, 84 - elapsed), `${active.json.daysRemaining} vs ${84 - elapsed}`);
 
-  const journey = await api("GET", "/api/guide/journey");
+  // Pinned to the Monday of seeded week 2 so the check is calendar-stable:
+  // on the real clock a run landing on the Sunday that ends the open week 2
+  // would flip nextAction to close_week; mid-week the open week is not a
+  // gap → execute_today.
+  const journeyToday = new Date(Date.parse(`${active.json.cycle.startDate}T00:00:00Z`) + 7 * 86_400_000).toISOString().slice(0, 10);
+  const journey = await api("GET", "/api/guide/journey", undefined, journeyToday);
   check("journey 200 with 14 steps", journey.status === 200 && journey.json.journey.steps.length === 14);
   check("journey phase=execution on seed", journey.json.journey.phase === "execution");
   check("journey foundation complete on seed", journey.json.journey.steps

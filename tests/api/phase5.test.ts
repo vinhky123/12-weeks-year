@@ -6,6 +6,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
+import { JOURNEY_DTO } from "../../src/lib/contracts";
 
 process.env.TWY_DB_PATH = path.join(os.tmpdir(), `twy-journey-${Date.now()}-${Math.random().toString(36).slice(2)}.db`);
 
@@ -54,6 +55,14 @@ describe("guide journey (Phase 5 contract)", () => {
     expect(j.steps).toHaveLength(14);
     expect(j.nextAction).toEqual({ id: "write_vision" });
     expect(j.context).toEqual({ cycleName: null, weekNumber: 0, unclosedWeek: null });
+    expect(() => JOURNEY_DTO.parse(j)).not.toThrow();
+
+    // Vision written, still no cycle → create_cycle (spec §7): the vision is
+    // global, so write_vision flips to done even before the cycle exists.
+    await visionRoute.PUT(req("PUT", "/api/vision", { longTerm: "Vision before cycle." }));
+    const jVision = await journey();
+    expect(jVision.nextAction).toEqual({ id: "create_cycle" });
+    expect(jVision.steps.find((s: any) => s.id === "write_vision").status).toBe("done");
   });
 
   it("full foundation, planning → start_cycle", async () => {

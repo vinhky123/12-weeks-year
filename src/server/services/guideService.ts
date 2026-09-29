@@ -44,7 +44,11 @@ export function getJourney(h: DbHandles, today = todayIso()) {
   }
 
   if (!cycle) {
-    const r = journeyState(EMPTY_SNAPSHOT);
+    // The vision is global (cycle-independent): a vision written before the
+    // first cycle exists still counts, otherwise write_vision would never
+    // complete for a vision-only user stuck before create_cycle.
+    const vision = getVision(h);
+    const r = journeyState({ ...EMPTY_SNAPSHOT, hasLivingVision: visionWritten(vision) });
     return toDto(r, { cycleName: null, weekNumber: 0, unclosedWeek: null });
   }
 
@@ -59,28 +63,26 @@ export function getJourney(h: DbHandles, today = todayIso()) {
   const plan = executionRepo.findWeekPlan(h, cycle.id, Math.min(Math.max(currentWeek, 1), WEEKS_IN_CYCLE));
 
   let unclosedWeek: number | null = null;
-  if (currentWeek >= 2) {
-    const prior = executionRepo.findWeekPlan(h, cycle.id, currentWeek - 1);
-    if (prior && prior.status !== "closed") unclosedWeek = currentWeek - 1;
-  }
-  if (
-    unclosedWeek === null &&
-    currentWeek >= 1 && currentWeek <= WEEKS_IN_CYCLE &&
-    plan && plan.status !== "closed" &&
-    // Closing becomes due once the week has ended (its last day counts);
-    // an open current week mid-week is not a gap.
-    diffDays(weekEnd(cycle.startDate, currentWeek), today) >= 0
-  ) {
-    unclosedWeek = currentWeek;
+  // close_week stays open while any plan is owed: the LATEST unclosed week
+  // (spec §3.3), found by scanning backward — an earlier week left open (or
+  // never generated) is still a gap even after later weeks pass.
+  for (let w = Math.min(currentWeek, WEEKS_IN_CYCLE); w >= 1; w--) {
+    const p = executionRepo.findWeekPlan(h, cycle.id, w);
+    if (!p || p.status === "closed") continue;
+    // Prior weeks are past their end by definition; the current week only
+    // counts once it has ended (its last day counts) — an open week
+    // mid-week is not a gap. First hit scanning downward wins.
+    if (w < currentWeek || diffDays(weekEnd(cycle.startDate, w), today) >= 0) {
+      unclosedWeek = w;
+      break;
+    }
   }
 
   const closedWeeks = executionRepo.listWeekPlans(h, cycle.id).filter((p) => p.status === "closed");
   const lastClosedWeek = closedWeeks.length ? Math.max(...closedWeeks.map((p) => p.weekNumber)) : null;
 
   const snapshot: JourneySnapshot = {
-    hasLivingVision:
-      !!vision &&
-      [vision.longTerm, vision.threeYear, vision.cycleConnection].some((t) => t.trim().length > 0),
+    hasLivingVision: visionWritten(vision),
     cycleStatus: cycle.status as JourneySnapshot["cycleStatus"],
     goalCount: goals.length,
     goalsWithoutTactics: goals.filter((g) => (tacticCount.get(g.id) ?? 0) === 0).length,
@@ -105,6 +107,13 @@ export function getJourney(h: DbHandles, today = todayIso()) {
   };
 
   return toDto(journeyState(snapshot), { cycleName: cycle.name, weekNumber: currentWeek, unclosedWeek });
+}
+
+function visionWritten(vision: ReturnType<typeof getVision>): boolean {
+  return (
+    !!vision &&
+    [vision.longTerm, vision.threeYear, vision.cycleConnection].some((t) => t.trim().length > 0)
+  );
 }
 
 function toDto(
