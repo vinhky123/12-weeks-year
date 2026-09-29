@@ -69,7 +69,7 @@ console.log("A. Foundations (dashboard, cycle, vision, model week, measures)");
   check("journey phase=execution on seed", journey.json.journey.phase === "execution");
   check("journey foundation complete on seed", journey.json.journey.steps
     .filter((s) => ["write_vision", "create_cycle", "set_goals", "add_tactics", "design_model_week", "write_commitment", "start_cycle"].includes(s.id))
-    .every((s) => s.status === "done"));
+    .filter((s) => s.status === "done").length === 7);
   check("journey nextAction=execute_today on seed (week 2 open)", journey.json.journey.nextAction?.id === "execute_today", JSON.stringify(journey.json.journey.nextAction));
   check("journey wam todo and never selected", journey.json.journey.steps.find((s) => s.id === "wam_report")?.status === "todo" && journey.json.journey.nextAction?.id !== "wam_report");
 
