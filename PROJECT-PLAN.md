@@ -343,6 +343,12 @@ F10 WAM (solo report + export), F11 week-13 wizard + archive + next-cycle carry-
 F14: JSON export/import (full fidelity) + auto-backup on week close; PWA (installable/offline); dark/light; print exports (plan, WAM); i18n EN/VI; demo seeder. **Antigravity handoff at delivery:** polish pass over all existing screens per updated `docs/fe-specs/phase-4/` specs.
 **Exit criteria:** export → wipe → import reproduces identical state; Lighthouse PWA-installable; VI locale complete.
 
+### Phase 5 — The Journey: actionable guide (M)
+State-aware "You are here" engine (`journeyRules` + `GET /api/guide/journey`), `/guide` rebuilt
+around the live journey rail + next-action hero, bilingual worked example, dashboard card upgrade.
+Spec: `docs/superpowers/specs/2026-09-26-guide-journey-design.md` · FE spec: `docs/fe-specs/phase-5-journey.md`.
+5A backend+spec (this repo) → 5B UI (Antigravity) → checkpoint.
+
 Post-v1 candidates (parking lot): Tauri wrapper, profiles, calendar (.ics) export of model week, local-only AI coach grounded in the user's own score data.
 
 ## 11. Testing & QA Strategy

@@ -64,6 +64,19 @@ console.log("A. Foundations (dashboard, cycle, vision, model week, measures)");
   const elapsed = Math.round((todayMs - startMs) / 86_400_000);
   check("days remaining consistent with cycle math", active.json.daysRemaining === Math.max(0, 84 - elapsed), `${active.json.daysRemaining} vs ${84 - elapsed}`);
 
+  const journey = await api("GET", "/api/guide/journey");
+  check("journey 200 with 14 steps", journey.status === 200 && journey.json.journey.steps.length === 14);
+  check("journey phase=execution on seed", journey.json.journey.phase === "execution");
+  check("journey foundation complete on seed", journey.json.journey.steps
+    .filter((s) => ["write_vision", "create_cycle", "set_goals", "add_tactics", "design_model_week", "write_commitment", "start_cycle"].includes(s.id))
+    .every((s) => s.status === "done"));
+  check("journey nextAction=execute_today on seed (week 2 open)", journey.json.journey.nextAction?.id === "execute_today", JSON.stringify(journey.json.journey.nextAction));
+  check("journey wam todo and never selected", journey.json.journey.steps.find((s) => s.id === "wam_report")?.status === "todo" && journey.json.journey.nextAction?.id !== "wam_report");
+
+  const week13 = new Date(Date.parse(`${active.json.cycle.startDate}T00:00:00Z`) + 84 * 86_400_000).toISOString().slice(0, 10);
+  const journey13 = await api("GET", "/api/guide/journey", undefined, week13);
+  check("journey time-travel week 13 → write_review", journey13.json.journey.phase === "completion" && journey13.json.journey.nextAction?.id === "write_review");
+
   const vision = await api("GET", "/api/vision");
   check("living vision exists", vision.json.vision !== null);
   check("vision has life domains", Array.isArray(vision.json.vision.lifeDomains) && vision.json.vision.lifeDomains.length >= 3);
@@ -241,10 +254,16 @@ let oldVisionLongTerm;
   const frozen = await api("GET", `/api/cycles/${cycleId}/vision`);
   check("snapshot frozen while living vision evolves", frozen.json.vision.longTerm === oldVisionLongTerm);
 
+  const journeyArchived = await api("GET", "/api/guide/journey");
+  check("journey after archive → start_next_cycle", journeyArchived.json.journey.phase === "completion" && journeyArchived.json.journey.nextAction?.id === "start_next_cycle");
+
   const next = await api("POST", `/api/cycles/${cycleId}/next`, { name: "Audit Q1", carryoverGoalIds: [g1, g2] });
   check("next cycle created in planning", next.json.status === "planning" && next.json.name === "Audit Q1");
   const nextDetail = await api("GET", `/api/cycles/${next.json.id}`);
   check("carried goals copy title/why/lag only (no tactics)", nextDetail.json.goals.length === 2 && nextDetail.json.goals.every((g) => g.tactics.length === 0));
+
+  const journeyNext = await api("GET", "/api/guide/journey");
+  check("journey successor cycle → add_tactics (carried goals lack tactics)", journeyNext.json.journey.phase === "foundation" && journeyNext.json.journey.nextAction?.id === "add_tactics");
 
   const history = await api("GET", "/api/history");
   check("history lists all cycles", history.json.length === 3);
