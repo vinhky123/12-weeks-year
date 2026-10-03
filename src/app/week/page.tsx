@@ -46,6 +46,7 @@ function WeekPageInner() {
   const [activeLoading, setActiveLoading] = useState(true);
   const [planLoading, setPlanLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [mutationPending, setMutationPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bannerError, setBannerError] = useState<string | null>(null);
 
@@ -55,6 +56,7 @@ function WeekPageInner() {
   const weekRequestRef = useRef(0);
   const previousWeekRef = useRef(selectedWeek);
   const selectionRef = useRef("none:1");
+  const mutationLockRef = useRef(false);
 
   selectionRef.current = `${activeCycle?.cycle.id ?? "none"}:${selectedWeek}`;
 
@@ -65,6 +67,25 @@ function WeekPageInner() {
     localeRef.current = locale;
     queryWeekRef.current = queryWeek;
   }, [locale, queryWeek]);
+
+  const withMutationLock = useCallback(async <T,>(mutation: () => Promise<T>): Promise<T> => {
+    if (mutationLockRef.current) {
+      throw new Error(
+        localeRef.current === "vi"
+          ? "Một thay đổi khác đang được lưu. Vui lòng đợi."
+          : "Another change is being saved. Please wait.",
+      );
+    }
+
+    mutationLockRef.current = true;
+    setMutationPending(true);
+    try {
+      return await mutation();
+    } finally {
+      mutationLockRef.current = false;
+      setMutationPending(false);
+    }
+  }, []);
 
   // Fetch active cycle info
   const fetchActiveCycle = useCallback(async () => {
@@ -178,28 +199,30 @@ function WeekPageInner() {
   }, [queryClose, queryWeek, planDetail, activeCycle, selectedWeek]);
 
   const handleGenerate = async () => {
-    if (!activeCycle) return;
-    const selectionKey = `${activeCycle.cycle.id}:${selectedWeek}`;
-    try {
-      setGenerating(true);
-      setBannerError(null);
-      const res = await apiFetch<WeekPlanDetailDto>(
-        `/api/cycles/${activeCycle.cycle.id}/weeks/${selectedWeek}/generate`,
-        { method: "POST" },
-      );
-      if (selectionRef.current !== selectionKey) return;
-      setPlanDetail(res);
-      setIsNotGenerated(false);
-    } catch (err: unknown) {
-      if (selectionRef.current !== selectionKey) return;
-      if (err instanceof ClientApiError) {
-        setBannerError(err.message);
-      } else {
-        setBannerError(locale === "vi" ? "Không thể tạo kế hoạch tuần." : "Failed to generate week plan.");
+    if (!activeCycle || mutationLockRef.current) return;
+    await withMutationLock(async () => {
+      const selectionKey = `${activeCycle.cycle.id}:${selectedWeek}`;
+      try {
+        setGenerating(true);
+        setBannerError(null);
+        const res = await apiFetch<WeekPlanDetailDto>(
+          `/api/cycles/${activeCycle.cycle.id}/weeks/${selectedWeek}/generate`,
+          { method: "POST" },
+        );
+        if (selectionRef.current !== selectionKey) return;
+        setPlanDetail(res);
+        setIsNotGenerated(false);
+      } catch (err: unknown) {
+        if (selectionRef.current !== selectionKey) return;
+        if (err instanceof ClientApiError) {
+          setBannerError(err.message);
+        } else {
+          setBannerError(locale === "vi" ? "Không thể tạo kế hoạch tuần." : "Failed to generate week plan.");
+        }
+      } finally {
+        if (selectionRef.current === selectionKey) setGenerating(false);
       }
-    } finally {
-      if (selectionRef.current === selectionKey) setGenerating(false);
-    }
+    });
   };
 
   const actionablePlan = (): WeekPlanDetailDto | null => {
@@ -222,89 +245,99 @@ function WeekPageInner() {
   };
 
   const handleAddItem = async (label: string, dayOfWeek: number) => {
-    const plan = actionablePlan();
-    if (!plan) throw new Error(locale === "vi" ? "Kế hoạch tuần đang được tải lại." : "The weekly plan is reloading.");
-    const selectionKey = selectionRef.current;
-    try {
-      const res = await apiFetch<WeekPlanDetailDto>(
-        `/api/week-plans/${plan.plan.id}/items`,
-        {
-          method: "POST",
-          body: JSON.stringify({ label, dayOfWeek, confirmPlanRevision: true }),
-        },
-      );
-      if (selectionRef.current === selectionKey) setPlanDetail(res);
-    } catch (err: unknown) {
-      throw actionError(err, "Không thể thêm công việc. Vui lòng thử lại.", "Could not add the task. Please try again.", selectionKey);
-    }
+    return withMutationLock(async () => {
+      const plan = actionablePlan();
+      if (!plan) throw new Error(locale === "vi" ? "Kế hoạch tuần đang được tải lại." : "The weekly plan is reloading.");
+      const selectionKey = selectionRef.current;
+      try {
+        const res = await apiFetch<WeekPlanDetailDto>(
+          `/api/week-plans/${plan.plan.id}/items`,
+          {
+            method: "POST",
+            body: JSON.stringify({ label, dayOfWeek, confirmPlanRevision: true }),
+          },
+        );
+        if (selectionRef.current === selectionKey) setPlanDetail(res);
+      } catch (err: unknown) {
+        throw actionError(err, "Không thể thêm công việc. Vui lòng thử lại.", "Could not add the task. Please try again.", selectionKey);
+      }
+    });
   };
 
   const handleMoveDay = async (itemId: number, newDay: number) => {
-    const plan = actionablePlan();
-    if (!plan) throw new Error(locale === "vi" ? "Kế hoạch tuần đang được tải lại." : "The weekly plan is reloading.");
-    const selectionKey = selectionRef.current;
-    try {
-      const res = await apiFetch<WeekPlanDetailDto>(
-        `/api/week-plans/${plan.plan.id}/items/${itemId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ dayOfWeek: newDay }),
-        },
-      );
-      if (selectionRef.current === selectionKey) setPlanDetail(res);
-    } catch (err: unknown) {
-      throw actionError(err, "Không thể chuyển công việc sang ngày khác.", "Could not move the task to another day.", selectionKey);
-    }
+    return withMutationLock(async () => {
+      const plan = actionablePlan();
+      if (!plan) throw new Error(locale === "vi" ? "Kế hoạch tuần đang được tải lại." : "The weekly plan is reloading.");
+      const selectionKey = selectionRef.current;
+      try {
+        const res = await apiFetch<WeekPlanDetailDto>(
+          `/api/week-plans/${plan.plan.id}/items/${itemId}`,
+          {
+            method: "PATCH",
+            body: JSON.stringify({ dayOfWeek: newDay }),
+          },
+        );
+        if (selectionRef.current === selectionKey) setPlanDetail(res);
+      } catch (err: unknown) {
+        throw actionError(err, "Không thể chuyển công việc sang ngày khác.", "Could not move the task to another day.", selectionKey);
+      }
+    });
   };
 
   const handleRename = async (itemId: number, newLabel: string) => {
-    const plan = actionablePlan();
-    if (!plan) throw new Error(locale === "vi" ? "Kế hoạch tuần đang được tải lại." : "The weekly plan is reloading.");
-    const selectionKey = selectionRef.current;
-    try {
-      const res = await apiFetch<WeekPlanDetailDto>(
-        `/api/week-plans/${plan.plan.id}/items/${itemId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ label: newLabel }),
-        },
-      );
-      if (selectionRef.current === selectionKey) setPlanDetail(res);
-    } catch (err: unknown) {
-      throw actionError(err, "Không thể đổi tên công việc.", "Could not rename the task.", selectionKey);
-    }
+    return withMutationLock(async () => {
+      const plan = actionablePlan();
+      if (!plan) throw new Error(locale === "vi" ? "Kế hoạch tuần đang được tải lại." : "The weekly plan is reloading.");
+      const selectionKey = selectionRef.current;
+      try {
+        const res = await apiFetch<WeekPlanDetailDto>(
+          `/api/week-plans/${plan.plan.id}/items/${itemId}`,
+          {
+            method: "PATCH",
+            body: JSON.stringify({ label: newLabel }),
+          },
+        );
+        if (selectionRef.current === selectionKey) setPlanDetail(res);
+      } catch (err: unknown) {
+        throw actionError(err, "Không thể đổi tên công việc.", "Could not rename the task.", selectionKey);
+      }
+    });
   };
 
   const handleRemove = async (itemId: number) => {
-    const plan = actionablePlan();
-    if (!plan) throw new Error(locale === "vi" ? "Kế hoạch tuần đang được tải lại." : "The weekly plan is reloading.");
-    const selectionKey = selectionRef.current;
-    try {
-      const res = await apiFetch<WeekPlanDetailDto>(
-        `/api/week-plans/${plan.plan.id}/items/${itemId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (selectionRef.current === selectionKey) setPlanDetail(res);
-    } catch (err: unknown) {
-      throw actionError(err, "Không thể xóa công việc.", "Could not remove the task.", selectionKey);
-    }
+    return withMutationLock(async () => {
+      const plan = actionablePlan();
+      if (!plan) throw new Error(locale === "vi" ? "Kế hoạch tuần đang được tải lại." : "The weekly plan is reloading.");
+      const selectionKey = selectionRef.current;
+      try {
+        const res = await apiFetch<WeekPlanDetailDto>(
+          `/api/week-plans/${plan.plan.id}/items/${itemId}`,
+          {
+            method: "DELETE",
+          },
+        );
+        if (selectionRef.current === selectionKey) setPlanDetail(res);
+      } catch (err: unknown) {
+        throw actionError(err, "Không thể xóa công việc.", "Could not remove the task.", selectionKey);
+      }
+    });
   };
 
   const handleCloseSubmit = async (data: CloseWeek): Promise<WeekPlanDetailDto> => {
-    const plan = actionablePlan();
-    if (!plan) throw new Error(locale === "vi" ? "Kế hoạch tuần đang được tải lại." : "The weekly plan is reloading.");
-    const selectionKey = selectionRef.current;
-    const res = await apiFetch<WeekPlanDetailDto>(
-      `/api/week-plans/${plan.plan.id}/close`,
-      {
-        method: "POST",
-        body: JSON.stringify(data),
-      },
-    );
-    if (selectionRef.current === selectionKey) setPlanDetail(res);
-    return res;
+    return withMutationLock(async () => {
+      const plan = actionablePlan();
+      if (!plan) throw new Error(locale === "vi" ? "Kế hoạch tuần đang được tải lại." : "The weekly plan is reloading.");
+      const selectionKey = selectionRef.current;
+      const res = await apiFetch<WeekPlanDetailDto>(
+        `/api/week-plans/${plan.plan.id}/close`,
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+        },
+      );
+      if (selectionRef.current === selectionKey) setPlanDetail(res);
+      return res;
+    });
   };
 
   const handleWeekChange = (w: number) => {
@@ -473,6 +506,7 @@ function WeekPageInner() {
             <>
               <button
                 type="button"
+                disabled={mutationPending}
                 onClick={() => setShowAddModal(true)}
                 className="min-h-10 rounded-lg border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
               >
@@ -482,6 +516,7 @@ function WeekPageInner() {
               {!isFutureWeek && (
                 <button
                   type="button"
+                  disabled={mutationPending}
                   onClick={() => setShowCloseModal(true)}
                   className="min-h-10 rounded-lg bg-teal-700 px-4 text-sm font-semibold text-white shadow-xs transition hover:bg-teal-800 dark:bg-teal-500 dark:text-zinc-950 dark:hover:bg-teal-400"
                 >
@@ -540,8 +575,8 @@ function WeekPageInner() {
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={generating}
-            className="min-h-10 rounded-lg bg-teal-700 px-6 text-sm font-semibold text-white shadow-xs transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-500 dark:text-zinc-950 dark:hover:bg-teal-400"
+            aria-disabled={generating || mutationPending || undefined}
+            className="min-h-10 rounded-lg bg-teal-700 px-6 text-sm font-semibold text-white shadow-xs transition hover:bg-teal-800 aria-disabled:cursor-wait aria-disabled:opacity-50 dark:bg-teal-500 dark:text-zinc-950 dark:hover:bg-teal-400"
           >
             {generating
               ? (locale === "vi" ? "Đang tạo…" : "Generating…")
@@ -553,6 +588,7 @@ function WeekPageInner() {
           weekStart={currentPlan.weekStart}
           items={currentPlan.items}
           isClosed={isClosed}
+          mutationPending={mutationPending}
           onMoveDay={handleMoveDay}
           onRename={handleRename}
           onRemove={handleRemove}
@@ -574,7 +610,7 @@ function WeekPageInner() {
           isOpen={showCloseModal}
           onClose={handleCloseModalDismiss}
           planDetail={currentPlan}
-          activeGoals={cycleDetail?.goals ?? []}
+          activeGoals={cycleDetail?.goals.filter((goal) => goal.status === "active") ?? []}
           currentCycleWeek={activeCycle.weekNumber}
           onCloseSubmit={handleCloseSubmit}
           onNavigateWeek={handleWeekChange}

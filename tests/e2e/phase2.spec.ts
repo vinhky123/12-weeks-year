@@ -5,7 +5,9 @@ test.describe("Phase 2 E2E (Antigravity UI Verification)", () => {
     await page.goto("/vision");
 
     // 1. Header
-    await expect(page.getByRole("heading", { name: /(Vision|Tầm nhìn)/ })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: /^(Vision|Tầm nhìn)$/ })
+    ).toBeVisible();
 
     // 2. Example Vision badge and single consolidated card
     await expect(page.getByText(/(Ví dụ tầm nhìn · Example Vision|Ví dụ tầm nhìn|Example Vision)/)).toBeVisible();
@@ -30,7 +32,9 @@ test.describe("Phase 2 E2E (Antigravity UI Verification)", () => {
 
     // 6. Save
     await saveBtn.click();
-    await expect(page.getByText(/(Saved|Đã lưu)/)).toBeVisible();
+    await expect(
+      page.getByText(/^(Vision saved successfully|Đã lưu tầm nhìn thành công)$/)
+    ).toBeVisible();
 
     // 7. Reload and verify persistence
     await page.reload();
@@ -41,7 +45,9 @@ test.describe("Phase 2 E2E (Antigravity UI Verification)", () => {
     await page.goto("/measures");
 
     // 1. Header & Verbatim Benchmark
-    await expect(page.getByRole("heading", { name: /(Measures|Chỉ số)/ })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: /^(Measures|Chỉ số)$/ })
+    ).toBeVisible();
     await expect(
       page.getByText(/(85% weekly execution is the benchmark — below 65, revise the plan\.|85% thực hiện hàng tuần là chuẩn — dưới 65, hãy sửa kế hoạch\.)/)
     ).toBeVisible();

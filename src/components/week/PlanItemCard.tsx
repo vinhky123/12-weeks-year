@@ -13,6 +13,7 @@ let focusMoveSelectFor: number | null = null;
 interface PlanItemCardProps {
   item: WeekPlanItemDto;
   isClosed: boolean;
+  mutationPending?: boolean;
   onMoveDay: (itemId: number, newDay: number) => Promise<void>;
   onRename: (itemId: number, newLabel: string) => Promise<void>;
   onRemove: (itemId: number) => Promise<void>;
@@ -22,6 +23,7 @@ type Mutation = "move" | "rename" | "remove" | null;
 export default function PlanItemCard({
   item,
   isClosed,
+  mutationPending = false,
   onMoveDay,
   onRename,
   onRemove,
@@ -35,11 +37,15 @@ export default function PlanItemCard({
   const isComplete = item.done >= item.plannedCount;
   const isPlanRevision = item.tacticId === null;
   const isPending = mutation !== null;
+  const cardWritePending = mutationPending || isPending;
   const dayNames = locale === "vi" ? VI_DAY_NAMES : EN_DAY_NAMES;
   const renameInputId = `rename-plan-item-${item.id}`;
   const moveSelectId = `move-plan-item-${item.id}`;
 
   const moveSelectRef = useRef<HTMLSelectElement>(null);
+  const renameTriggerRef = useRef<HTMLButtonElement>(null);
+  const mutationRef = useRef<Mutation>(null);
+  const focusRenameTriggerRef = useRef(false);
 
   useEffect(() => {
     if (!isEditing) setDraftLabel(item.label);
@@ -52,30 +58,48 @@ export default function PlanItemCard({
     }
   }, [item.id]);
 
+  useEffect(() => {
+    if (!isEditing && focusRenameTriggerRef.current) {
+      focusRenameTriggerRef.current = false;
+      renameTriggerRef.current?.focus();
+    }
+  }, [isEditing]);
+
   const failureMessage =
     locale === "vi" ? "Không thể cập nhật công việc. Vui lòng thử lại." : "Could not update this task. Please try again.";
 
+  const beginMutation = (nextMutation: Exclude<Mutation, null>) => {
+    if (mutationPending || mutationRef.current !== null) return false;
+    mutationRef.current = nextMutation;
+    setMutation(nextMutation);
+    return true;
+  };
+
+  const finishMutation = () => {
+    mutationRef.current = null;
+    setMutation(null);
+  };
+
   const handleSaveRename = async () => {
     const nextLabel = draftLabel.trim();
-    if (!nextLabel || isPending) return;
+    if (!nextLabel || !beginMutation("rename")) return;
 
     setError("");
-    setMutation("rename");
     try {
       await onRename(item.id, nextLabel);
+      focusRenameTriggerRef.current = true;
       setIsEditing(false);
     } catch {
       setError(failureMessage);
     } finally {
-      setMutation(null);
+      finishMutation();
     }
   };
 
   const handleSelectDay = async (newDay: number) => {
-    if (newDay === item.dayOfWeek || isPending) return;
+    if (newDay === item.dayOfWeek || !beginMutation("move")) return;
 
     setError("");
-    setMutation("move");
     focusMoveSelectFor = item.id;
     try {
       await onMoveDay(item.id, newDay);
@@ -83,33 +107,35 @@ export default function PlanItemCard({
       focusMoveSelectFor = null;
       setError(failureMessage);
     } finally {
-      setMutation(null);
+      finishMutation();
     }
   };
 
   const handleRemove = async () => {
-    if (isPending) return;
+    if (!beginMutation("remove")) return;
 
     setError("");
-    setMutation("remove");
     try {
       await onRemove(item.id);
     } catch {
       setError(failureMessage);
     } finally {
-      setMutation(null);
+      finishMutation();
     }
   };
 
   const startRename = () => {
+    if (mutationPending || mutationRef.current !== null) return;
     setError("");
     setDraftLabel(item.label);
     setIsEditing(true);
   };
 
   const cancelRename = () => {
+    if (mutationRef.current !== null) return;
     setError("");
     setDraftLabel(item.label);
+    focusRenameTriggerRef.current = true;
     setIsEditing(false);
   };
 
@@ -132,8 +158,9 @@ export default function PlanItemCard({
               type="text"
               value={draftLabel}
               onChange={(event) => setDraftLabel(event.target.value)}
-              disabled={isPending}
-              className="min-h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:cursor-wait disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+              readOnly={cardWritePending}
+              aria-disabled={cardWritePending || undefined}
+              className="min-h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 aria-disabled:cursor-wait aria-disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
               autoFocus
             />
           </div>
@@ -166,7 +193,8 @@ export default function PlanItemCard({
             <button
               type="button"
               onClick={handleSaveRename}
-              disabled={isPending || !draftLabel.trim()}
+              disabled={!draftLabel.trim()}
+              aria-disabled={cardWritePending || undefined}
               aria-label={locale === "vi" ? "Lưu tên công việc" : "Save task name"}
               className="min-h-10 rounded-lg border border-teal-700 bg-teal-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50 dark:border-teal-500 dark:bg-teal-600 dark:hover:bg-teal-500"
             >
@@ -175,7 +203,7 @@ export default function PlanItemCard({
             <button
               type="button"
               onClick={cancelRename}
-              disabled={isPending}
+              aria-disabled={isPending || undefined}
               aria-label={locale === "vi" ? "Hủy đổi tên" : "Cancel rename"}
               className="min-h-10 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
@@ -193,7 +221,7 @@ export default function PlanItemCard({
                 id={moveSelectId}
                 value={item.dayOfWeek}
                 onChange={(event) => void handleSelectDay(Number(event.target.value))}
-                aria-disabled={isPending || undefined}
+                aria-disabled={cardWritePending || undefined}
                 className="min-h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 aria-disabled:cursor-wait aria-disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
               >
                 {dayNames.map((day, dayIndex) => (
@@ -204,9 +232,10 @@ export default function PlanItemCard({
               </select>
             </div>
             <button
+              ref={renameTriggerRef}
               type="button"
               onClick={startRename}
-              disabled={isPending}
+              aria-disabled={cardWritePending || undefined}
               aria-label={locale === "vi" ? `Đổi tên ${item.label}` : `Rename ${item.label}`}
               className="min-h-10 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
             >
@@ -215,7 +244,7 @@ export default function PlanItemCard({
             <button
               type="button"
               onClick={() => void handleRemove()}
-              disabled={isPending}
+              aria-disabled={cardWritePending || undefined}
               aria-label={locale === "vi" ? `Xóa ${item.label}` : `Remove ${item.label}`}
               className="min-h-10 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-rose-900 dark:hover:bg-rose-950/30 dark:hover:text-rose-300"
             >

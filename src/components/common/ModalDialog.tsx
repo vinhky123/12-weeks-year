@@ -22,6 +22,7 @@ export default function ModalDialog({
 }: ModalDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const reopenFocusRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
   const { locale } = useSettings();
 
@@ -51,7 +52,19 @@ export default function ModalDialog({
       className={`modal-dialog m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-hidden rounded-2xl border border-zinc-200 bg-white p-0 text-zinc-900 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 ${className}`}
       onCancel={(event) => {
         event.preventDefault();
-        if (!busy) onClose();
+        if (busy) {
+          reopenFocusRef.current =
+            document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        } else {
+          onClose();
+        }
+      }}
+      onClose={(event) => {
+        if (!open) return;
+        event.currentTarget.showModal();
+        const reopenFocus = reopenFocusRef.current;
+        reopenFocusRef.current = null;
+        requestAnimationFrame(() => reopenFocus?.focus());
       }}
     >
       <div className="flex max-h-[calc(100dvh-2rem)] flex-col">

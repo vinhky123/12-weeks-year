@@ -11,6 +11,7 @@ interface DayColumnProps {
   dateStr: string;
   items: WeekPlanItemDto[];
   isClosed: boolean;
+  mutationPending?: boolean;
   onMoveDay: (itemId: number, newDay: number) => Promise<void>;
   onRename: (itemId: number, newLabel: string) => Promise<void>;
   onRemove: (itemId: number) => Promise<void>;
@@ -20,6 +21,7 @@ export default function DayColumn({
   dateStr,
   items,
   isClosed,
+  mutationPending = false,
   onMoveDay,
   onRename,
   onRemove,
@@ -56,6 +58,7 @@ export default function DayColumn({
               key={item.id}
               item={item}
               isClosed={isClosed}
+              mutationPending={mutationPending}
               onMoveDay={onMoveDay}
               onRename={onRename}
               onRemove={onRemove}

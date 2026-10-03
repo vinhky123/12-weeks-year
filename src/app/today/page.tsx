@@ -29,6 +29,7 @@ export default function TodayPage() {
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mutatingItemId, setMutatingItemId] = useState<number | null>(null);
+  const [restOfWeekOpen, setRestOfWeekOpen] = useState(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mutationPendingRef = useRef(false);
 
@@ -339,8 +340,15 @@ export default function TodayPage() {
         ))}
       </section>
 
-      <details className="rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/40">
-        <summary role="button" className="flex min-h-12 cursor-pointer items-center justify-between rounded-xl px-4 py-3 text-base font-bold text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800">
+      <details
+        onToggle={(event) => setRestOfWeekOpen(event.currentTarget.open)}
+        className="rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/40"
+      >
+        <summary
+          role="button"
+          aria-expanded={restOfWeekOpen}
+          className="flex min-h-12 cursor-pointer items-center justify-between rounded-xl px-4 py-3 text-base font-bold text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800"
+        >
           <span>{locale === "vi" ? "Phần còn lại của tuần" : "Rest of week"}</span>
           <span aria-hidden="true" className="text-sm font-medium text-zinc-500">{restDays.length}</span>
         </summary>

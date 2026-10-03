@@ -40,6 +40,8 @@ export default function CloseWeekModal({
   const [closedResult, setClosedResult] = useState<WeekPlanDetailDto | null>(null);
   const wasOpenRef = useRef(false);
   const planIdRef = useRef(plan.id);
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+  const focusStepHeadingRef = useRef(false);
 
   useEffect(() => {
     const freshOpen = isOpen && !wasOpenRef.current;
@@ -58,6 +60,18 @@ export default function CloseWeekModal({
     wasOpenRef.current = isOpen;
     planIdRef.current = plan.id;
   }, [isOpen, plan.id]);
+
+  useEffect(() => {
+    if (!focusStepHeadingRef.current) return;
+    focusStepHeadingRef.current = false;
+    const frame = requestAnimationFrame(() => stepHeadingRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [step]);
+
+  const goToStep = (nextStep: 1 | 2 | 3 | 4) => {
+    focusStepHeadingRef.current = true;
+    setStep(nextStep);
+  };
 
   const numberError = locale === "vi"
     ? "Hãy nhập một số hợp lệ, dùng dấu chấm cho phần thập phân."
@@ -91,7 +105,7 @@ export default function CloseWeekModal({
     }
 
     setLagErrors({});
-    setStep(3);
+    goToStep(3);
   };
 
   const handleFinalClose = async () => {
@@ -118,7 +132,7 @@ export default function CloseWeekModal({
 
       const result = await onCloseSubmit(payload);
       setClosedResult(result);
-      setStep(4);
+      goToStep(4);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setServerError(err.message);
@@ -145,7 +159,13 @@ export default function CloseWeekModal({
       <div className="space-y-5">
         {/* Header & Step Indicator */}
         <div className="flex items-center justify-between gap-4">
-          <p className="text-sm font-semibold text-teal-700 dark:text-teal-300">{stepName}</p>
+          <h3
+            ref={stepHeadingRef}
+            tabIndex={-1}
+            className="text-sm font-semibold text-teal-700 outline-none dark:text-teal-300"
+          >
+            {stepName}
+          </h3>
 
           {step < 4 && (
             <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
@@ -175,7 +195,7 @@ export default function CloseWeekModal({
               </button>
               <button
                 type="button"
-                onClick={() => setStep(2)}
+                onClick={() => goToStep(2)}
                 className="inline-flex min-h-10 items-center rounded-md bg-teal-700 px-5 text-sm font-semibold text-white shadow-xs transition hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-500"
               >
                 {continueLabel}
@@ -232,7 +252,7 @@ export default function CloseWeekModal({
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setStep(1)}
+                  onClick={() => goToStep(1)}
                   className="inline-flex min-h-10 items-center rounded-md px-4 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 transition dark:text-zinc-400 dark:hover:bg-zinc-800"
                 >
                   {backLabel}
@@ -296,7 +316,7 @@ export default function CloseWeekModal({
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
+                  onClick={() => goToStep(2)}
                   disabled={submitting}
                   className="inline-flex min-h-10 items-center rounded-md px-4 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 transition dark:text-zinc-400 dark:hover:bg-zinc-800"
                 >
@@ -314,9 +334,9 @@ export default function CloseWeekModal({
               <button
                 type="button"
                 onClick={handleFinalClose}
-                disabled={submitting}
+                aria-disabled={submitting}
                 aria-label={title}
-                className="inline-flex min-h-10 items-center rounded-md bg-teal-700 px-6 text-sm font-semibold text-white shadow-xs hover:bg-teal-800 disabled:opacity-50 transition dark:bg-teal-600 dark:hover:bg-teal-500"
+                className="inline-flex min-h-10 items-center rounded-md bg-teal-700 px-6 text-sm font-semibold text-white shadow-xs transition hover:bg-teal-800 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-500"
               >
                 {submitting
                   ? (locale === "vi" ? "Đang chốt..." : "Closing...")
