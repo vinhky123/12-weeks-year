@@ -54,7 +54,7 @@ export default function TodayItem({ item, isClosed, onIncrement, onDecrement, is
           {isComplete ? <span aria-hidden="true" className="text-lg">✓</span> : <span aria-hidden="true" className="h-3 w-3 rounded-sm border border-current" />}
         </button>
         <div className="min-w-0 flex-1">
-          <p className={`min-w-0 break-all text-[15px] font-medium leading-6 ${isComplete ? "text-zinc-500 line-through dark:text-zinc-400" : "text-zinc-900 dark:text-zinc-100"}`}>{item.label}</p>
+          <p className={`min-w-0 [overflow-wrap:anywhere] text-[15px] font-medium leading-6 ${isComplete ? "text-zinc-500 line-through dark:text-zinc-400" : "text-zinc-900 dark:text-zinc-100"}`}>{item.label}</p>
           {isExtraTask && <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{locale === "vi" ? "Việc thêm · không thể theo dõi hoàn thành" : "Extra task · completion tracking unavailable"}</p>}
           {item.goal && (
             <details open={showGoal} className="mt-2 min-w-0 max-w-full">
@@ -65,7 +65,7 @@ export default function TodayItem({ item, isClosed, onIncrement, onDecrement, is
                   event.preventDefault();
                   setShowGoal((current) => !current);
                 }}
-                className="min-h-10 min-w-0 max-w-full cursor-pointer break-all whitespace-normal rounded-md bg-zinc-100 px-2.5 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="min-h-10 min-w-0 max-w-full cursor-pointer [overflow-wrap:anywhere] whitespace-normal rounded-md bg-zinc-100 px-2.5 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
                 {locale === "vi" ? "Mục tiêu:" : "Goal:"} {item.goal.title}
               </summary>

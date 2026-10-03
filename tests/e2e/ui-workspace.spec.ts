@@ -1,5 +1,24 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Locator } from "@playwright/test";
 import { mockUiWorkspace } from "./fixtures/uiWorkspace";
+
+/** Words whose rendered glyphs span more than one line, i.e. were broken mid-word. */
+function wordsSplitAcrossLines(locator: Locator): Promise<string[]> {
+  return locator.evaluate((element) => {
+    const split: string[] = [];
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const text = node as Text;
+      for (const match of text.data.matchAll(/\S+/g)) {
+        const range = document.createRange();
+        range.setStart(text, match.index ?? 0);
+        range.setEnd(text, (match.index ?? 0) + match[0].length);
+        const lineTops = new Set(Array.from(range.getClientRects(), (rect) => Math.round(rect.top)));
+        if (lineTops.size > 1) split.push(match[0]);
+      }
+    }
+    return split;
+  });
+}
 
 test.describe("UI workspace browser contracts", () => {
   test("phone navigation fits the viewport, keeps primary destinations visible, and opens an accessible menu", async ({ page }) => {
@@ -243,6 +262,21 @@ test.describe("UI workspace browser contracts", () => {
     await expect(earlier.getByText("Monday carryover")).toHaveCount(0);
     await page.locator("summary").filter({ hasText: "Rest of week" }).click();
     await expect(page.getByRole("button", { name: "Undo completion: Monday carryover" })).toBeVisible();
+  });
+
+  test("Today wraps task and goal text between words at phone width", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await mockUiWorkspace(page, {
+      longItemLabel: "Send ten personalized outreach messages to warm leads before Friday",
+      longGoalTitle: "Earn the first one thousand dollars from freelance design clients",
+    });
+    await page.goto("/today");
+
+    const label = page.getByText("Send ten personalized outreach messages to warm leads before Friday", { exact: true });
+    await expect(label).toBeVisible();
+    expect(await wordsSplitAcrossLines(label)).toEqual([]);
+    const goalSummary = page.locator("summary").filter({ hasText: "Earn the first one thousand dollars" }).first();
+    expect(await wordsSplitAcrossLines(goalSummary)).toEqual([]);
   });
 
   test("Today header names the week and day once", async ({ page }) => {
