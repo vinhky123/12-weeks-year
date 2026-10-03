@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { WeekPlanItemDto } from "@/lib/contracts";
+import { useSettings } from "@/context/SettingsContext";
 import PlanItemCard from "./PlanItemCard";
 
 interface DayColumnProps {
@@ -14,7 +15,6 @@ interface DayColumnProps {
   onRename: (itemId: number, newLabel: string) => Promise<void>;
   onRemove: (itemId: number) => Promise<void>;
 }
-
 export default function DayColumn({
   dayName,
   dateStr,
@@ -24,26 +24,32 @@ export default function DayColumn({
   onRename,
   onRemove,
 }: DayColumnProps) {
-  const completed = items.filter((i) => i.done >= i.plannedCount).length;
-  const total = items.length;
+  const { locale } = useSettings();
+  const completed = items.filter((item) => item.done >= item.plannedCount).length;
+  const headingId = `week-day-${dayName.replace(/\s+/g, "-").toLowerCase()}`;
 
   return (
-    <div className="flex flex-col rounded-lg border border-zinc-200 bg-zinc-50/60 p-3 shadow-2xs min-w-[160px] flex-1 dark:border-zinc-800 dark:bg-zinc-900/60">
-      {/* Column Header */}
-      <div className="border-b border-zinc-200/80 pb-2.5 mb-2.5 flex items-baseline justify-between dark:border-zinc-800">
-        <div>
-          <span className="text-xs font-bold text-zinc-900 block dark:text-zinc-100">{dayName}</span>
-          <span className="text-[10px] text-zinc-400 font-medium dark:text-zinc-500">{dateStr}</span>
+    <section
+      aria-labelledby={headingId}
+      className="min-w-0 rounded-xl border border-zinc-200 bg-zinc-50/70 p-4 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900/60"
+    >
+      <header className="mb-3 flex items-start justify-between gap-3 border-b border-zinc-200/80 pb-3 dark:border-zinc-800">
+        <div className="min-w-0">
+          <h2 id={headingId} className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            {dayName}
+          </h2>
+          {dateStr ? <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{dateStr}</p> : null}
         </div>
-        <span className="text-[10px] font-bold text-zinc-500 rounded bg-white border border-zinc-200 px-1.5 py-0.5 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300">
-          {completed}/{total}
+        <span className="shrink-0 rounded-full border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+          {completed}/{items.length}
         </span>
-      </div>
+      </header>
 
-      {/* Item list */}
-      <div className="flex-1 space-y-2 overflow-y-auto max-h-[500px] pr-0.5">
+      <div className="space-y-3">
         {items.length === 0 ? (
-          <div className="py-8 text-center text-xs text-zinc-400 italic dark:text-zinc-600">—</div>
+          <p className="rounded-lg border border-dashed border-zinc-200 px-3 py-6 text-center text-sm leading-5 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+            {locale === "vi" ? "Chưa có công việc cho ngày này." : "No tasks planned for this day."}
+          </p>
         ) : (
           items.map((item) => (
             <PlanItemCard
@@ -57,6 +63,6 @@ export default function DayColumn({
           ))
         )}
       </div>
-    </div>
+    </section>
   );
 }

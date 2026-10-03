@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 import type { WeekPlanItemDto } from "@/lib/contracts";
 import { useSettings } from "@/context/SettingsContext";
 
@@ -12,157 +12,80 @@ interface TodayItemProps {
   isMutating?: boolean;
 }
 
-export default function TodayItem({
-  item,
-  isClosed,
-  onIncrement,
-  onDecrement,
-  isMutating = false,
-}: TodayItemProps) {
+export default function TodayItem({ item, isClosed, onIncrement, onDecrement, isMutating = false }: TodayItemProps) {
   const { locale } = useSettings();
-  const [showWhy, setShowWhy] = useState(false);
+  const goalId = useId();
+  const [showGoal, setShowGoal] = useState(false);
   const isMulti = item.plannedCount > 1;
   const isComplete = item.done >= item.plannedCount;
-  const isPlanRevision = item.tacticId === null;
+  const isExtraTask = item.tacticId === null;
+  const controlsDisabled = isClosed || isMutating || isExtraTask;
+  const completionName = isComplete
+    ? locale === "vi" ? `Hủy hoàn thành: ${item.label}` : `Undo completion: ${item.label}`
+    : locale === "vi" ? `Đánh dấu hoàn thành: ${item.label}` : `Mark complete: ${item.label}`;
 
   const handleToggle = () => {
-    if (isClosed || isMutating) return;
-    if (isComplete) {
-      onDecrement(item);
-    } else {
-      onIncrement(item);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === " " || e.key === "Enter") {
-      e.preventDefault();
-      handleToggle();
-    }
+    if (controlsDisabled) return;
+    if (isComplete) onDecrement(item);
+    else onIncrement(item);
   };
 
   return (
-    <div
-      className={`group relative flex items-start justify-between gap-3 rounded-xl border p-4 transition ${
-        isComplete
-          ? "border-zinc-200 bg-zinc-100/60 opacity-80 dark:border-zinc-800 dark:bg-zinc-900/40"
-          : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
-      }`}
-    >
-      <div className="flex items-start gap-3 min-w-0 flex-1">
-        {/* Checkbox button */}
+    <article className={`flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden rounded-xl border p-4 sm:flex-row sm:items-start sm:justify-between ${
+      isComplete
+        ? "border-zinc-200 bg-zinc-100/70 dark:border-zinc-800 dark:bg-zinc-900/50"
+        : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+    }`}>
+      <div className="flex min-w-0 flex-1 items-start gap-3">
         <button
           type="button"
-          disabled={isClosed || isMutating}
+          aria-label={completionName}
+          aria-pressed={isComplete}
+          disabled={controlsDisabled}
           onClick={handleToggle}
-          onKeyDown={handleKeyDown}
-          title={
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 dark:focus:ring-teal-300 ${
             isComplete
-              ? locale === "vi"
-                ? "Điểm số đo lường thành tựu đạt được, không đo ý chí (The score measures achievements)."
-                : "The score measures achievements, not effort or intentions."
-              : locale === "vi"
-              ? "Đánh dấu hoàn thành (Mark completion)"
-              : "Mark completion"
-          }
-          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition focus:outline-hidden focus:ring-2 focus:ring-zinc-400 ${
-            isComplete
-              ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-              : "border-zinc-300 bg-white hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600"
-          } ${isClosed ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+              ? "border-teal-700 bg-teal-700 text-white dark:border-teal-400 dark:bg-teal-400 dark:text-zinc-950"
+              : "border-zinc-300 bg-white text-zinc-700 hover:border-teal-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+          } disabled:cursor-not-allowed disabled:opacity-50`}
         >
-          {isComplete && (
-            <svg
-              className="h-3.5 w-3.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={3}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          )}
+          {isComplete ? <span aria-hidden="true" className="text-lg">✓</span> : <span aria-hidden="true" className="h-3 w-3 rounded-sm border border-current" />}
         </button>
-
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              onClick={handleToggle}
-              className={`text-sm font-medium select-none cursor-pointer ${
-                isComplete
-                  ? "text-zinc-500 line-through dark:text-zinc-400"
-                  : "text-zinc-900 dark:text-zinc-100"
-              }`}
-            >
-              {item.label}
-            </span>
-
-            {isPlanRevision && (
-              <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
-                {locale === "vi" ? "sửa đổi kế hoạch" : "plan revision"}
-              </span>
-            )}
-          </div>
-
-          {/* Goal Context Chip */}
+          <p className={`min-w-0 break-all text-[15px] font-medium leading-6 ${isComplete ? "text-zinc-500 line-through dark:text-zinc-400" : "text-zinc-900 dark:text-zinc-100"}`}>{item.label}</p>
+          {isExtraTask && <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{locale === "vi" ? "Việc thêm · không thể theo dõi hoàn thành" : "Extra task · completion tracking unavailable"}</p>}
           {item.goal && (
-            <div className="mt-1.5">
-              <button
-                type="button"
-                onClick={() => setShowWhy(!showWhy)}
-                className="inline-flex items-center gap-1 rounded bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-200 transition dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+            <details open={showGoal} className="mt-2 min-w-0 max-w-full">
+              <summary
+                aria-controls={goalId}
+                aria-expanded={showGoal}
+                onClick={(event) => {
+                  event.preventDefault();
+                  setShowGoal((current) => !current);
+                }}
+                className="min-h-10 min-w-0 max-w-full cursor-pointer break-all whitespace-normal rounded-md bg-zinc-100 px-2.5 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
-                <span>{locale === "vi" ? "Mục tiêu:" : "Goal:"} {item.goal.title}</span>
-                <span className="text-[9px] text-zinc-400">
-                  {showWhy ? "▲" : "▼"}
-                </span>
-              </button>
-
-              {showWhy && (
-                <p className="mt-1 text-xs text-zinc-500 italic dark:text-zinc-400">
-                  {locale === "vi" ? "Lý do:" : "Why:"} &ldquo;{item.goal.why}&rdquo;
-                </p>
-              )}
-            </div>
+                {locale === "vi" ? "Mục tiêu:" : "Goal:"} {item.goal.title}
+              </summary>
+              <p id={goalId} className="mt-1.5 min-w-0 max-w-full break-words [overflow-wrap:anywhere] text-sm italic text-zinc-600 dark:text-zinc-400">{locale === "vi" ? "Lý do:" : "Why:"} “{item.goal.why}”</p>
+            </details>
           )}
         </div>
       </div>
-
-      {/* Counter / stepper for multi-count items */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        <span
-          className={`rounded-md px-2 py-0.5 text-xs font-bold ${
-            isComplete
-              ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-              : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-          }`}
-        >
+      <div className="flex shrink-0 items-center justify-end gap-2 pl-[52px] sm:pl-0">
+        <span className="rounded-md bg-zinc-100 px-2.5 py-1.5 text-right text-sm font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
           {item.done}/{item.plannedCount}
+          {isMulti && <span className="block text-[11px] font-medium text-zinc-500 dark:text-zinc-400">{locale === "vi" ? "lượt trong tuần" : "weekly count"}</span>}
         </span>
-
-        {isMulti && !isClosed && (
-          <div className="flex items-center rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-            <button
-              type="button"
-              disabled={isClosed || isMutating || item.done <= 0}
-              onClick={() => onDecrement(item)}
-              title={locale === "vi" ? "Giảm hoàn thành" : "Decrease completion"}
-              className="flex h-6 w-6 items-center justify-center rounded-l text-xs font-bold text-zinc-600 hover:bg-zinc-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-zinc-400 dark:hover:bg-zinc-800"
-            >
-              −
-            </button>
-            <button
-              type="button"
-              disabled={isClosed || isMutating || item.done >= item.plannedCount}
-              onClick={() => onIncrement(item)}
-              title={locale === "vi" ? "Tăng hoàn thành" : "Increase completion"}
-              className="flex h-6 w-6 items-center justify-center rounded-r border-l border-zinc-200 text-xs font-bold text-zinc-600 hover:bg-zinc-100 disabled:opacity-30 disabled:hover:bg-transparent dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            >
-              +
-            </button>
-          </div>
+        {isMulti && (
+          <>
+            <div className="flex items-center rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+              <button type="button" aria-label={locale === "vi" ? `Giảm hoàn thành: ${item.label}` : `Decrease completion: ${item.label}`} disabled={controlsDisabled || item.done <= 0} onClick={() => onDecrement(item)} className="flex h-10 w-10 items-center justify-center rounded-l-lg text-lg font-bold text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-30 dark:text-zinc-300 dark:hover:bg-zinc-800">−</button>
+              <button type="button" aria-label={locale === "vi" ? `Tăng hoàn thành: ${item.label}` : `Increase completion: ${item.label}`} disabled={controlsDisabled || item.done >= item.plannedCount} onClick={() => onIncrement(item)} className="flex h-10 w-10 items-center justify-center rounded-r-lg border-l border-zinc-200 text-lg font-bold text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-30 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">+</button>
+            </div>
+          </>
         )}
       </div>
-    </div>
+    </article>
   );
 }

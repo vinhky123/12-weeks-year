@@ -2,8 +2,8 @@
 
 import React from "react";
 import type { WeekPlanItemDto } from "@/lib/contracts";
-import DayColumn from "./DayColumn";
 import { useSettings } from "@/context/SettingsContext";
+import DayColumn from "./DayColumn";
 
 const EN_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const VI_DAYS = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
@@ -16,7 +16,6 @@ interface WeekBoardProps {
   onRename: (itemId: number, newLabel: string) => Promise<void>;
   onRemove: (itemId: number) => Promise<void>;
 }
-
 export default function WeekBoard({
   weekStart,
   items,
@@ -26,30 +25,29 @@ export default function WeekBoard({
   onRemove,
 }: WeekBoardProps) {
   const { locale } = useSettings();
-  const startDate = new Date(weekStart);
-
-  const getDayDate = (dayOffset: number): string => {
-    if (isNaN(startDate.getTime())) return "";
-    const d = new Date(startDate);
-    d.setDate(d.getDate() + dayOffset);
-    return `${d.getMonth() + 1}/${d.getDate()}`;
-  };
-
+  const startDate = new Date(`${weekStart}T00:00:00Z`);
   const days = locale === "vi" ? VI_DAYS : EN_DAYS;
 
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-        <span className="italic">
-          {locale === "vi"
-            ? "Các đầu việc bắt đầu từ Thứ Hai — hãy chuyển sang các ngày bạn dự định thực hiện (Items start on Monday — move them to the days you’ll do them)."
-            : "Items start on Monday — move them to the days you’ll do them."}
-        </span>
-      </div>
+  const getDayDate = (dayOffset: number): string => {
+    if (Number.isNaN(startDate.getTime())) return "";
 
-      <div className="flex gap-3 overflow-x-auto pb-4 pt-1">
+    const date = new Date(startDate);
+    date.setUTCDate(date.getUTCDate() + dayOffset);
+    return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
+  };
+
+  return (
+    <section className="space-y-4" aria-label={locale === "vi" ? "Lịch tuần" : "Weekly schedule"}>
+      <p className="text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+        {locale === "vi"
+          ? "Các công việc bắt đầu vào Thứ Hai. Chuyển chúng sang ngày bạn dự định thực hiện."
+          : "Tasks start on Monday. Move them to the day you plan to do them."}
+      </p>
+
+      <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {days.map((dayName, dayIndex) => {
-          const dayItems = items.filter((i) => i.dayOfWeek === dayIndex);
+          const dayItems = items.filter((item) => item.dayOfWeek === dayIndex);
+
           return (
             <DayColumn
               key={dayName}
@@ -65,6 +63,6 @@ export default function WeekBoard({
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type {
   WeekPlanDetailDto,
   GoalDto,
@@ -8,6 +8,7 @@ import type {
 } from "@/lib/contracts";
 import ScoreVerdict from "./ScoreVerdict";
 import { useSettings } from "@/context/SettingsContext";
+import ModalDialog from "@/components/common/ModalDialog";
 
 interface CloseWeekModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export default function CloseWeekModal({
   onNavigateWeek,
 }: CloseWeekModalProps) {
   const { locale } = useSettings();
+  const { plan, score } = planDetail;
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [lagInputs, setLagInputs] = useState<Record<number, string>>({});
   const [lagErrors, setLagErrors] = useState<Record<number, string>>({});
@@ -36,15 +38,34 @@ export default function CloseWeekModal({
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [closedResult, setClosedResult] = useState<WeekPlanDetailDto | null>(null);
+  const wasOpenRef = useRef(false);
+  const planIdRef = useRef(plan.id);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    const freshOpen = isOpen && !wasOpenRef.current;
+    const differentPlan = planIdRef.current !== plan.id;
 
-  const { plan, score } = planDetail;
+    if (isOpen && (freshOpen || differentPlan)) {
+      setStep(1);
+      setLagInputs({});
+      setLagErrors({});
+      setReflection("");
+      setSubmitting(false);
+      setServerError(null);
+      setClosedResult(null);
+    }
+
+    wasOpenRef.current = isOpen;
+    planIdRef.current = plan.id;
+  }, [isOpen, plan.id]);
+
+  const numberError = locale === "vi" ? "Hãy nhập một số hợp lệ." : "Enter a valid number.";
+  const isValidLagValue = (value: string) => value.trim() === "" || Number.isFinite(Number(value));
 
   const handleLagChange = (goalId: number, val: string) => {
     setLagInputs((prev) => ({ ...prev, [goalId]: val }));
-    if (val.trim() !== "" && isNaN(Number(val))) {
-      setLagErrors((prev) => ({ ...prev, [goalId]: "Must be a valid number" }));
+    if (!isValidLagValue(val)) {
+      setLagErrors((prev) => ({ ...prev, [goalId]: numberError }));
     } else {
       setLagErrors((prev) => {
         const next = { ...prev };
@@ -57,8 +78,8 @@ export default function CloseWeekModal({
   const handleContinueFromLag = () => {
     const errors: Record<number, string> = {};
     for (const [goalIdStr, val] of Object.entries(lagInputs)) {
-      if (val.trim() !== "" && isNaN(Number(val))) {
-        errors[Number(goalIdStr)] = "Must be a valid number";
+      if (!isValidLagValue(val)) {
+        errors[Number(goalIdStr)] = numberError;
       }
     }
 
@@ -72,13 +93,15 @@ export default function CloseWeekModal({
   };
 
   const handleFinalClose = async () => {
+    if (submitting) return;
+
     try {
       setSubmitting(true);
       setServerError(null);
 
       const lagValues: { goalId: number; value: number }[] = [];
       for (const [goalIdStr, val] of Object.entries(lagInputs)) {
-        if (val.trim() !== "" && !isNaN(Number(val))) {
+        if (val.trim() !== "" && Number.isFinite(Number(val))) {
           lagValues.push({
             goalId: Number(goalIdStr),
             value: Number(val),
@@ -107,46 +130,30 @@ export default function CloseWeekModal({
 
   const nextWeekNumber = plan.weekNumber + 1;
   const canPlanNextWeek = nextWeekNumber <= currentCycleWeek + 1 && nextWeekNumber <= 12;
+  const title = locale === "vi" ? `Chốt tuần ${plan.weekNumber}` : `Close week ${plan.weekNumber}`;
+  const stepName = locale === "vi"
+    ? ["", "Xem lại thực thi", "Cập nhật kết quả", "Suy ngẫm và chốt tuần", "Tuần đã chốt"][step]
+    : ["", "Review execution", "Update results", "Reflect and close", "Week closed"][step];
+  const cancelLabel = locale === "vi" ? "Hủy" : "Cancel";
+  const backLabel = locale === "vi" ? "Quay lại" : "Back";
+  const continueLabel = locale === "vi" ? "Tiếp tục" : "Continue";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-xs">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl border border-zinc-200 animate-in fade-in zoom-in-95 duration-150 space-y-6 dark:border-zinc-800 dark:bg-zinc-900">
+    <ModalDialog open={isOpen} onClose={onClose} title={title} busy={submitting}>
+      <div className="space-y-5">
         {/* Header & Step Indicator */}
-        <div className="flex items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-800">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-              {locale === "vi"
-                ? `Nghi thức chốt tuần · Tuần ${plan.weekNumber}`
-                : `Close Week Ritual · Week ${plan.weekNumber}`}
-            </span>
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-              {step === 1 && "Step 1: Confront the Truth"}
-              {step === 2 && "Step 2: Log Lag Numbers"}
-              {step === 3 && "Step 3: Reflection & Freeze"}
-              {step === 4 && (locale === "vi" ? "Đã chốt tuần thành công" : "Week Closed Successfully")}
-            </h3>
-          </div>
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm font-semibold text-teal-700 dark:text-teal-300">{stepName}</p>
 
           {step < 4 && (
-            <div className="flex items-center gap-1.5">
-              {[1, 2, 3].map((s) => (
-                <div
-                  key={s}
-                  className={`h-2 w-2 rounded-full transition ${
-                    step === s
-                      ? "bg-zinc-900 dark:bg-zinc-100 w-5"
-                      : step > s
-                      ? "bg-zinc-400 dark:bg-zinc-600"
-                      : "bg-zinc-200 dark:bg-zinc-800"
-                  }`}
-                />
-              ))}
-            </div>
+            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              {locale === "vi" ? `Bước ${step}/3` : `Step ${step} of 3`}
+            </p>
           )}
         </div>
 
         {serverError && (
-          <div className="rounded-md bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 font-medium dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
+          <div role="alert" className="rounded-md bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 font-medium dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
             {serverError}
           </div>
         )}
@@ -156,13 +163,20 @@ export default function CloseWeekModal({
           <div className="space-y-6">
             <ScoreVerdict score={score} />
 
-            <div className="flex justify-end pt-2">
+            <div className="flex items-center justify-between gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex min-h-10 items-center rounded-md px-4 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                {cancelLabel}
+              </button>
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="rounded-md bg-zinc-900 px-5 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-zinc-800 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                className="inline-flex min-h-10 items-center rounded-md bg-teal-700 px-5 text-sm font-semibold text-white shadow-xs transition hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-500"
               >
-                Continue to Lag Values &rarr;
+                {continueLabel}
               </button>
             </div>
           </div>
@@ -189,16 +203,18 @@ export default function CloseWeekModal({
                       {locale === "vi" ? "Mục tiêu:" : "Target:"} {g.lagTarget} {g.lagUnit}
                     </span>
                   </div>
-                  <label className="block text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <label htmlFor={`close-week-lag-${g.id}`} className="block text-[11px] text-zinc-500 dark:text-zinc-400">
                     {g.lagMetricName} ({g.lagUnit}): {g.lagStart} &rarr; {g.lagTarget} &middot; {locale === "vi" ? "tuần này:" : "this week:"}
                   </label>
                   <input
+                    id={`close-week-lag-${g.id}`}
                     type="number"
                     step="any"
                     placeholder={`e.g. ${g.lagTarget}`}
                     value={lagInputs[g.id] ?? ""}
                     onChange={(e) => handleLagChange(g.id, e.target.value)}
-                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 focus:border-zinc-900 focus:outline-hidden dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    aria-invalid={Boolean(lagErrors[g.id])}
+                    className="min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-teal-600 focus:outline-hidden dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                   />
                   {lagErrors[g.id] && (
                     <p className="text-[11px] text-rose-600 font-medium dark:text-rose-400">
@@ -209,20 +225,29 @@ export default function CloseWeekModal({
               ))}
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-zinc-800">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="rounded-md px-4 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition dark:text-zinc-400 dark:hover:bg-zinc-800"
-              >
-                &larr; {locale === "vi" ? "Quay lại điểm số" : "Back to Score"}
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="inline-flex min-h-10 items-center rounded-md px-4 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 transition dark:text-zinc-400 dark:hover:bg-zinc-800"
+                >
+                  {backLabel}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="inline-flex min-h-10 items-center rounded-md px-4 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 transition dark:text-zinc-400 dark:hover:bg-zinc-800"
+                >
+                  {cancelLabel}
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={handleContinueFromLag}
-                className="rounded-md bg-zinc-900 px-5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-zinc-800 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                className="inline-flex min-h-10 items-center rounded-md bg-teal-700 px-5 text-sm font-semibold text-white shadow-xs hover:bg-teal-800 transition dark:bg-teal-600 dark:hover:bg-teal-500"
               >
-                Continue to Reflection &rarr;
+                {continueLabel}
               </button>
             </div>
           </div>
@@ -232,10 +257,12 @@ export default function CloseWeekModal({
         {step === 3 && (
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-1 dark:text-zinc-300">
-                {locale === "vi" ? "Một dòng suy ngẫm tuần (Tùy chọn)" : "One-Line Weekly Reflection (Optional)"}
+              <label htmlFor="close-week-reflection" className="block text-sm font-semibold text-zinc-700 mb-1 dark:text-zinc-300">
+                {locale === "vi" ? "Suy ngẫm tuần" : "Weekly reflection"}
               </label>
+              <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">{locale === "vi" ? "Không bắt buộc" : "Optional"}</p>
               <textarea
+                id="close-week-reflection"
                 rows={3}
                 value={reflection}
                 onChange={(e) => setReflection(e.target.value)}
@@ -253,34 +280,44 @@ export default function CloseWeekModal({
               <div className="flex items-start gap-2.5">
                 <span className="text-lg">🔒</span>
                 <div>
-                  <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wide dark:text-zinc-100">
-                    {locale === "vi" ? "Cảnh báo đóng băng" : "Freeze Warning"}
-                  </h4>
                   <p className="mt-0.5 text-xs text-zinc-700 font-medium leading-relaxed dark:text-zinc-300">
-                    Closing freezes week {plan.weekNumber} forever — completions can no longer change.
+                    {locale === "vi"
+                      ? `Sau khi chốt, thành tựu của tuần ${plan.weekNumber} sẽ không thể thay đổi.`
+                      : `After closing, week ${plan.weekNumber} completions cannot be changed.`}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-zinc-800">
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                disabled={submitting}
-                className="rounded-md px-4 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition dark:text-zinc-400 dark:hover:bg-zinc-800"
-              >
-                &larr; {locale === "vi" ? "Quay lại chỉ số" : "Back to Lag"}
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  disabled={submitting}
+                  className="inline-flex min-h-10 items-center rounded-md px-4 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 transition dark:text-zinc-400 dark:hover:bg-zinc-800"
+                >
+                  {backLabel}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={submitting}
+                  className="inline-flex min-h-10 items-center rounded-md px-4 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 transition dark:text-zinc-400 dark:hover:bg-zinc-800"
+                >
+                  {cancelLabel}
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={handleFinalClose}
                 disabled={submitting}
-                className="rounded-md bg-zinc-900 px-6 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-zinc-800 disabled:opacity-50 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                aria-label={title}
+                className="inline-flex min-h-10 items-center rounded-md bg-teal-700 px-6 text-sm font-semibold text-white shadow-xs hover:bg-teal-800 disabled:opacity-50 transition dark:bg-teal-600 dark:hover:bg-teal-500"
               >
                 {submitting
                   ? (locale === "vi" ? "Đang chốt..." : "Closing...")
-                  : (locale === "vi" ? `Chốt Tuần ${plan.weekNumber} (Close Week ${plan.weekNumber})` : `Close Week ${plan.weekNumber}`)}
+                  : (locale === "vi" ? `Chốt tuần ${plan.weekNumber}` : `Close week ${plan.weekNumber}`)}
               </button>
             </div>
           </div>
@@ -295,12 +332,16 @@ export default function CloseWeekModal({
 
             <div>
               <h4 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100">
-                {locale === "vi" ? `Tuần ${plan.weekNumber} đã được chốt` : `Week ${plan.weekNumber} is Closed`}
+                {locale === "vi" ? `Tuần ${plan.weekNumber} đã chốt` : `Week ${plan.weekNumber} is closed`}
               </h4>
               <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                {locale === "vi"
-                  ? `Điểm số chính thức là ${closedResult.score?.scorePct ?? 0}%. Một bản sao lưu tự động đã được lưu an toàn.`
-                  : `Your final score is locked at ${closedResult.score?.scorePct ?? 0}%. An automatic checkpoint was saved.`}
+                {closedResult.score
+                  ? locale === "vi"
+                    ? `Điểm cuối cùng: ${closedResult.score.scorePct}%. Điểm kiểm tra tự động đã được lưu.`
+                    : `Final score: ${closedResult.score.scorePct}%. An automatic checkpoint was saved.`
+                  : locale === "vi"
+                    ? "Tuần đã chốt mà không có điểm số. Điểm kiểm tra tự động đã được lưu."
+                    : "The week closed with no score. An automatic checkpoint was saved."}
               </p>
             </div>
 
@@ -312,15 +353,15 @@ export default function CloseWeekModal({
                     onClose();
                     onNavigateWeek(nextWeekNumber);
                   }}
-                  className="w-full sm:w-auto rounded-md bg-zinc-900 px-5 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-zinc-800 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                  className="inline-flex min-h-10 w-full items-center justify-center rounded-md bg-teal-700 px-5 text-sm font-semibold text-white shadow-xs hover:bg-teal-800 transition sm:w-auto dark:bg-teal-600 dark:hover:bg-teal-500"
                 >
-                  {locale === "vi" ? `Lập kế hoạch Tuần ${nextWeekNumber} →` : `Plan Week ${nextWeekNumber} →`}
+                  {locale === "vi" ? `Lập kế hoạch tuần ${nextWeekNumber}` : `Plan week ${nextWeekNumber}`}
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full sm:w-auto rounded-md bg-zinc-900 px-5 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-zinc-800 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                  className="inline-flex min-h-10 w-full items-center justify-center rounded-md bg-teal-700 px-5 text-sm font-semibold text-white shadow-xs hover:bg-teal-800 transition sm:w-auto dark:bg-teal-600 dark:hover:bg-teal-500"
                 >
                   {locale === "vi" ? "Đóng" : "Done"}
                 </button>
@@ -329,6 +370,6 @@ export default function CloseWeekModal({
           </div>
         )}
       </div>
-    </div>
+    </ModalDialog>
   );
 }

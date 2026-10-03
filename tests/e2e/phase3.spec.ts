@@ -84,7 +84,9 @@ test.describe("Phase 3 E2E (Antigravity UI Verification)", () => {
     await page.goto("/review?id=1");
 
     // 1. Step 1: Celebrate
-    await expect(page.getByText(/(Celebrate before you analyze\.|Ăn mừng trước khi bạn phân tích\.|Ăn mừng trước khi phân tích\.)/)).toBeVisible();
+    // A cold dev server compiles three review API routes on this first visit and
+    // Fast Refresh reloads the page twice, so allow for compilation here.
+    await expect(page.getByText(/(Celebrate before you analyze\.|Ăn mừng trước khi bạn phân tích\.|Ăn mừng trước khi phân tích\.)/)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/(Peak Execution|Đỉnh cao thực thi)/)).toBeVisible();
     await expect(page.getByText(/(12-Week Average|Điểm trung bình 12 tuần|Trung bình 12 tuần)/)).toBeVisible();
     await expect(page.getByText(/(Goals Achieved|Mục tiêu đã hoàn thành|Mục tiêu đạt được)/)).toBeVisible();

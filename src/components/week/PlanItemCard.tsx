@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { WeekPlanItemDto } from "@/lib/contracts";
 import { useSettings } from "@/context/SettingsContext";
 
-const EN_DAY_NAMES_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const VI_DAY_NAMES_SHORT = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+const EN_DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const VI_DAY_NAMES = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
 
 interface PlanItemCardProps {
   item: WeekPlanItemDto;
@@ -14,6 +14,7 @@ interface PlanItemCardProps {
   onRename: (itemId: number, newLabel: string) => Promise<void>;
   onRemove: (itemId: number) => Promise<void>;
 }
+type Mutation = "move" | "rename" | "remove" | null;
 
 export default function PlanItemCard({
   item,
@@ -24,146 +25,196 @@ export default function PlanItemCard({
 }: PlanItemCardProps) {
   const { locale } = useSettings();
   const [isEditing, setIsEditing] = useState(false);
-  const [label, setLabel] = useState(item.label);
-  const [isMoving, setIsMoving] = useState(false);
+  const [draftLabel, setDraftLabel] = useState(item.label);
+  const [mutation, setMutation] = useState<Mutation>(null);
+  const [error, setError] = useState("");
 
   const isComplete = item.done >= item.plannedCount;
   const isPlanRevision = item.tacticId === null;
-  const daysShort = locale === "vi" ? VI_DAY_NAMES_SHORT : EN_DAY_NAMES_SHORT;
+  const isPending = mutation !== null;
+  const dayNames = locale === "vi" ? VI_DAY_NAMES : EN_DAY_NAMES;
+  const renameInputId = `rename-plan-item-${item.id}`;
+  const moveSelectId = `move-plan-item-${item.id}`;
+
+  useEffect(() => {
+    if (!isEditing) setDraftLabel(item.label);
+  }, [isEditing, item.label]);
+
+  const failureMessage =
+    locale === "vi" ? "Không thể cập nhật công việc. Vui lòng thử lại." : "Could not update this task. Please try again.";
 
   const handleSaveRename = async () => {
-    if (!label.trim()) return;
-    await onRename(item.id, label.trim());
-    setIsEditing(false);
+    const nextLabel = draftLabel.trim();
+    if (!nextLabel || isPending) return;
+
+    setError("");
+    setMutation("rename");
+    try {
+      await onRename(item.id, nextLabel);
+      setIsEditing(false);
+    } catch {
+      setError(failureMessage);
+    } finally {
+      setMutation(null);
+    }
   };
 
   const handleSelectDay = async (newDay: number) => {
-    setIsMoving(false);
-    if (newDay === item.dayOfWeek) return;
-    await onMoveDay(item.id, newDay);
+    if (newDay === item.dayOfWeek || isPending) return;
+
+    setError("");
+    setMutation("move");
+    try {
+      await onMoveDay(item.id, newDay);
+    } catch {
+      setError(failureMessage);
+    } finally {
+      setMutation(null);
+    }
+  };
+
+  const handleRemove = async () => {
+    if (isPending) return;
+
+    setError("");
+    setMutation("remove");
+    try {
+      await onRemove(item.id);
+    } catch {
+      setError(failureMessage);
+    } finally {
+      setMutation(null);
+    }
+  };
+
+  const startRename = () => {
+    setError("");
+    setDraftLabel(item.label);
+    setIsEditing(true);
+  };
+
+  const cancelRename = () => {
+    setError("");
+    setDraftLabel(item.label);
+    setIsEditing(false);
   };
 
   return (
-    <div
-      className={`rounded-xl border p-3 shadow-2xs transition space-y-2 ${
+    <article
+      className={`min-w-0 space-y-3 rounded-xl border p-3 shadow-2xs transition-colors ${
         isComplete
-          ? "border-zinc-200 bg-zinc-100/60 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400"
-          : "border-zinc-200 bg-white text-zinc-900 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-700"
+          ? "border-zinc-200 bg-zinc-100/70 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950/30 dark:text-zinc-400"
+          : "border-zinc-200 bg-white text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex min-w-0 items-start justify-between gap-3">
         {isEditing ? (
-          <div className="flex items-center gap-1.5 w-full">
+          <div className="min-w-0 flex-1">
+            <label htmlFor={renameInputId} className="mb-1.5 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+              {locale === "vi" ? "Tên công việc" : "Task name"}
+            </label>
             <input
+              id={renameInputId}
               type="text"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              className="flex-1 rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              value={draftLabel}
+              onChange={(event) => setDraftLabel(event.target.value)}
+              disabled={isPending}
+              className="min-h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:cursor-wait disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
               autoFocus
             />
+          </div>
+        ) : (
+          <p
+            className={`min-w-0 flex-1 text-sm font-semibold leading-5 [overflow-wrap:anywhere] ${
+              isComplete ? "text-zinc-500 line-through dark:text-zinc-400" : "text-zinc-900 dark:text-zinc-100"
+            }`}
+          >
+            {item.label}
+          </p>
+        )}
+
+        <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+          {item.done}/{item.plannedCount}
+        </span>
+      </div>
+
+      {item.goal ? (
+        <p className="text-xs leading-5 text-zinc-600 [overflow-wrap:anywhere] dark:text-zinc-400">{item.goal.title}</p>
+      ) : isPlanRevision ? (
+        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          {locale === "vi" ? "Điều chỉnh kế hoạch" : "Plan revision"}
+        </p>
+      ) : null}
+
+      {!isClosed ? (
+        isEditing ? (
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={handleSaveRename}
-              className="rounded bg-zinc-900 px-2 py-1 text-xs font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900"
+              disabled={isPending || !draftLabel.trim()}
+              aria-label={locale === "vi" ? "Lưu tên công việc" : "Save task name"}
+              className="min-h-10 rounded-lg border border-teal-700 bg-teal-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50 dark:border-teal-500 dark:bg-teal-600 dark:hover:bg-teal-500"
             >
-              {locale === "vi" ? "Lưu" : "Save"}
+              {mutation === "rename" ? (locale === "vi" ? "Đang lưu…" : "Saving…") : locale === "vi" ? "Lưu" : "Save"}
             </button>
             <button
               type="button"
-              onClick={() => setIsEditing(false)}
-              className="rounded bg-zinc-100 px-2 py-1 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+              onClick={cancelRename}
+              disabled={isPending}
+              aria-label={locale === "vi" ? "Hủy đổi tên" : "Cancel rename"}
+              className="min-h-10 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               {locale === "vi" ? "Hủy" : "Cancel"}
             </button>
           </div>
         ) : (
-          <span
-            className={`text-xs font-semibold leading-snug break-words ${
-              isComplete ? "text-zinc-400 line-through dark:text-zinc-500" : "text-zinc-900 dark:text-zinc-100"
-            }`}
-          >
-            {item.label}
-          </span>
-        )}
-
-        <span
-          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${
-            isComplete
-              ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-              : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-          }`}
-        >
-          {item.done}/{item.plannedCount}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between gap-1 text-[11px] text-zinc-500 flex-wrap dark:text-zinc-400">
-        {item.goal ? (
-          <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 truncate max-w-[140px] dark:bg-zinc-800 dark:text-zinc-400">
-            {item.goal.title}
-          </span>
-        ) : isPlanRevision ? (
-          <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
-            {locale === "vi" ? "điều chỉnh kế hoạch" : "plan revision"}
-          </span>
-        ) : null}
-
-        {!isClosed && !isEditing && (
-          <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500">
-            {/* Move Day Trigger */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsMoving(!isMoving)}
-                className="hover:text-zinc-700 dark:hover:text-zinc-200 text-[10px] font-semibold transition"
-                title={locale === "vi" ? "Chuyển sang ngày khác" : "Move to another day"}
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-[11rem] flex-1">
+              <label htmlFor={moveSelectId} className="sr-only">
+                {locale === "vi" ? `Chuyển ${item.label}` : `Move ${item.label}`}
+              </label>
+              <select
+                id={moveSelectId}
+                value={item.dayOfWeek}
+                onChange={(event) => void handleSelectDay(Number(event.target.value))}
+                disabled={isPending}
+                className="min-h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:cursor-wait disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
               >
-                {locale === "vi" ? "Chuyển ▼" : "Move ▼"}
-              </button>
-
-              {isMoving && (
-                <div className="absolute right-0 top-full mt-1 z-30 w-28 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
-                  <div className="text-[10px] font-bold text-zinc-400 px-2 py-1 uppercase dark:text-zinc-500">
-                    {locale === "vi" ? "Chuyển tới" : "Move to"}
-                  </div>
-                  {daysShort.map((day, dIdx) => (
-                    <button
-                      key={day}
-                      type="button"
-                      onClick={() => handleSelectDay(dIdx)}
-                      className={`w-full rounded px-2 py-1 text-left text-xs transition ${
-                        dIdx === item.dayOfWeek
-                          ? "bg-zinc-100 font-bold text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100"
-                          : "hover:bg-zinc-50 text-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-700/50"
-                      }`}
-                    >
-                      {day}
-                    </button>
-                  ))}
-                </div>
-              )}
+                {dayNames.map((day, dayIndex) => (
+                  <option key={day} value={dayIndex}>
+                    {day}
+                  </option>
+                ))}
+              </select>
             </div>
-
             <button
               type="button"
-              onClick={() => setIsEditing(true)}
-              className="hover:text-zinc-700 dark:hover:text-zinc-200 text-[10px] transition"
-              title="Rename item"
+              onClick={startRename}
+              disabled={isPending}
+              aria-label={locale === "vi" ? `Đổi tên ${item.label}` : `Rename ${item.label}`}
+              className="min-h-10 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
             >
               {locale === "vi" ? "Đổi tên" : "Rename"}
             </button>
-
             <button
               type="button"
-              onClick={() => onRemove(item.id)}
-              className="hover:text-rose-600 text-[10px] transition dark:hover:text-rose-400"
-              title="Remove item"
+              onClick={() => void handleRemove()}
+              disabled={isPending}
+              aria-label={locale === "vi" ? `Xóa ${item.label}` : `Remove ${item.label}`}
+              className="min-h-10 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-rose-900 dark:hover:bg-rose-950/30 dark:hover:text-rose-300"
             >
-              &times;
+              {mutation === "remove" ? (locale === "vi" ? "Đang xóa…" : "Removing…") : locale === "vi" ? "Xóa" : "Remove"}
             </button>
           </div>
-        )}
-      </div>
-    </div>
+        )
+      ) : null}
+
+      {error ? (
+        <p role="alert" className="text-sm leading-5 text-rose-700 dark:text-rose-300">
+          {error}
+        </p>
+      ) : null}
+    </article>
   );
 }

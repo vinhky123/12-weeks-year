@@ -22,6 +22,15 @@ html.dark body {
   color: #f4f4f5;
 }
 
+.modal-dialog {
+  overscroll-behavior: contain;
+}
+
+.modal-dialog::backdrop {
+  background-color: rgb(9 9 11 / 55%);
+  backdrop-filter: blur(2px);
+}
+
 @media print {
   @page {
     margin: 2cm;

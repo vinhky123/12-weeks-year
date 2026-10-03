@@ -1,13 +1,19 @@
 import { defineConfig } from "@playwright/test";
 
+const port = process.env.PLAYWRIGHT_PORT ?? "3210";
+const baseURL = `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: "tests/e2e",
   timeout: 30_000,
   workers: 1,
-  use: { baseURL: "http://localhost:3210" },
+  use: {
+    baseURL,
+    ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}),
+  },
   webServer: {
-    command: "npm run dev -- -p 3210",
-    url: "http://localhost:3210",
+    command: `npm run dev -- -p ${port}`,
+    url: baseURL,
     reuseExistingServer: true,
     timeout: 120_000,
   },

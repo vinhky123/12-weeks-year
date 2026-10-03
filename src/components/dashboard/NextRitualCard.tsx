@@ -69,10 +69,10 @@ export default function NextRitualCard({
 
           {nextRitual === "close_last_week" && (
             <Link
-              href="/week?close=1"
+              href={`/week?week=${Math.max(1, currentWeekNumber - 1)}&close=1`}
               className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-zinc-800 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
             >
-              {t(locale, "ritual.close_last_week", { n: Math.max(1, currentWeekNumber - 1) })}
+              {getTitle(nextRitual, currentWeekNumber, locale)}
             </Link>
           )}
 

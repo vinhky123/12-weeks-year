@@ -85,21 +85,21 @@ test.describe("Phase 4 E2E (Antigravity UI Verification)", () => {
     await page.getByRole("button", { name: "Tiếng Việt" }).click();
 
     // Verify Vietnamese Nav Labels
-    await expect(page.getByRole("link", { name: /Bảng điều khiển/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Chu kỳ/ })).toBeVisible();
     await expect(page.getByRole("link", { name: /Hôm nay/ })).toBeVisible();
     await expect(page.getByRole("link", { name: /Kế hoạch 12 tuần/ })).toBeVisible();
     await expect(page.getByRole("link", { name: /Cài đặt/ })).toBeVisible();
 
     // Navigate to Today and verify Vietnamese heading
     await page.goto("/today");
-    await expect(page.getByRole("heading", { name: "Hôm nay" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Hôm nay", exact: true })).toBeVisible();
 
     // Switch back to English
     await page.goto("/settings");
     await page.getByRole("button", { name: "English" }).click();
 
     // Verify English Nav Labels restored
-    await expect(page.getByRole("link", { name: /Dashboard/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Cycle/ })).toBeVisible();
     await expect(page.getByRole("link", { name: /Today/ })).toBeVisible();
     await expect(page.getByRole("link", { name: /12-Week Plan/ })).toBeVisible();
     await expect(page.getByRole("link", { name: /Settings/ })).toBeVisible();

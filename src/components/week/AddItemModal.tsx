@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
+import ModalDialog from "@/components/common/ModalDialog";
 import { useSettings } from "@/context/SettingsContext";
 
 const EN_DAYS = [
@@ -35,20 +36,36 @@ export default function AddItemModal({
   onAdd,
 }: AddItemModalProps) {
   const { locale } = useSettings();
+  const labelId = useId();
+  const dayId = useId();
+  const wasOpenRef = useRef(false);
   const [label, setLabel] = useState("");
   const [dayOfWeek, setDayOfWeek] = useState<number>(0);
   const [showConfirmRevision, setShowConfirmRevision] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
+      setLabel("");
+      setDayOfWeek(0);
+      setShowConfirmRevision(false);
+      setSubmitting(false);
+      setError(null);
+    }
+    wasOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  const close = () => {
+    if (!submitting) onClose();
+  };
 
   const daysOptions = locale === "vi" ? VI_DAYS : EN_DAYS;
 
   const handleInitialSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!label.trim()) {
-      setError(locale === "vi" ? "Tên đầu việc là bắt buộc." : "Item label is required.");
+      setError(locale === "vi" ? "Vui lòng nhập tên công việc." : "Enter a task name.");
       return;
     }
     setError(null);
@@ -60,73 +77,71 @@ export default function AddItemModal({
       setSubmitting(true);
       setError(null);
       await onAdd(label.trim(), dayOfWeek);
-      setLabel("");
-      setShowConfirmRevision(false);
       onClose();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError(locale === "vi" ? "Không thể thêm đầu việc." : "Failed to add plan item.");
-      }
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : locale === "vi"
+            ? "Không thể thêm công việc. Vui lòng thử lại."
+            : "Could not add the task. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-xs">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl border border-zinc-200 animate-in fade-in zoom-in-95 duration-150 dark:border-zinc-800 dark:bg-zinc-900">
+    <ModalDialog
+      open={isOpen}
+      onClose={close}
+      title={locale === "vi" ? "Thêm công việc" : "Add task"}
+      busy={submitting}
+      className="max-w-md"
+    >
         {!showConfirmRevision ? (
           <div>
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800">
-              <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
-                {locale === "vi"
-                  ? "Thêm công việc phát sinh vào tuần (Add Ad-hoc Task to Week Plan)"
-                  : "Add Ad-hoc Task to Week Plan"}
-              </h3>
-              <button
-                type="button"
-                onClick={onClose}
-                className="text-zinc-400 hover:text-zinc-600 text-lg dark:hover:text-zinc-200"
-              >
-                &times;
-              </button>
-            </div>
+            <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+              {locale === "vi"
+                ? "Thêm một công việc phát sinh vào ngày bạn dự định thực hiện."
+                : "Add an extra task to the day when you plan to do it."}
+            </p>
 
             {error && (
-              <div className="mt-3 rounded-md bg-rose-50 border border-rose-200 p-2.5 text-xs text-rose-700 font-medium dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
+              <div role="alert" className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleInitialSubmit} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-1 dark:text-zinc-300">
-                  {locale === "vi" ? "Tên công việc" : "Task Label"}
+            <form onSubmit={handleInitialSubmit} className="mt-5 space-y-5">
+              <div className="space-y-2">
+                <label htmlFor={labelId} className="block text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                  {locale === "vi" ? "Tên công việc" : "Task name"}
                 </label>
                 <input
+                  id={labelId}
                   type="text"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
                   placeholder={
                     locale === "vi"
-                      ? "Ví dụ: Họp khẩn giải quyết khiếu nại (Urgent client presentation)"
-                      : "e.g. Urgent client presentation follow-up"
+                      ? "Ví dụ: Gọi lại cho khách hàng"
+                      : "For example: Follow up with the customer"
                   }
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-900 focus:outline-hidden dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-teal-400 dark:focus:ring-teal-400/20"
                   autoFocus
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-1 dark:text-zinc-300">
-                  {locale === "vi" ? "Thực hiện vào ngày" : "Placed on Day"}
+              <div className="space-y-2">
+                <label htmlFor={dayId} className="block text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                  {locale === "vi" ? "Ngày" : "Day"}
                 </label>
                 <select
+                  id={dayId}
                   value={dayOfWeek}
                   onChange={(e) => setDayOfWeek(Number(e.target.value))}
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-900 focus:outline-hidden dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-teal-400 dark:focus:ring-teal-400/20"
                 >
                   {daysOptions.map((d) => (
                     <option key={d.value} value={d.value}>
@@ -136,64 +151,75 @@ export default function AddItemModal({
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex flex-col-reverse gap-2 border-t border-zinc-200 pt-4 sm:flex-row sm:justify-end dark:border-zinc-700">
                 <button
                   type="button"
-                  onClick={onClose}
-                  className="rounded-lg px-4 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  onClick={close}
+                  className="min-h-10 rounded-lg px-4 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 >
-                  Cancel
+                  {locale === "vi" ? "Hủy" : "Cancel"}
                 </button>
                 <button
                   type="submit"
                   disabled={!label.trim()}
-                  className="rounded-lg bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                  className="min-h-10 rounded-lg bg-teal-700 px-5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-500 dark:text-zinc-950 dark:hover:bg-teal-400"
                 >
-                  Continue
+                  {locale === "vi" ? "Tiếp tục" : "Continue"}
                 </button>
               </div>
             </form>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
-              <span className="text-xl">⚠️</span>
-              <h3 className="text-base font-bold">
-                {locale === "vi" ? "Xác nhận điều chỉnh kế hoạch" : "Plan Revision Confirmation"}
+          <div className="space-y-5">
+            <div>
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                {locale === "vi" ? "Xác nhận điều chỉnh kế hoạch" : "Confirm plan revision"}
               </h3>
+              <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                {locale === "vi"
+                  ? "Đây là công việc phát sinh, không nằm trong các nghĩa vụ chiến thuật dùng để tính điểm tuần. Bạn vẫn muốn thêm chứ?"
+                  : "This is an extra task. It is not included in the tactic obligations used to score the week. Add it anyway?"}
+              </p>
             </div>
 
-            <p className="text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed font-medium bg-zinc-100 border border-zinc-200 rounded-md p-4 dark:bg-zinc-800 dark:border-zinc-700">
-              This isn’t from your 12-Week Plan. Adding it as a plan revision keeps the weekly plan strategic. Add anyway?
-            </p>
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-700 dark:bg-zinc-800/70">
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{label.trim()}</p>
+              <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+                {daysOptions.find((day) => day.value === dayOfWeek)?.label}
+              </p>
+            </div>
 
             {error && (
-              <div className="rounded-lg bg-rose-50 border border-rose-200 p-2.5 text-xs text-rose-700 font-medium dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
+              <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
                 {error}
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex flex-col-reverse gap-2 border-t border-zinc-200 pt-4 sm:flex-row sm:justify-end dark:border-zinc-700">
               <button
                 type="button"
-                onClick={() => setShowConfirmRevision(false)}
+                onClick={() => {
+                  setError(null);
+                  setShowConfirmRevision(false);
+                }}
                 disabled={submitting}
-                className="rounded-lg px-4 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition dark:text-zinc-400 dark:hover:bg-zinc-800"
+                className="min-h-10 rounded-lg px-4 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
-                Go Back
+                {locale === "vi" ? "Hủy" : "Cancel"}
               </button>
               <button
                 type="button"
                 onClick={handleConfirmAdd}
                 disabled={submitting}
-                className="rounded-lg bg-zinc-900 px-5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-zinc-800 disabled:opacity-50 transition dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                className="min-h-10 rounded-lg bg-teal-700 px-5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-500 dark:text-zinc-950 dark:hover:bg-teal-400"
               >
-                {submitting ? (locale === "vi" ? "Đang thêm..." : "Adding...") : (locale === "vi" ? "Xác nhận thêm" : "Confirm & Add")}
+                {submitting
+                  ? locale === "vi" ? "Đang thêm…" : "Adding…"
+                  : locale === "vi" ? "Xác nhận thêm" : "Confirm & add"}
               </button>
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </ModalDialog>
   );
 }

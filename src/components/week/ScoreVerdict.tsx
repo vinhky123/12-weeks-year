@@ -26,7 +26,7 @@ export default function ScoreVerdict({ score }: ScoreVerdictProps) {
             : "Nothing was due this week — no score. The week still closes."}
         </p>
         <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-          {locale === "vi" ? "Điểm số đo lường thành tựu đạt được, không đo ý chí (The score measures achievements, not effort or intentions)." : ACHIEVEMENTS_LINE}
+          {locale === "vi" ? "Điểm số đo lường thành tựu, không đo nỗ lực hay ý định." : ACHIEVEMENTS_LINE}
         </p>
       </div>
     );
@@ -46,9 +46,9 @@ export default function ScoreVerdict({ score }: ScoreVerdictProps) {
   };
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-xs text-center space-y-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-5 text-center shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
       <div>
-        <div className="text-6xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
+        <div className="text-5xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
           <span className={bandStyles.text}>{score.scorePct}%</span>
         </div>
         <div className="mt-2 flex items-center justify-center gap-2">
@@ -69,12 +69,12 @@ export default function ScoreVerdict({ score }: ScoreVerdictProps) {
       <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
         <p className="font-semibold text-zinc-800 dark:text-zinc-200">
           {locale === "vi"
-            ? "85% thực thi hàng tuần là chuẩn — dưới 65, hãy sửa kế hoạch (85% weekly execution is the benchmark — below 65, revise the plan)."
+            ? "85% thực thi hàng tuần là chuẩn — dưới 65%, hãy điều chỉnh kế hoạch."
             : BENCHMARK_LINE}
         </p>
         <p className="text-zinc-500 italic dark:text-zinc-400">
           {locale === "vi"
-            ? "Điểm số đo lường thành tựu, không đo ý chí (The score measures achievements, not effort or intentions)."
+            ? "Điểm số đo lường thành tựu, không đo nỗ lực hay ý định."
             : ACHIEVEMENTS_LINE}
         </p>
         {score.band === "REVISE_PLAN" && (

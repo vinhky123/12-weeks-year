@@ -2,65 +2,47 @@
 
 import React from "react";
 import type { WeekScoreDto } from "@/lib/contracts";
-import { getBandBadgeStyles } from "@/components/common/scoreUtils";
 import { useSettings } from "@/context/SettingsContext";
 
 interface ProjectedScoreBarProps {
   score: WeekScoreDto | null;
+  isClosed?: boolean;
 }
 
-export default function ProjectedScoreBar({ score }: ProjectedScoreBarProps) {
+export default function ProjectedScoreBar({ score, isClosed = false }: ProjectedScoreBarProps) {
   const { locale } = useSettings();
   const pct = score ? Math.min(100, Math.max(0, score.scorePct)) : 0;
-  const bandStyles = getBandBadgeStyles(score?.band);
+  const heading = isClosed
+    ? locale === "vi" ? "Điểm tuần chính thức" : "Final weekly score"
+    : locale === "vi" ? "Tiến độ tuần" : "Weekly progress";
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center justify-between text-xs mb-2">
-        <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-          {locale === "vi"
-            ? `Điểm dự kiến tuần này — ${score !== null ? `${score.scorePct}%` : "—"} · chuẩn 85%.`
-            : `Projected week score — ${score !== null ? `${score.scorePct}%` : "—"} · benchmark 85%.`}
-        </span>
-        {score && (
-          <span className="text-zinc-500 font-medium dark:text-zinc-400">
-            {locale === "vi"
-              ? `Đã đạt ${score.completed}/${score.due}`
-              : `${score.completed} of ${score.due} due`}
-          </span>
-        )}
+    <section aria-labelledby="weekly-progress-heading" className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 id="weekly-progress-heading" className="text-base font-bold text-zinc-900 dark:text-zinc-100">{heading}</h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            {score
+              ? locale === "vi" ? `${score.completed}/${score.due} lượt cần làm trong tuần đã hoàn thành` : `${score.completed} of ${score.due} planned actions completed`
+              : locale === "vi" ? "Chưa có lượt cần làm trong tuần." : "No planned actions yet."}
+          </p>
+        </div>
+        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{score ? `${score.scorePct}%` : "—"}</span>
       </div>
-
-      <div className="relative h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-        {/* Progress bar */}
-        <div
-          className={`h-full transition-all duration-300 ${
-            score?.band === "ON_TRACK"
-              ? "bg-zinc-900 dark:bg-zinc-100"
-              : score?.band === "AT_RISK"
-              ? "bg-zinc-500 dark:bg-zinc-400"
-              : score?.band === "REVISE_PLAN"
-              ? "bg-zinc-400 dark:bg-zinc-500"
-              : "bg-zinc-300 dark:bg-zinc-700"
-          }`}
-          style={{ width: `${pct}%` }}
-        />
-
-        {/* 85% benchmark reference line */}
-        <div
-          className="absolute top-0 bottom-0 w-0.5 bg-zinc-950 dark:bg-zinc-50 z-10"
-          style={{ left: "85%" }}
-          title={locale === "vi" ? "Mục tiêu 85%" : "85% Benchmark"}
-        />
+      <div
+        className="relative mt-3 h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+        role={score ? "progressbar" : undefined}
+        aria-label={score ? heading : undefined}
+        aria-valuemin={score ? 0 : undefined}
+        aria-valuemax={score ? 100 : undefined}
+        aria-valuenow={score ? pct : undefined}
+      >
+        <div className="h-full bg-teal-600 transition-[width] duration-300 dark:bg-teal-400" style={{ width: `${pct}%` }} />
+        <div className="absolute inset-y-0 z-10 w-0.5 bg-zinc-950 dark:bg-zinc-50" style={{ left: "85%" }} title={locale === "vi" ? "Mốc 85%" : "85% benchmark"} />
       </div>
-
-      <div className="mt-2 flex items-center justify-between text-[11px] text-zinc-400 dark:text-zinc-500">
-        <span>0%</span>
-        <span className="font-bold text-zinc-700 dark:text-zinc-300">
-          {locale === "vi" ? "chuẩn 85%" : "85% benchmark"}
-        </span>
-        <span>100%</span>
+      <div className="mt-2 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+        <span>0%</span><span className="font-bold">{locale === "vi" ? "mốc 85%" : "85% benchmark"}</span><span>100%</span>
       </div>
-    </div>
+    </section>
   );
 }
