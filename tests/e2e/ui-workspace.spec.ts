@@ -279,6 +279,16 @@ test.describe("UI workspace browser contracts", () => {
     expect(await wordsSplitAcrossLines(goalSummary)).toEqual([]);
   });
 
+  test("Today loads once when saved settings switch the language", async ({ page }) => {
+    // The app starts in Vietnamese; the mocked settings switch it to English.
+    const fixture = await mockUiWorkspace(page);
+    await page.goto("/today");
+
+    await expect(page.getByRole("heading", { name: "Today’s work", exact: true })).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    expect(fixture.requests.filter((request) => request.pathname === "/api/today")).toHaveLength(1);
+  });
+
   test("Today header names the week and day once", async ({ page }) => {
     await mockUiWorkspace(page);
     await page.goto("/today");

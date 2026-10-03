@@ -42,6 +42,12 @@ export default function TodayPage() {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
   }, []);
 
+  // Today's data does not depend on the locale; read it from a ref so a language switch does not reload the page.
+  const localeRef = useRef(locale);
+  useEffect(() => {
+    localeRef.current = locale;
+  }, [locale]);
+
   const fetchToday = useCallback(async () => {
     try {
       setLoading(true);
@@ -57,12 +63,12 @@ export default function TodayPage() {
           setError(err.message);
         }
       } else {
-        setError(locale === "vi" ? "Không thể tải trang Hôm nay." : "Failed to load today view.");
+        setError(localeRef.current === "vi" ? "Không thể tải trang Hôm nay." : "Failed to load today view.");
       }
     } finally {
       setLoading(false);
     }
-  }, [locale]);
+  }, []);
 
   useEffect(() => {
     fetchToday();
