@@ -334,6 +334,20 @@ test.describe("UI workspace browser contracts", () => {
       .map((request) => request.body?.dayOfWeek)).toEqual([3, 4]);
   });
 
+  test("close-week rejects a measurement it cannot read instead of dropping it", async ({ page }) => {
+    await mockUiWorkspace(page);
+    await page.goto("/week?week=3");
+
+    await page.getByRole("button", { name: "Close week 3", exact: true }).click();
+    const closeDialog = page.getByRole("dialog", { name: "Close week 3" });
+    await closeDialog.getByRole("button", { name: "Continue", exact: true }).click();
+    await closeDialog.getByLabel(/this week:/).pressSequentially("1,5");
+    await closeDialog.getByRole("button", { name: "Continue", exact: true }).click();
+
+    await expect(closeDialog.getByText(/^Enter a valid number/)).toBeVisible();
+    await expect(closeDialog.getByText("Update results", { exact: true })).toBeVisible();
+  });
+
   test("Today header names the week and day once", async ({ page }) => {
     await mockUiWorkspace(page);
     await page.goto("/today");

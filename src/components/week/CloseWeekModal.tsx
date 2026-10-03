@@ -59,7 +59,9 @@ export default function CloseWeekModal({
     planIdRef.current = plan.id;
   }, [isOpen, plan.id]);
 
-  const numberError = locale === "vi" ? "Hãy nhập một số hợp lệ." : "Enter a valid number.";
+  const numberError = locale === "vi"
+    ? "Hãy nhập một số hợp lệ, dùng dấu chấm cho phần thập phân."
+    : "Enter a valid number, using a dot for decimals.";
   const isValidLagValue = (value: string) => value.trim() === "" || Number.isFinite(Number(value));
 
   const handleLagChange = (goalId: number, val: string) => {
@@ -206,10 +208,11 @@ export default function CloseWeekModal({
                   <label htmlFor={`close-week-lag-${g.id}`} className="block text-[11px] text-zinc-500 dark:text-zinc-400">
                     {g.lagMetricName} ({g.lagUnit}): {g.lagStart} &rarr; {g.lagTarget} &middot; {locale === "vi" ? "tuần này:" : "this week:"}
                   </label>
+                  {/* Text, not type="number": number inputs silently turn "1,5" into 15, and this value is saved for good. */}
                   <input
                     id={`close-week-lag-${g.id}`}
-                    type="number"
-                    step="any"
+                    type="text"
+                    inputMode="decimal"
                     placeholder={`e.g. ${g.lagTarget}`}
                     value={lagInputs[g.id] ?? ""}
                     onChange={(e) => handleLagChange(g.id, e.target.value)}
