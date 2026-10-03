@@ -146,11 +146,20 @@ export function closeWeek(
   if (!cycle) throw notFound("Cycle");
   const currentWeek = cycleWeekNumber(today, cycle.startDate);
   if (plan.weekNumber > currentWeek) throw conflict("You can't close a week that hasn't happened yet.");
-  const closed = executionRepo.closeWeekPlan(h, planId, today, input.reflection?.trim() || null);
-  for (const lag of input.lagValues ?? []) {
+  const lagValues = input.lagValues ?? [];
+  for (const lag of lagValues) {
     if (!Number.isFinite(lag.value)) throw invalid("Lag values must be numbers.");
-    executionRepo.upsertLagLog(h, { goalId: lag.goalId, weekNumber: plan.weekNumber, value: lag.value, loggedAt: today });
+    const goal = planRepo.getGoal(h, lag.goalId);
+    if (!goal) throw notFound("Goal");
+    if (goal.cycleId !== plan.cycleId) throw invalid("Lag goals must belong to the week plan's cycle.");
   }
+  const closed = h.sqlite.transaction(() => {
+    const closedPlan = executionRepo.closeWeekPlan(h, planId, today, input.reflection?.trim() || null);
+    for (const lag of lagValues) {
+      executionRepo.upsertLagLog(h, { goalId: lag.goalId, weekNumber: plan.weekNumber, value: lag.value, loggedAt: today });
+    }
+    return closedPlan;
+  })();
   // durable local checkpoint after every closed week (best-effort, never fails the close)
   writeAutoBackup(h, `week-${plan.weekNumber}-closed`);
   return closed;
