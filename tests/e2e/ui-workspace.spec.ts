@@ -301,6 +301,22 @@ test.describe("UI workspace browser contracts", () => {
     await expect(increase).toBeDisabled();
   });
 
+  test("switching weeks keeps the page mounted and the pager focused", async ({ page }) => {
+    await mockUiWorkspace(page);
+    await page.goto("/week?week=2");
+    await expect(page.getByRole("heading", { name: "Week 2", exact: true })).toBeVisible();
+
+    const next = page.getByRole("button", { name: "Next week", exact: true });
+    await next.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { name: "Week 3", exact: true })).toBeVisible();
+    // The heading updates at once; wait for any follow-up reload before checking focus.
+    await page.waitForLoadState("networkidle");
+    await expect(next).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { name: "Week 4", exact: true })).toBeVisible();
+  });
+
   test("Today header names the week and day once", async ({ page }) => {
     await mockUiWorkspace(page);
     await page.goto("/today");

@@ -58,6 +58,14 @@ function WeekPageInner() {
 
   selectionRef.current = `${activeCycle?.cycle.id ?? "none"}:${selectedWeek}`;
 
+  // Loaders read the latest locale and ?week= so that neither change reloads the cycle.
+  const localeRef = useRef(locale);
+  const queryWeekRef = useRef(queryWeek);
+  useEffect(() => {
+    localeRef.current = locale;
+    queryWeekRef.current = queryWeek;
+  }, [locale, queryWeek]);
+
   // Fetch active cycle info
   const fetchActiveCycle = useCallback(async () => {
     const requestId = ++activeRequestRef.current;
@@ -75,7 +83,7 @@ function WeekPageInner() {
       const res = await apiFetch<ActiveCycleInfoDto>("/api/cycles/active");
       if (requestId !== activeRequestRef.current) return;
 
-      const targetWeek = normalizeWeek(queryWeek, res.weekNumber);
+      const targetWeek = normalizeWeek(queryWeekRef.current, res.weekNumber);
 
       const detailRes = await apiFetch<CycleDetailDto>(`/api/cycles/${res.cycle.id}`);
       if (requestId !== activeRequestRef.current) return;
@@ -89,12 +97,12 @@ function WeekPageInner() {
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError(locale === "vi" ? "Không thể tải chu kỳ hoạt động." : "Failed to load active cycle.");
+        setError(localeRef.current === "vi" ? "Không thể tải chu kỳ hoạt động." : "Failed to load active cycle.");
       }
     } finally {
       if (requestId === activeRequestRef.current) setActiveLoading(false);
     }
-  }, [queryWeek, locale]);
+  }, []);
 
   // Fetch week plan details
   const fetchWeekPlan = useCallback(async (cycleId: number, weekNum: number) => {
@@ -118,14 +126,14 @@ function WeekPageInner() {
       } else if (err instanceof Error) {
         setBannerError(err.message);
       } else {
-        setBannerError(locale === "vi" ? "Không thể tải kế hoạch tuần." : "Could not load the weekly plan.");
+        setBannerError(localeRef.current === "vi" ? "Không thể tải kế hoạch tuần." : "Could not load the weekly plan.");
       }
     } finally {
       if (requestId === weekRequestRef.current && selectionRef.current === selectionKey) {
         setPlanLoading(false);
       }
     }
-  }, [locale]);
+  }, []);
 
   useEffect(() => {
     void fetchActiveCycle();
@@ -136,6 +144,11 @@ function WeekPageInner() {
       void fetchWeekPlan(activeCycle.cycle.id, selectedWeek);
     }
   }, [activeCycle, selectedWeek, fetchWeekPlan]);
+
+  // Follow ?week= changes from the pager or browser history without reloading the cycle.
+  useEffect(() => {
+    if (activeCycle) setSelectedWeek(normalizeWeek(queryWeek, activeCycle.weekNumber));
+  }, [activeCycle, queryWeek]);
 
   useEffect(() => {
     if (previousWeekRef.current !== selectedWeek) {
