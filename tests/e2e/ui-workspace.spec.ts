@@ -317,6 +317,23 @@ test.describe("UI workspace browser contracts", () => {
     await expect(page.getByRole("heading", { name: "Week 4", exact: true })).toBeVisible();
   });
 
+  test("moving a task with the keyboard keeps focus on its day select", async ({ page }) => {
+    const fixture = await mockUiWorkspace(page);
+    await page.goto("/week?week=3");
+
+    const move = page.getByRole("combobox", { name: "Move Wednesday priority" });
+    await move.focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(move).toHaveValue("3");
+    await page.waitForLoadState("networkidle");
+    await expect(move).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(move).toHaveValue("4");
+    await expect.poll(() => fixture.requests
+      .filter((request) => request.pathname === "/api/week-plans/33/items/303")
+      .map((request) => request.body?.dayOfWeek)).toEqual([3, 4]);
+  });
+
   test("Today header names the week and day once", async ({ page }) => {
     await mockUiWorkspace(page);
     await page.goto("/today");

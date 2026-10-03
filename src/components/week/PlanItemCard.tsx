@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { WeekPlanItemDto } from "@/lib/contracts";
 import { useSettings } from "@/context/SettingsContext";
 
 const EN_DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const VI_DAY_NAMES = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
+
+// A moved card remounts in another day column; this lets the new instance take focus back.
+let focusMoveSelectFor: number | null = null;
 
 interface PlanItemCardProps {
   item: WeekPlanItemDto;
@@ -36,9 +39,18 @@ export default function PlanItemCard({
   const renameInputId = `rename-plan-item-${item.id}`;
   const moveSelectId = `move-plan-item-${item.id}`;
 
+  const moveSelectRef = useRef<HTMLSelectElement>(null);
+
   useEffect(() => {
     if (!isEditing) setDraftLabel(item.label);
   }, [isEditing, item.label]);
+
+  useEffect(() => {
+    if (focusMoveSelectFor === item.id) {
+      focusMoveSelectFor = null;
+      moveSelectRef.current?.focus();
+    }
+  }, [item.id]);
 
   const failureMessage =
     locale === "vi" ? "Không thể cập nhật công việc. Vui lòng thử lại." : "Could not update this task. Please try again.";
@@ -64,9 +76,11 @@ export default function PlanItemCard({
 
     setError("");
     setMutation("move");
+    focusMoveSelectFor = item.id;
     try {
       await onMoveDay(item.id, newDay);
     } catch {
+      focusMoveSelectFor = null;
       setError(failureMessage);
     } finally {
       setMutation(null);
@@ -175,11 +189,12 @@ export default function PlanItemCard({
                 {locale === "vi" ? `Chuyển ${item.label}` : `Move ${item.label}`}
               </label>
               <select
+                ref={moveSelectRef}
                 id={moveSelectId}
                 value={item.dayOfWeek}
                 onChange={(event) => void handleSelectDay(Number(event.target.value))}
-                disabled={isPending}
-                className="min-h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:cursor-wait disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                aria-disabled={isPending || undefined}
+                className="min-h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 aria-disabled:cursor-wait aria-disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
               >
                 {dayNames.map((day, dayIndex) => (
                   <option key={day} value={dayIndex}>
