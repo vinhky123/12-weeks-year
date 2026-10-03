@@ -19,7 +19,8 @@ export default function TodayItem({ item, isClosed, onIncrement, onDecrement, is
   const isMulti = item.plannedCount > 1;
   const isComplete = item.done >= item.plannedCount;
   const isExtraTask = item.tacticId === null;
-  const controlsDisabled = isClosed || isMutating || isExtraTask;
+  const isLocked = isClosed || isExtraTask;
+  const controlsDisabled = isLocked || isMutating;
   const completionName = isComplete
     ? locale === "vi" ? `Hủy hoàn thành: ${item.label}` : `Undo completion: ${item.label}`
     : locale === "vi" ? `Đánh dấu hoàn thành: ${item.label}` : `Mark complete: ${item.label}`;
@@ -41,13 +42,14 @@ export default function TodayItem({ item, isClosed, onIncrement, onDecrement, is
           type="button"
           aria-label={completionName}
           aria-pressed={isComplete}
-          disabled={controlsDisabled}
+          disabled={isLocked}
+          aria-disabled={isMutating || undefined}
           onClick={handleToggle}
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 dark:focus:ring-teal-300 ${
             isComplete
               ? "border-teal-700 bg-teal-700 text-white dark:border-teal-400 dark:bg-teal-400 dark:text-zinc-950"
               : "border-zinc-300 bg-white text-zinc-700 hover:border-teal-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-          } disabled:cursor-not-allowed disabled:opacity-50`}
+          } disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-wait aria-disabled:opacity-50`}
         >
           {isComplete ? <span aria-hidden="true" className="text-lg">✓</span> : <span aria-hidden="true" className="h-3 w-3 rounded-sm border border-current" />}
         </button>
@@ -80,8 +82,8 @@ export default function TodayItem({ item, isClosed, onIncrement, onDecrement, is
         {isMulti && (
           <>
             <div className="flex items-center rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-              <button type="button" aria-label={locale === "vi" ? `Giảm hoàn thành: ${item.label}` : `Decrease completion: ${item.label}`} disabled={controlsDisabled || item.done <= 0} onClick={() => onDecrement(item)} className="flex h-10 w-10 items-center justify-center rounded-l-lg text-lg font-bold text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-30 dark:text-zinc-300 dark:hover:bg-zinc-800">−</button>
-              <button type="button" aria-label={locale === "vi" ? `Tăng hoàn thành: ${item.label}` : `Increase completion: ${item.label}`} disabled={controlsDisabled || item.done >= item.plannedCount} onClick={() => onIncrement(item)} className="flex h-10 w-10 items-center justify-center rounded-r-lg border-l border-zinc-200 text-lg font-bold text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-30 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">+</button>
+              <button type="button" aria-label={locale === "vi" ? `Giảm hoàn thành: ${item.label}` : `Decrease completion: ${item.label}`} disabled={isLocked || item.done <= 0} aria-disabled={isMutating || undefined} onClick={() => { if (!controlsDisabled) onDecrement(item); }} className="flex h-10 w-10 items-center justify-center rounded-l-lg text-lg font-bold text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-wait aria-disabled:opacity-30 dark:text-zinc-300 dark:hover:bg-zinc-800">−</button>
+              <button type="button" aria-label={locale === "vi" ? `Tăng hoàn thành: ${item.label}` : `Increase completion: ${item.label}`} disabled={isLocked || item.done >= item.plannedCount} aria-disabled={isMutating || undefined} onClick={() => { if (!controlsDisabled) onIncrement(item); }} className="flex h-10 w-10 items-center justify-center rounded-r-lg border-l border-zinc-200 text-lg font-bold text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-wait aria-disabled:opacity-30 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">+</button>
             </div>
           </>
         )}

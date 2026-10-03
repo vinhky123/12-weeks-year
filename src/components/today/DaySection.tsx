@@ -13,7 +13,6 @@ interface DaySectionProps {
   date: string;
   items: WeekPlanItemDto[];
   isToday: boolean;
-  isPast: boolean;
   isClosed: boolean;
   onIncrement: (item: WeekPlanItemDto) => void;
   onDecrement: (item: WeekPlanItemDto) => void;

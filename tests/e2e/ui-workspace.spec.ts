@@ -228,4 +228,30 @@ test.describe("UI workspace browser contracts", () => {
 
     await expect(page.getByRole("link", { name: "Close Week 2", exact: true })).toHaveAttribute("href", "/week?week=2&close=1");
   });
+
+  test("completing unfinished earlier work keeps it in place until the next visit", async ({ page }) => {
+    await mockUiWorkspace(page);
+    await page.goto("/today");
+
+    const earlier = page.getByRole("region", { name: "Earlier this week" });
+    await earlier.getByRole("button", { name: "Mark complete: Monday carryover" }).click();
+    const undo = earlier.getByRole("button", { name: "Undo completion: Monday carryover" });
+    await expect(undo).toHaveAttribute("aria-pressed", "true");
+    await expect(undo).toBeFocused();
+
+    await page.reload();
+    await expect(earlier.getByText("Monday carryover")).toHaveCount(0);
+    await page.locator("summary").filter({ hasText: "Rest of week" }).click();
+    await expect(page.getByRole("button", { name: "Undo completion: Monday carryover" })).toBeVisible();
+  });
+
+  test("a closed week on Today shows the final score and locks completion", async ({ page }) => {
+    await mockUiWorkspace(page, { closedToday: true });
+    await page.goto("/today");
+
+    await expect(page.getByText("Week 3 is closed — the score is final.")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Final weekly score" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Weekly progress" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Mark complete: Wednesday priority" })).toBeDisabled();
+  });
 });

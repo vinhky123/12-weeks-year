@@ -10,9 +10,21 @@ import ProjectedScoreBar from "@/components/today/ProjectedScoreBar";
 import { useSettings } from "@/context/SettingsContext";
 import { t } from "@/lib/i18n";
 
+/** Earlier-day items still unfinished when Today loads; they keep their section until the next load. */
+function unfinishedEarlierIds(today: TodayDto): ReadonlySet<number> {
+  return new Set(
+    today.days
+      .filter((day) => day.dayOfWeek < today.dayIndexToday)
+      .flatMap((day) => day.items)
+      .filter((item) => item.done < item.plannedCount)
+      .map((item) => item.id),
+  );
+}
+
 export default function TodayPage() {
   const { locale } = useSettings();
   const [data, setData] = useState<TodayDto | null>(null);
+  const [earlierItemIds, setEarlierItemIds] = useState<ReadonlySet<number>>(() => new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -35,6 +47,7 @@ export default function TodayPage() {
       setLoading(true);
       setError(null);
       const res = await apiFetch<TodayDto>("/api/today");
+      setEarlierItemIds(unfinishedEarlierIds(res));
       setData(res);
     } catch (err) {
       if (err instanceof ClientApiError) {
@@ -224,14 +237,14 @@ export default function TodayPage() {
   };
   const earlierDays = days
     .filter((day) => day.dayOfWeek < dayIndexToday)
-    .map((day) => ({ ...day, items: day.items.filter((item) => item.done < item.plannedCount) }))
+    .map((day) => ({ ...day, items: day.items.filter((item) => earlierItemIds.has(item.id)) }))
     .filter((day) => day.items.length > 0);
   const restDays = days
     .filter((day) => day.dayOfWeek !== dayIndexToday)
     .map((day) => ({
       ...day,
       items: day.dayOfWeek < dayIndexToday
-        ? day.items.filter((item) => item.done >= item.plannedCount)
+        ? day.items.filter((item) => !earlierItemIds.has(item.id))
         : day.items,
     }))
     .filter((day) => day.dayOfWeek > dayIndexToday || day.items.length > 0);
@@ -289,7 +302,6 @@ export default function TodayPage() {
           date={todayDay.date}
           items={todayDay.items}
           isToday
-          isPast={false}
           isClosed={isClosed}
           onIncrement={handleIncrement}
           onDecrement={handleDecrement}
@@ -312,7 +324,6 @@ export default function TodayPage() {
             date={day.date}
             items={day.items}
             isToday={false}
-            isPast
             isClosed={isClosed}
             onIncrement={handleIncrement}
             onDecrement={handleDecrement}
@@ -337,7 +348,6 @@ export default function TodayPage() {
               date={day.date}
               items={day.items}
               isToday={false}
-              isPast={day.dayOfWeek < dayIndexToday}
               isClosed={isClosed}
               onIncrement={handleIncrement}
               onDecrement={handleDecrement}

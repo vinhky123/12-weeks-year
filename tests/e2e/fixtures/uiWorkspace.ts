@@ -40,6 +40,7 @@ type FixtureOptions = {
   longItemLabel?: string;
   longGoalTitle?: string;
   noActiveToday?: boolean;
+  closedToday?: boolean;
 };
 
 type ManualResolution = { status: number };
@@ -193,8 +194,8 @@ export async function mockUiWorkspace(page: Page, options: FixtureOptions = {}):
           date,
           items: items.filter((item) => item.dayOfWeek === dayOfWeek),
         })),
-        planStatus: "draft",
-        projectedScore: { week: 3, due: 4, completed: 1, scorePct: 25, band: "REVISE_PLAN", closed: false, projected: true },
+        planStatus: options.closedToday ? "closed" : "draft",
+        projectedScore: { week: 3, due: 4, completed: 1, scorePct: 25, band: "REVISE_PLAN", closed: Boolean(options.closedToday), projected: !options.closedToday },
         dailyPrinciple: "Honor the plan, then adapt it honestly.",
       };
       return fulfill(today);
