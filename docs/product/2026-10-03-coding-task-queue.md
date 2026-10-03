@@ -75,8 +75,12 @@ Remaining limitations:
 - Measures, Plan, Review, WAM and Model Week are not yet restyled. Inline EN/VI copy is not yet in `src/lib/i18n.ts`.
 - Deferred review minors:
   - The multi-count toggle name has no progress.
-  - A second Escape can dismiss a dialog while it saves.
   - Today has no "Plan this week" link before the week is planned.
-  - The "Rest of week" disclosure has no state, and its badge counts day sections.
+  - The "Rest of week" badge counts day sections.
   - Server errors stay English in Vietnamese.
-  - Dialog focus and announcements after saves.
+
+## Review fixes merged on 2026-10-04
+
+Commit ccf5ab3 serializes Week writes, filters Close Week measurements to active goals, restores rename and wizard focus, protects repeated busy Escape, and exposes Today disclosure state. The Phase 2 browser assertions now select unique page headings and exact localized save acknowledgement while preserving persistence and CRUD checks.
+
+All five reviewed findings are resolved. The primary checkout is on main after a fast-forward merge; coding and review used GPT-5.6 Sol. Verification on the merged checkout: 160 unit tests, 48 Edge browser tests, and production build including TypeScript validation. Tests used isolated data. [Delivery record](2026-10-04-ui-review-fixes-delivery.md). Scheduling occurrences and persistent extra-task completion remain queued.

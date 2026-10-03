@@ -54,6 +54,8 @@ Initial sweep: 46 passed, two Phase 2 failures. The Vision save-feedback asserti
 - [x] Current Today grouping, completion state and locale behavior stay intact.
 - [x] Review owned diffs, run one fresh combined Sol review; route any concrete remaining findings through a bounded fix/re-review pass.
 - [x] Run full unit suite, TypeScript, new and existing UI/browser checks, and production build with isolated data.
-- [ ] Commit verified fixes, fetch main, preserve local work and merge locally into main. Verify the merged checkout and record evidence; no push is requested.
+- [x] Commit verified fixes, fetch main, preserve local work and merge locally into main. Verify the merged checkout and record evidence; no push is requested.
+
+Delivery: source/test fixes committed as ccf5ab3 and fast-forwarded into main. The merged primary checkout passed 160 unit tests, the production build with TypeScript validation, and all 48 Edge browser tests against isolated example data. The standalone TypeScript check passed before integration. One fresh Sol review approved all five findings; its scoped follow-up approved the Phase 2 selector corrections. See [delivery record](../../product/2026-10-04-ui-review-fixes-delivery.md).
 
 Scheduling occurrences and persistent unscored-task completion remain in their existing product queue, outside these review fixes.
