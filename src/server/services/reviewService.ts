@@ -87,22 +87,27 @@ export function getReview(h: DbHandles, cycleId: number) {
 export function saveReview(h: DbHandles, cycleId: number, patch: ReviewInput, today = todayIso()) {
   requireCycle(h, cycleId);
   validateReview(patch);
-  const auto = autoResults(h, cycleId);
-  const results = (patch.results ?? auto).map((r) => {
-    const suggestion = auto.find((a) => a.goalId === r.goalId);
-    return {
-      ...r,
-      title: r.title ?? suggestion?.title ?? planRepo.getGoal(h, r.goalId)?.title ?? `Goal ${r.goalId}`,
-      percentComplete: r.percentComplete ?? suggestion?.percentComplete ?? null,
-      avgScore: r.avgScore ?? suggestion?.avgScore ?? null,
-      grade: r.grade ?? suggestion?.grade ?? 1,
-    };
-  });
   const existing = h.db.select().from(cycleReviews).where(eq(cycleReviews.cycleId, cycleId)).get();
+  let resultsJson = existing?.resultsJson;
+  if (patch.results !== undefined || !existing) {
+    const auto = autoResults(h, cycleId);
+    const results = (patch.results ?? auto).map((r) => {
+      const suggestion = auto.find((a) => a.goalId === r.goalId);
+      return {
+        ...r,
+        title: r.title ?? suggestion?.title ?? planRepo.getGoal(h, r.goalId)?.title ?? `Goal ${r.goalId}`,
+        percentComplete: r.percentComplete ?? suggestion?.percentComplete ?? null,
+        avgScore: r.avgScore ?? suggestion?.avgScore ?? null,
+        grade: r.grade ?? suggestion?.grade ?? 1,
+      };
+    });
+    resultsJson = JSON.stringify(results);
+  }
   const values = {
-    resultsJson: JSON.stringify(results),
-    qolJson: JSON.stringify(patch.qol ?? []),
-    disciplinesJson: JSON.stringify(patch.disciplines ?? []),
+    resultsJson: resultsJson!,
+    qolJson: patch.qol === undefined && existing ? existing.qolJson : JSON.stringify(patch.qol ?? []),
+    disciplinesJson:
+      patch.disciplines === undefined && existing ? existing.disciplinesJson : JSON.stringify(patch.disciplines ?? []),
     breakthroughs: patch.breakthroughs ?? existing?.breakthroughs ?? null,
     nextCycleNotes: patch.nextCycleNotes ?? existing?.nextCycleNotes ?? null,
     updatedAt: today,
