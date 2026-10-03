@@ -41,6 +41,7 @@ type FixtureOptions = {
   longGoalTitle?: string;
   noActiveToday?: boolean;
   closedToday?: boolean;
+  withBundle?: boolean;
 };
 
 type ManualResolution = { status: number };
@@ -149,6 +150,9 @@ export async function mockUiWorkspace(page: Page, options: FixtureOptions = {}):
   const theme = options.theme ?? "light";
   const requests: UiWorkspaceRequest[] = [];
   let items = initialItems(options.longItemLabel, options.longGoalTitle);
+  if (options.withBundle) {
+    items.push({ id: 306, weekPlanId: 33, tacticId: 106, label: "Wednesday bundle", dayOfWeek: 2, done: 2, plannedCount: 3, sortOrder: 2, goal: null });
+  }
   let resolveCompletionGate: (value: ManualResolution) => void = () => {};
   let resolveCloseGate: (value: ManualResolution) => void = () => {};
   let resolveWeek4Gate: () => void = () => {};

@@ -289,6 +289,18 @@ test.describe("UI workspace browser contracts", () => {
     expect(fixture.requests.filter((request) => request.pathname === "/api/today")).toHaveLength(1);
   });
 
+  test("completing the last count of a bundle keeps focus on its stepper", async ({ page }) => {
+    await mockUiWorkspace(page, { withBundle: true });
+    await page.goto("/today");
+
+    const increase = page.getByRole("button", { name: "Increase completion: Wednesday bundle" });
+    await increase.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("button", { name: "Undo completion: Wednesday bundle" })).toHaveAttribute("aria-pressed", "true");
+    await expect(increase).toBeFocused();
+    await expect(increase).toBeDisabled();
+  });
+
   test("Today header names the week and day once", async ({ page }) => {
     await mockUiWorkspace(page);
     await page.goto("/today");
