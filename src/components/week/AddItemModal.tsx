@@ -205,7 +205,7 @@ export default function AddItemModal({
                 disabled={submitting}
                 className="min-h-10 rounded-lg px-4 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
-                {locale === "vi" ? "Hủy" : "Cancel"}
+                {locale === "vi" ? "Quay lại" : "Back"}
               </button>
               <button
                 type="button"

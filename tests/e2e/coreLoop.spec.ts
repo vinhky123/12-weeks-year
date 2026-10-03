@@ -115,6 +115,8 @@ test.describe("Phase 1 Core Loop E2E (Antigravity UI Verification)", () => {
     await page.goto("/week?week=1");
     await expect(page.getByRole("heading", { level: 1, name: /^(Week 1|Tuần 1)$/ })).toBeVisible();
     await expect(page.getByText(/^(Week 1 is closed\. The score is final\.|Tuần 1 đã chốt\. Điểm số là chính thức\.)$/)).toBeVisible();
+    // A frozen week does not invite moving tasks.
+    await expect(page.getByText(/(Tasks start on Monday|Các công việc bắt đầu vào Thứ Hai)/)).toHaveCount(0);
 
     // 2. Visit active week 2
     await page.goto("/week?week=2");
@@ -139,6 +141,9 @@ test.describe("Phase 1 Core Loop E2E (Antigravity UI Verification)", () => {
     // The plan-revision confirmation explains that the extra task is not scored.
     await expect(addDialog.getByRole("heading", { name: /^(Confirm plan revision|Xác nhận điều chỉnh kế hoạch)$/ })).toBeVisible();
     await expect(addDialog.getByText(/(not included in the tactic obligations|không nằm trong các nghĩa vụ chiến thuật)/)).toBeVisible();
+    // Back returns to the form with the draft intact; nothing is saved yet.
+    await addDialog.getByRole("button", { name: /^(Back|Quay lại)$/ }).click();
+    await expect(addDialog.getByRole("textbox", { name: /(Task name|Tên công việc)/ })).toHaveValue("Prepare client presentation");
     await addDialog.getByRole("button", { name: /(Close dialog|Đóng hộp thoại)/ }).click();
     await expect(addDialog).toBeHidden();
 

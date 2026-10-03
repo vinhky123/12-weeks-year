@@ -38,11 +38,13 @@ export default function WeekBoard({
 
   return (
     <section className="space-y-4" aria-label={locale === "vi" ? "Lịch tuần" : "Weekly schedule"}>
-      <p className="text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-        {locale === "vi"
-          ? "Các công việc bắt đầu vào Thứ Hai. Chuyển chúng sang ngày bạn dự định thực hiện."
-          : "Tasks start on Monday. Move them to the day you plan to do them."}
-      </p>
+      {!isClosed && (
+        <p className="text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+          {locale === "vi"
+            ? "Các công việc bắt đầu vào Thứ Hai. Chuyển chúng sang ngày bạn dự định thực hiện."
+            : "Tasks start on Monday. Move them to the day you plan to do them."}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {days.map((dayName, dayIndex) => {
