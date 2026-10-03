@@ -6,9 +6,9 @@ This is a delivery queue, not a claim that the product redesign is finished. The
 
 | ID | Small deliverable | Main ownership | Acceptance | Dependency / status |
 |---|---|---|---|---|
-| R1 | Preserve partial review saves | reviewService + dedicated tests | Later saves preserve earlier answers; explicit empty sections clear deliberately | Batch 1 |
-| R2 | Local today date | cycleMath + tests | Saigon midnight picks Monday; date-only arithmetic stays stable | Batch 1 |
-| R3 | Atomic weekly close | weekPlanService + dedicated tests | Rejection/failure changes no plan or measurement | Batch 1 |
+| R1 | Preserve partial review saves | reviewService + dedicated tests | Later saves preserve earlier answers; explicit empty sections clear deliberately | Implemented and verified — batch 1 |
+| R2 | Local today date | cycleMath + WAM clock + tests | Saigon midnight picks Monday; date-only arithmetic stays stable | Implemented and verified — batch 1 |
+| R3 | Atomic weekly close | weekPlanService + dedicated tests | Rejection/failure changes no plan or measurement | Implemented and verified — batch 1 |
 | R4 | Previous-week close link | NextRitualCard | Link opens the exact week named on the card | Ready to specify |
 | R5 | Reset and cancel close wizard | CloseWeekModal | Reopen starts clean; cancel/Escape works before submit; pending submit protected | After R4 |
 | R6 | Submit confirmed extra task | Week page + contract regression | Explicit confirmation reaches the required API field | Ready to specify |
@@ -38,4 +38,14 @@ This is a delivery queue, not a claim that the product redesign is finished. The
 
 Execution details for R1-R3: [batch-1 plan](../superpowers/plans/2026-10-03-reliability-batch-1.md).
 
-Cost controls: short task-specific context; one coding worker at a time; focused tests while iterating; one full suite before each commit; one combined final review; no extra research agents, duplicate reviews, or automatic model escalation. The coordinator splits or clarifies a stuck task before spending on more context.
+Cost controls: short task-specific context; parallel coding only with disjoint file ownership and serialized commits; focused tests while iterating; one full suite before each commit; one combined final review; no extra research agents, duplicate reviews, or automatic model escalation. The coordinator splits or clarifies a stuck task before spending on more context.
+
+
+## First batch delivered
+
+- R1: /root/review_save_fix, GPT-5.6 Sol medium, commit dec3cb0.
+- R2: /root/local_date_fix, GPT-5.6 Sol medium, commit 51baa23.
+- R3: /root/atomic_week_close_fix, GPT-5.6 Sol medium, commit 507f453.
+
+Coordinator reviewed each task; one fresh combined review found no actionable issues. Final combined verification: 160 tests passed across 21 files; TypeScript no-emit check passed; Next.js production build passed against an isolated temporary database. Existing Vite config warning remains. Browser tests were not rerun for this server-only batch. The larger UI and scheduling work remains queued.
+

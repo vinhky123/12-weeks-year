@@ -1,6 +1,6 @@
 # Reliability Batch 1 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Preserve review answers, choose the correct local day, and prevent partially saved weekly closes.
 
@@ -35,7 +35,7 @@ Runtime: `C:/Users/Kyyy/.cache/codex-runtimes/codex-primary-runtime/dependencies
 
 Use `git -c safe.directory=D:/Data/Codes/12-weeks-planning-reliability-repairs` for every Git command. Focused test command: invoke the runtime with `node_modules/vitest/vitest.mjs run <test file>`. Full suite: same without the test path. No install is required.
 
-One implementer at a time keeps commit ranges and verification unambiguous. Context is fresh (`fork_turns: none`), model `gpt-5.6-sol`, reasoning `medium`. Reports are files, not long chat messages. The coordinator reviews each task, and one independent reviewer checks the completed batch.
+Independent implementers may run concurrently when file ownership is disjoint. The coordinator serializes Git writes and reviews the assigned files for each task; final verification runs after all edits stop. Context is fresh (`fork_turns: none`), model `gpt-5.6-sol`, reasoning `medium`. Reports are files, not long chat messages. The coordinator reviews each task, and one independent reviewer checks the completed batch.
 
 ### Task 1: Preserve partially saved cycle reviews
 
@@ -43,25 +43,26 @@ One implementer at a time keeps commit ranges and verification unambiguous. Cont
 
 **Interfaces:** Keep `saveReview(h: DbHandles, cycleId: number, patch: ReviewInput, today?: string)` and `getReview(h, cycleId)` response shapes unchanged. Consume the existing JSON sections in `cycleReviews`.
 
-- [ ] Write regression tests using a temporary file database. Save custom results, then Physical QoL with anchors, then Vision discipline, then breakthroughs/next-cycle notes; read back and assert all sections and custom values survive. Assert `createdAt` remains stable and `updatedAt` follows the latest save.
-- [ ] Test explicit empty arrays clear only their section, remain empty after an unrelated save, and omitted sections on a first save use automatic results / empty QoL and disciplines. Test invalid ratings change no persisted section.
-- [ ] Run the focused test and record the expected lost-data failures before production changes.
-- [ ] Read the existing review before assembling values. Preserve the exact existing JSON for omitted array sections; compute/enrich result suggestions only for first-save defaults or explicitly submitted results. Explicit arrays replace their section, including `[]`. Keep text-section behavior and response shapes.
-- [ ] Run focused tests and full suite; self-review and commit only assigned files with `fix: preserve partial cycle review saves`.
-- [ ] Write the full report to the assigned report path: red/green command evidence, suite count, changed files, commit, concerns. Reply with status and a one-line summary.
+- [x] Write regression tests using a temporary file database. Save custom results, then Physical QoL with anchors, then Vision discipline, then breakthroughs/next-cycle notes; read back and assert all sections and custom values survive. Assert `createdAt` remains stable and `updatedAt` follows the latest save.
+- [x] Test explicit empty arrays clear only their section, remain empty after an unrelated save, and omitted sections on a first save use automatic results / empty QoL and disciplines. Test invalid ratings change no persisted section.
+- [x] Run the focused test and record the expected lost-data failures before production changes.
+- [x] Read the existing review before assembling values. Preserve the exact existing JSON for omitted array sections; compute/enrich result suggestions only for first-save defaults or explicitly submitted results. Explicit arrays replace their section, including `[]`. Keep text-section behavior and response shapes.
+- [x] Run focused tests and full suite; self-review and commit only assigned files with `fix: preserve partial cycle review saves`.
+- [x] Write the full report to the assigned report path: red/green command evidence, suite count, changed files, commit, concerns. Reply with status and a one-line summary.
 
 ### Task 2: Use the local calendar day for today
 
-**Files:** Modify `src/server/cycleMath.ts` and `src/server/cycleMath.test.ts` only.
+**Files:** Modify `src/server/cycleMath.ts`, `src/server/cycleMath.test.ts`, and the clock default in `src/server/services/wamService.ts`; create `src/server/services/wamService.date.test.ts`.
 
 **Interfaces:** `todayIso(now: Date = new Date(), timeZone?: string): string`. Existing callers remain valid. `toIsoDate`, `toUtcMs`, `addDays`, and cycle/week arithmetic keep their behavior.
 
-- [ ] Replace the UTC-only clock test with local-default behavior. Add explicit-zone cases: Asia/Ho_Chi_Minh at `2026-10-04T17:30:00Z` -> `2026-10-05`; at `2026-10-04T16:59:00Z` -> `2026-10-04`; at `2026-12-31T17:30:00Z` -> `2027-01-01`; UTC at `2026-10-04T17:30:00Z` -> `2026-10-04`.
-- [ ] Add America/New_York cases around spring DST: `2026-03-08T04:30:00Z` -> `2026-03-07` and `2026-03-08T07:30:00Z` -> `2026-03-08`. Verify cycleWeekNumber(todayIso(Saigon instant, zone), `2026-10-05`) is week 1 and existing date-only arithmetic still passes.
-- [ ] Run the focused test and record the expected UTC-date failures before production changes.
-- [ ] Format the injected instant through `Intl.DateTimeFormat` date parts, using the host zone when omitted; concatenate padded YYYY-MM-DD. Update comments to distinguish local clock formatting from UTC date-only arithmetic. Do not hardcode Saigon for all users.
-- [ ] Run focused tests and full suite; self-review and commit only assigned files with `fix: use local calendar dates for today`.
-- [ ] Write the full report to the assigned report path and return the short status contract.
+- [x] Replace the UTC-only clock test with local-default behavior. Add explicit-zone cases: Asia/Ho_Chi_Minh at `2026-10-04T17:30:00Z` -> `2026-10-05`; at `2026-10-04T16:59:00Z` -> `2026-10-04`; at `2026-12-31T17:30:00Z` -> `2027-01-01`; UTC at `2026-10-04T17:30:00Z` -> `2026-10-04`.
+- [x] Add America/New_York cases around spring DST: `2026-03-08T04:30:00Z` -> `2026-03-07` and `2026-03-08T07:30:00Z` -> `2026-03-08`. Verify cycleWeekNumber(todayIso(Saigon instant, zone), `2026-10-05`) is week 1 and existing date-only arithmetic still passes.
+- [x] Run the focused test and record the expected UTC-date failures before production changes.
+- [x] Format the injected instant through `Intl.DateTimeFormat` date parts, using the host zone when omitted; concatenate padded YYYY-MM-DD. Update comments to distinguish local clock formatting from UTC date-only arithmetic. Do not hardcode Saigon for all users.
+- [x] Replace `saveWam`'s standalone UTC clock default with imported `todayIso()`. In its dedicated temporary-DB test, use Vitest fake time with a host-local `new Date(2026, 9, 5, 0, 30)` and save without an injected today. Assert the saved WAM's `created_at` and `updated_at` are `2026-10-05`; restore timers and remove the temporary database afterward. Snapshot/export behavior stays unchanged.
+- [x] Run focused tests and full suite; self-review and commit only assigned files with `fix: use local calendar dates for today`.
+- [x] Write the full report to the assigned report path and return the short status contract.
 
 ### Task 3: Make weekly close all-or-nothing
 
@@ -69,17 +70,18 @@ One implementer at a time keeps commit ranges and verification unambiguous. Cont
 
 **Interfaces:** Keep `closeWeek(h: DbHandles, planId: number, input: { reflection?: string; lagValues?: { goalId: number; value: number }[] }, today?: string)` and its return shape unchanged. Use existing `getGoal`, `upsertLagLog`, and `h.sqlite.transaction`.
 
-- [ ] Use a temporary database in its own temporary directory. Test an existing lag value, a valid first entry followed by a non-finite second entry, and assert rejection leaves plan draft, reflection unchanged, and lag rows unchanged.
-- [ ] Test a goal from another cycle and a nonexistent goal both reject without saved changes. Test rollback under a real SQLite trigger that aborts insertion of the second valid measurement. Assert the first write and close both roll back.
-- [ ] Test successful close persists reflection and all lag rows and retains current-week closure behavior. Keep test backup output inside the temporary directory and remove it during teardown; do not mock transactional repositories.
-- [ ] Run the focused test and record expected partial-write / ownership failures before production changes.
-- [ ] Validate all values and goal ownership before writes. Execute `closeWeekPlan` and every `upsertLagLog` inside one synchronous SQLite transaction. Call `writeAutoBackup` after the transaction returns successfully. Preserve existing future-week and duplicate-close guards.
-- [ ] Run focused tests and full suite; self-review and commit only assigned files with `fix: close weekly plans atomically`.
-- [ ] Write the full report to the assigned report path and return the short status contract.
+- [x] Use a temporary database in its own temporary directory. Test an existing lag value, a valid first entry followed by a non-finite second entry, and assert rejection leaves plan draft, reflection unchanged, and lag rows unchanged.
+- [x] Test a goal from another cycle and a nonexistent goal both reject without saved changes. Test rollback under a real SQLite trigger that aborts insertion of the second valid measurement. Assert the first write and close both roll back.
+- [x] Test successful close persists reflection and all lag rows and retains current-week closure behavior. Keep test backup output inside the temporary directory and remove it during teardown; do not mock transactional repositories.
+- [x] Run the focused test and record expected partial-write / ownership failures before production changes.
+- [x] Validate all values and goal ownership before writes. Execute `closeWeekPlan` and every `upsertLagLog` inside one synchronous SQLite transaction. Call `writeAutoBackup` after the transaction returns successfully. Preserve existing future-week and duplicate-close guards.
+- [x] Run focused tests and full suite; self-review and commit only assigned files with `fix: close weekly plans atomically`.
+- [x] Write the full report to the assigned report path and return the short status contract.
 
 ## Coordinator completion
 
-- [ ] Review task diffs and red/green evidence; delegate any fixes to the original coding agent.
-- [ ] Independent review of the combined code diff against the spec.
-- [ ] Run full suite, TypeScript no-emit check, and production build with an isolated temporary database.
-- [ ] Update the coding queue and report exactly which fixes landed and what remains.
+- [x] Review task diffs and red/green evidence; delegate any fixes to the original coding agent.
+- [x] Independent review of the combined code diff against the spec.
+- [x] Run full suite, TypeScript no-emit check, and production build with an isolated temporary database.
+- [x] Update the coding queue and report exactly which fixes landed and what remains.
+
