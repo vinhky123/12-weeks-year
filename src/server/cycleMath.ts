@@ -1,7 +1,7 @@
 // Pure cycle/date math for The 12 Week Year.
-// Dates are 'YYYY-MM-DD' strings interpreted as UTC calendar days, so results
-// never depend on the machine's timezone. No I/O; the only clock access is the
-// explicitly injected `now` parameter of todayIso().
+// Date-only 'YYYY-MM-DD' arithmetic uses UTC so results never depend on the
+// machine's timezone. todayIso() formats its injected clock instant in the
+// requested local timezone (or the host timezone when none is requested).
 
 export const WEEKS_IN_CYCLE = 12 as const;
 export const REVIEW_WEEK = 13 as const;
@@ -35,9 +35,19 @@ export function toIsoDate(ms: number): string {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 }
 
-/** Current UTC calendar date; `now` is injected for testability. */
-export function todayIso(now: Date = new Date()): string {
-  return toIsoDate(now.getTime());
+/** Current local calendar date; `now` and `timeZone` are injectable for testability. */
+export function todayIso(now: Date = new Date(), timeZone?: string): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    calendar: "gregory",
+    numberingSystem: "latn",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone,
+  }).formatToParts(now);
+  const value = (type: "year" | "month" | "day") =>
+    parts.find((part) => part.type === type)!.value.padStart(type === "year" ? 4 : 2, "0");
+  return `${value("year")}-${value("month")}-${value("day")}`;
 }
 
 export function addDays(iso: string, days: number): string {

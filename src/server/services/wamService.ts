@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { WEEKS_IN_CYCLE } from "../cycleMath";
+import { todayIso, WEEKS_IN_CYCLE } from "../cycleMath";
 import type { DbHandles } from "../db/index";
 import { cycles as cyclesTable, wamReports } from "../db/schema";
 import * as planRepo from "../db/repositories/plan";
@@ -68,7 +68,7 @@ export function saveWam(
   cycleId: number,
   week: number,
   input: { blockers?: string; whatWorked?: string; encouragement?: string },
-  today = new Date().toISOString().slice(0, 10),
+  today = todayIso(),
 ) {
   validateWeek(week);
   requireCycle(h, cycleId);

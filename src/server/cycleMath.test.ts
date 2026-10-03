@@ -16,8 +16,22 @@ describe("date helpers", () => {
     expect(diffDays("2026-10-05", "2026-10-11")).toBe(6);
     expect(diffDays("2026-10-11", "2026-10-05")).toBe(-6);
   });
-  it("todayIso formats UTC calendar date", () => {
-    expect(todayIso(new Date(Date.UTC(2026, 8, 27)))).toBe("2026-09-27");
+  it("todayIso formats the host's local calendar date by default", () => {
+    expect(todayIso(new Date(2026, 9, 5, 0, 30))).toBe("2026-10-05");
+  });
+  it("todayIso formats an injected instant in an explicit time zone", () => {
+    expect(todayIso(new Date("2026-10-04T17:30:00Z"), "Asia/Ho_Chi_Minh")).toBe("2026-10-05");
+    expect(todayIso(new Date("2026-10-04T16:59:00Z"), "Asia/Ho_Chi_Minh")).toBe("2026-10-04");
+    expect(todayIso(new Date("2026-12-31T17:30:00Z"), "Asia/Ho_Chi_Minh")).toBe("2027-01-01");
+    expect(todayIso(new Date("2026-10-04T17:30:00Z"), "UTC")).toBe("2026-10-04");
+  });
+  it("todayIso respects New York's spring daylight-saving transition", () => {
+    expect(todayIso(new Date("2026-03-08T04:30:00Z"), "America/New_York")).toBe("2026-03-07");
+    expect(todayIso(new Date("2026-03-08T07:30:00Z"), "America/New_York")).toBe("2026-03-08");
+  });
+  it("uses the local calendar date in cycle week arithmetic", () => {
+    const today = todayIso(new Date("2026-10-04T17:30:00Z"), "Asia/Ho_Chi_Minh");
+    expect(cycleWeekNumber(today, START)).toBe(1);
   });
   it("rejects malformed and rollover dates", () => {
     expect(() => addDays("2026-2-3", 1)).toThrow();
