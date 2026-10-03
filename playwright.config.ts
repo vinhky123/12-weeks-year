@@ -5,7 +5,10 @@ const baseURL = `http://localhost:${port}`;
 
 export default defineConfig({
   testDir: "tests/e2e",
-  timeout: 30_000,
+  // The dev server compiles pages and API routes on first visit, with Fast Refresh reloads,
+  // so first renders can take several seconds.
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
   workers: 1,
   use: {
     baseURL,
