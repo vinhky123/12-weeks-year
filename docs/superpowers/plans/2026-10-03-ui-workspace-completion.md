@@ -910,3 +910,39 @@ Present the options and wait for the owner's choice. Facts for that conversation
 2. Extend the calm workspace to the remaining screens, worst first: Measures (Vietnamese-only strings, custom popover, small icon buttons), Plan (slate palette, custom `GoalModal`), Review (32px step buttons), WAM (Vietnamese-only), Model Week (hover-only actions on touch). Move their dialogs onto `ModalDialog`.
 3. Move inline `locale === "vi" ? … : …` copy into `src/lib/i18n.ts`, and remove the now-unused `score.projected_score` key.
 4. Roadmap items this UI pass depends on: R7 (persist extra-task completion), D1–D4 (separately schedulable occurrences, needed to finish U2/U3), and the DTO/rules half of W1 (progress versus final score).
+
+## Walkthrough findings
+
+Seeded walkthrough DB on port 3318; 44 screenshots (VI/EN × light/dark × 390px/1440px). No page is wider than its viewport. Today order, Week grid (1 column at 390px, 3 at 1440px), the closed-week banner without move hints, both dialogs and the phone menu match the spec.
+
+- `today-vi-light-phone.png`, `today-vi-dark-phone.png`: Today task labels and goal chips split ordinary words mid-word at 390px ("outreach message|s", "freelancin|g") because `TodayItem` uses `break-all`. Expected: wrap at spaces and break only unbroken strings, as Week cards do with `[overflow-wrap:anywhere]`.
+- `today-en-light-desktop.png`: the Today header link reads "Week 2 · Day 6 · Day 6". `/api/today` already returns `weekLabel: "Week 2 · Day 6"` and the English branch appends the day again; the mocked fixture's `weekLabel: "Week 3"` hides this. Expected: "Week 2 · Day 6".
+- Pre-existing (same code at 398d69a): for English users Today renders, then flashes back to the loading skeleton once settings load, because `fetchToday` depends on `locale` (default "vi") and sets `loading` again on refetch. Expected: no skeleton flash when the locale settles.
+- Checked, not a defect: the dark-mode current-day header looked muted in the downscaled screenshot; computed colors are zinc-950 text on teal-400.
+
+## Review triage
+
+One read-only Opus review of `398d69a..9b46b7e` returned "With fixes". Each finding was checked against the code before a decision.
+
+Accepted and fixed test-first:
+- I1 Week switch tears down the page and drops focus. Verified: `fetchActiveCycle` depends on `queryWeek` and resets `activeLoading`/`activeCycle` (week/page.tsx:62-97), and the page returns a skeleton while loading (:315). The base kept the cycle mounted.
+- I2 A keyboard move commits on each arrow key and loses focus. Verified: the select is natively disabled while saving (PlanItemCard.tsx:181) and the card remounts in another column.
+- I3 (focus half) The bundle `+`/`−` lose focus at their bounds. Verified: Task 3 Step 7 made them natively disabled at `done = plannedCount` or `0`.
+- I4 Unreadable measurements are silently dropped. Verified: `type="number"` reports "" for bad input, and validation treats "" as empty (CloseWeekModal.tsx:63, 209-215).
+- Walkthrough 1 (mid-word wrapping) and 2 ("Day 6 · Day 6"): confirmed by the reviewer.
+- Walkthrough 3 (English Today skeleton flash, pre-existing): fixed with I1. Same cause (a locale-dependent refetch that resets loading) and same small fix.
+
+Deferred (minor):
+- I3 naming half: the multi-count toggle name has no progress; the count is shown next to it.
+- M5: two Escapes during a save can bypass busy.
+- M6: no "Plan this week" link when the week is unplanned (pre-existing).
+- M7: the "Rest of week" summary role/state and its day-count badge.
+- M8: server error text stays English in VI.
+- M9: dialog focus and announcements after saves and step changes, and autoFocus on first open.
+- M10: remaining test gaps (a second-input attempt, a two-Escape test).
+- Candidate (c), the closed-banner wording difference: not a defect.
+
+Fix outcomes (each with a regression test that failed first):
+- Walkthrough 2 → b003d65; walkthrough 1 → 7efeda8; walkthrough 3 → 0a4ed53; I3 focus half → 2d3fbe0; I1 → baa50fc; I2 → 17b1520; I4 → 81e7217. I4 was worse than reported: an Edge number input silently turns "1,5" into 15 and "1.500.000" into 1.5.
+- 6c2cc70 raises the browser-test budgets (expect 15 s, test 60 s). Cold dev-server first visits measured up to ~9 s with Fast Refresh reloads.
+- After the fix pass: full browser suite 36/36 on a fresh seed with a cold server.

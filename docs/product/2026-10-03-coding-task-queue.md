@@ -9,9 +9,9 @@ This is a delivery queue, not a claim that the product redesign is finished. The
 | R1 | Preserve partial review saves | reviewService + dedicated tests | Later saves preserve earlier answers; explicit empty sections clear deliberately | Implemented and verified — batch 1 |
 | R2 | Local today date | cycleMath + WAM clock + tests | Saigon midnight picks Monday; date-only arithmetic stays stable | Implemented and verified — batch 1 |
 | R3 | Atomic weekly close | weekPlanService + dedicated tests | Rejection/failure changes no plan or measurement | Implemented and verified — batch 1 |
-| R4 | Previous-week close link | NextRitualCard | Link opens the exact week named on the card | Ready to specify |
-| R5 | Reset and cancel close wizard | CloseWeekModal | Reopen starts clean; cancel/Escape works before submit; pending submit protected | After R4 |
-| R6 | Submit confirmed extra task | Week page + contract regression | Explicit confirmation reaches the required API field | Ready to specify |
+| R4 | Previous-week close link | NextRitualCard | Link opens the exact week named on the card | Implemented and verified — UI workspace batch |
+| R5 | Reset and cancel close wizard | CloseWeekModal | Reopen starts clean; cancel/Escape works before submit; pending submit protected | Implemented and verified — UI workspace batch |
+| R6 | Submit confirmed extra task | Week page + contract regression | Explicit confirmation reaches the required API field | Implemented and verified — UI workspace batch (UI sends `confirmPlanRevision: true`; persistence of extra-task completion remains R7) |
 | R7 | Persist unscored task completion | Item contract/route/service, then Today integration | Toggle/undo survives reload; denominator unchanged | Agree API first; split backend/UI |
 | R8 | Protect closed scores from deactivation | planService + tests | Backdating never changes a closed score | Define allowed effective weeks first |
 | R9 | Reject archived plan mutations | planService/weekPlanService + tests | Archived cycle history survives every mutation attempt | After R8 |
@@ -22,9 +22,9 @@ This is a delivery queue, not a claim that the product redesign is finished. The
 | D2 | Generate separate occurrences | planRules/service + tests | A 3x tactic produces three schedulable obligations | D1 |
 | D3 | Reconcile open plans after revision | weekPlanService + tests | New dues appear; placements and completions survive | D2 |
 | D4 | Complete/move an occurrence | contract/routes/service + tests | Moving changes no denominator; completion belongs to its occurrence | D2-D3 |
-| U1 | Responsive navigation shell | AppShell | Today/This Week/Cycle hierarchy works at narrow widths | Approve visual/interaction direction |
-| U2 | Today focus and overdue work | Today + small components | Current actions and unfinished earlier work are immediately visible | D4, U1 |
-| U3 | Occurrence-based weekly layout | WeekBoard/DayColumn | Place Mon/Wed/Fri sessions independently with readable controls | D4, U1 |
+| U1 | Responsive navigation shell | AppShell | Today/This Week/Cycle hierarchy works at narrow widths | Implemented and verified — UI workspace batch |
+| U2 | Today focus and overdue work | Today + small components | Current actions and unfinished earlier work are immediately visible | Partial — Today focus and earlier work delivered on count bundles; per-occurrence scheduling still needs D4 |
+| U3 | Occurrence-based weekly layout | WeekBoard/DayColumn | Place Mon/Wed/Fri sessions independently with readable controls | Partial — readable 1/2/3-column grid delivered; per-occurrence placement still needs D4 |
 | W1 | Progress versus final score | scoring DTO/rules, then score components | Current progress is distinguished from final/closed averages | Separate backend/UI briefs |
 | W2 | Contextual feedback | measuresRules + tests, then copy | Advice reflects elapsed weeks and available evidence | W1 |
 | W3 | Weekly ritual handoff | Week/WAM routing | Close -> next-week plan -> optional WAM retains context | R3-R5, U3 |
@@ -49,3 +49,34 @@ Cost controls: short task-specific context; parallel coding only with disjoint f
 
 Coordinator reviewed each task; one fresh combined review found no actionable issues. Final combined verification: 160 tests passed across 21 files; TypeScript no-emit check passed; Next.js production build passed against an isolated temporary database. Existing Vite config warning remains. Browser tests were not rerun for this server-only batch. The larger UI and scheduling work remains queued.
 
+
+## UI workspace batch delivered
+
+Plan: [UI workspace](../superpowers/plans/2026-10-03-ui-workspace.md), finished through the [completion plan](../superpowers/plans/2026-10-03-ui-workspace-completion.md). The completion plan records the walkthrough findings, the review triage and the executor's rulings. Commits on `codex/ui-workspace`:
+
+- 29daef1 docs: plan ui workspace completion
+- f3a0cf3 feat: calm daily and weekly workspace
+- b007632 fix: match week dialog and frozen-board cues to their behavior
+- 9b46b7e fix: keep Today items in place and focusable while saving
+- b003d65 fix: show the Today week and day once in English
+- 7efeda8 fix: wrap Today task and goal text between words
+- 0a4ed53 fix: keep Today loaded when settings switch the language
+- 2d3fbe0 fix: keep bundle steppers focusable at their limits
+- baa50fc fix: switch weeks without reloading the Week page
+- 6c2cc70 test: allow for dev-server compilation in browser tests
+- 17b1520 fix: keep keyboard focus on a task's day select after moving it
+- 81e7217 fix: reject unreadable week-close measurements instead of misreading them
+
+Verification on 2026-10-03: TypeScript clean; 160 unit tests across 21 files; 36 browser tests (Edge, isolated seeded DB, cold dev server); production build with an isolated DB. A real-data walkthrough (44 screenshots: VI/EN, light/dark, 390px/1440px) found no page wider than its viewport. One independent review followed, and every accepted finding was fixed test-first.
+
+Remaining limitations:
+- Repeated tactics are still one count bundle (D1–D4). Extra-task completion is not persisted (R7). Only the UI half of W1 is done.
+- Review wizard step labels are Vietnamese-only in English mode (`StepIndicator`).
+- Measures, Plan, Review, WAM and Model Week are not yet restyled. Inline EN/VI copy is not yet in `src/lib/i18n.ts`.
+- Deferred review minors:
+  - The multi-count toggle name has no progress.
+  - A second Escape can dismiss a dialog while it saves.
+  - Today has no "Plan this week" link before the week is planned.
+  - The "Rest of week" disclosure has no state, and its badge counts day sections.
+  - Server errors stay English in Vietnamese.
+  - Dialog focus and announcements after saves.
