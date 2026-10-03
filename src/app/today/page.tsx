@@ -228,7 +228,7 @@ export default function TodayPage() {
     );
   }
 
-  const { date, weekNumber, weekLabel, dayIndexToday, days, planStatus, projectedScore, dailyPrinciple } = data;
+  const { date, weekNumber, dayIndexToday, days, planStatus, projectedScore, dailyPrinciple } = data;
   const isClosed = planStatus === "closed";
   const todayDay = days.find((day) => day.dayOfWeek === dayIndexToday) ?? {
     dayOfWeek: dayIndexToday,
@@ -255,7 +255,7 @@ export default function TodayPage() {
   }).format(new Date(`${date}T00:00:00`));
   const headerWeekDay = locale === "vi"
     ? `Tuần ${weekNumber} · Ngày ${dayIndexToday + 1}`
-    : `${weekLabel ?? `Week ${weekNumber}`} · Day ${dayIndexToday + 1}`;
+    : `Week ${weekNumber} · Day ${dayIndexToday + 1}`;
 
   return (
     <div className="space-y-6">

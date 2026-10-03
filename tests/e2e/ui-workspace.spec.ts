@@ -245,6 +245,13 @@ test.describe("UI workspace browser contracts", () => {
     await expect(page.getByRole("button", { name: "Undo completion: Monday carryover" })).toBeVisible();
   });
 
+  test("Today header names the week and day once", async ({ page }) => {
+    await mockUiWorkspace(page);
+    await page.goto("/today");
+
+    await expect(page.getByRole("link", { name: "Week 3 · Day 3", exact: true })).toBeVisible();
+  });
+
   test("a closed week on Today shows the final score and locks completion", async ({ page }) => {
     await mockUiWorkspace(page, { closedToday: true });
     await page.goto("/today");

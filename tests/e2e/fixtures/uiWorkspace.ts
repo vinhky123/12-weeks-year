@@ -187,7 +187,8 @@ export async function mockUiWorkspace(page: Page, options: FixtureOptions = {}):
       const today: TodayDto = {
         date: "2026-09-30",
         weekNumber: 3,
-        weekLabel: locale === "vi" ? "Tuần 3" : "Week 3",
+        // Same English-only format as the server's weekAndDayLabel.
+        weekLabel: "Week 3 · Day 3",
         dayIndexToday: 2,
         days: dates.map((date, dayOfWeek) => ({
           dayOfWeek,
