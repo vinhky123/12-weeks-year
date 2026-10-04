@@ -30,15 +30,15 @@ Each task has a bounded brief in .superpowers/sdd/2026-10-04-project-completion.
 
 | ID | Deliverable | Ownership boundary | Dependencies | Status |
 |---|---|---|---|---|
-| C01 | Closed score and archived plan integrity | planService + cycleMutationPolicy + integrity tests | none | queued |
-| C02 | Extra completion API and archived week guards | weekPlanService + item contract/route + service/API tests | C01 | queued |
-| C03 | Immutable WAM snapshots and week-specific preview | wamService + snapshot tests | none | queued |
+| C01 | Closed score and archived plan integrity | planService + cycleMutationPolicy + integrity tests | none | complete |
+| C02 | Extra completion API and archived week guards | weekPlanService + item contract/route + service/API tests | C01 | complete |
+| C03 | Immutable WAM snapshots and week-specific preview | wamService + snapshot tests | none | complete |
 | C04 | Extra completion UI with reload/rollback | Today + TodayItem + dedicated browser spec | C02 | queued |
 | C05 | Closed-only averages and dated week-13 catch-up | scoringService + completion contract/route + tests | C01 | queued |
 | C06 | Review draft/final schema and compatibility | schema/migration + reviewService/contracts + guide/history + backup compatibility | C05 | queued |
 | C07 | Latest baseline and atomic next-cycle creation | reviewService + dedicated tests | C06 | queued |
 | C08 | Finalize/resume review and bilingual steps | Review wizard/page/components + dedicated browser spec | C06,C07 | queued |
-| C09 | Remaining archived measurement/report/block guards | measures + lag route + modelWeek + WAM/review guard tests | C01,C03,C06 | queued |
+| C09 | Remaining archived measurement/report/block guards | measures + lag route + modelWeek + WAM/review guard tests | C01; review guard owned C06 | complete |
 | C10 | Occurrence schema and deterministic legacy migration | schema/migration + normalization + migration tests | C06 | queued |
 | C11 | Occurrence repos and backup v1/v2 compatibility | execution repository + backup service/tests | C10 | queued |
 | C12 | Separate obligations and open-plan reconciliation | planRules + weekPlanService + planService + tests | C11 | queued |
