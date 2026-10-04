@@ -595,6 +595,19 @@ export type CommitmentDto = z.infer<typeof COMMITMENT_DTO>;
 export const COMMITMENT_SCHEMA = z.object({ costs: z.string().min(1), statement: z.string().min(1) });
 export type Commitment = z.infer<typeof COMMITMENT_SCHEMA>;
 
+export const NEXT_CYCLE_PREVIEW_DTO = z.object({
+  cycleId: z.number().int(),
+  goals: z.array(
+    z.object({
+      goalId: z.number().int(),
+      lagStart: z.number().finite(),
+      lagTarget: z.number().finite(),
+      canCarry: z.boolean(),
+    }),
+  ),
+});
+export type NextCyclePreviewDto = z.infer<typeof NEXT_CYCLE_PREVIEW_DTO>;
+
 export const NEXT_CYCLE_CREATE_SCHEMA = z.object({
   name: z.string().optional(),
   startDate: z.string().optional(),

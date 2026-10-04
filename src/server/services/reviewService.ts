@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { CycleReviewDto, ReviewFinalizeIssue } from "../../lib/contracts";
+import type { CycleReviewDto, NextCyclePreviewDto, ReviewFinalizeIssue } from "../../lib/contracts";
 import { todayIso } from "../cycleMath";
 import type { DbHandles } from "../db/index";
 import { cycleReviews, cycles as cyclesTable } from "../db/schema";
@@ -265,6 +265,29 @@ function ratingIssues(
  * Week-13 reload: create the next cycle from an archived one, carrying the
  * selected goals (title/why/lag only — tactics are re-derived, not copied).
  */
+export function getNextCyclePreview(h: DbHandles, sourceCycleId: number): NextCyclePreviewDto {
+  requireCycle(h, sourceCycleId);
+  return buildNextCyclePreview(h, sourceCycleId);
+}
+
+function buildNextCyclePreview(h: DbHandles, sourceCycleId: number): NextCyclePreviewDto {
+  const logs = executionRepo.listLagLogs(h, sourceCycleId);
+  return {
+    cycleId: sourceCycleId,
+    goals: planRepo.listGoals(h, sourceCycleId).map((goal) => {
+      const latest = logs
+        .filter((log) => log.goalId === goal.id)
+        .sort(
+          (a, b) =>
+            a.weekNumber - b.weekNumber || a.loggedAt.localeCompare(b.loggedAt) || a.id - b.id,
+        )
+        .at(-1);
+      const lagStart = latest?.value ?? goal.lagStart;
+      return { goalId: goal.id, lagStart, lagTarget: goal.lagTarget, canCarry: lagStart !== goal.lagTarget };
+    }),
+  };
+}
+
 export function startNextCycle(
   h: DbHandles,
   sourceCycleId: number,
@@ -276,26 +299,49 @@ export function startNextCycle(
     throw conflict("Archive this cycle first — week 13 is where the year closes before the next one opens.");
   }
   const carryIds = input.carryoverGoalIds ?? [];
-  if (carryIds.length > 3) throw invalid("Max 3 goals per cycle — the vital few.");
-  const newCycle = cycleService.createCycle(h, { name: input.name ?? "Next 12 Weeks", startDate: input.startDate ?? undefined }, today);
-  for (const goalId of carryIds) {
-    const goal = planRepo.getGoal(h, goalId);
-    if (!goal || goal.cycleId !== sourceCycleId) throw notFound(`Goal ${goalId}`);
-    planRepo.createGoal(h, {
-      cycleId: newCycle.id,
-      title: goal.title,
-      why: goal.why,
-      lagMetricName: goal.lagMetricName,
-      lagUnit: goal.lagUnit,
-      lagStart: goal.lagStart,
-      lagTarget: goal.lagTarget,
-      deadlineWeek: goal.deadlineWeek,
-      status: "active",
-      sortOrder: planRepo.countActiveGoals(h, newCycle.id),
-      createdAt: today,
-    });
+  if (!Array.isArray(carryIds) || carryIds.some((id) => !Number.isInteger(id) || id < 1)) {
+    throw invalid("Carryover goal IDs must be an array of positive integers.");
   }
-  return newCycle;
+  if (carryIds.length > 3) throw invalid("Max 3 goals per cycle — the vital few.");
+  if (new Set(carryIds).size !== carryIds.length) {
+    throw invalid("Carryover goal IDs must be unique; omit goals listed more than once.");
+  }
+
+  const sourceGoals = new Map(planRepo.listGoals(h, sourceCycleId).map((goal) => [goal.id, goal]));
+  const previewGoals = new Map(buildNextCyclePreview(h, sourceCycleId).goals.map((goal) => [goal.goalId, goal]));
+  const selected = carryIds.map((goalId) => {
+    const goal = sourceGoals.get(goalId);
+    if (!goal) throw invalid(`Goal ${goalId} does not belong to the source cycle.`);
+    const preview = previewGoals.get(goalId)!;
+    if (!preview.canCarry) {
+      throw invalid(`Goal "${goal.title}" has already reached its target; give it a new target or omit it from carryover.`);
+    }
+    return { goal, lagStart: preview.lagStart };
+  });
+
+  return h.sqlite.transaction(() => {
+    const newCycle = cycleService.createCycle(
+      h,
+      { name: input.name ?? "Next 12 Weeks", startDate: input.startDate ?? undefined },
+      today,
+    );
+    for (const [sortOrder, { goal, lagStart }] of selected.entries()) {
+      planRepo.createGoal(h, {
+        cycleId: newCycle.id,
+        title: goal.title,
+        why: goal.why,
+        lagMetricName: goal.lagMetricName,
+        lagUnit: goal.lagUnit,
+        lagStart,
+        lagTarget: goal.lagTarget,
+        deadlineWeek: goal.deadlineWeek,
+        status: "active",
+        sortOrder,
+        createdAt: today,
+      });
+    }
+    return newCycle;
+  })();
 }
 
 function toDto(row: CycleReviewRow): CycleReviewDto {
