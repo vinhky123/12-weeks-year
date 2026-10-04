@@ -1,11 +1,13 @@
 import { and, eq } from "drizzle-orm";
-import { todayIso, WEEKS_IN_CYCLE } from "../cycleMath";
+import { WAM_AUTO_DTO, type WamAutoDto } from "../../lib/contracts";
+import { todayIso, weekEnd, WEEKS_IN_CYCLE } from "../cycleMath";
 import type { DbHandles } from "../db/index";
-import { cycles as cyclesTable, wamReports } from "../db/schema";
+import * as executionRepo from "../db/repositories/execution";
+import { cycles as cyclesTable, leadLogs, leadMeasures, wamReports } from "../db/schema";
 import * as planRepo from "../db/repositories/plan";
-import { invalid, notFound } from "../ruleError";
+import { invalid, notFound, RuleError } from "../ruleError";
 import { dueForWeek } from "../scoring";
-import * as measuresService from "./measuresService";
+import { requireMutableCycle } from "./cycleMutationPolicy";
 import { toTacticLike } from "./planService";
 import * as scoringService from "./scoringService";
 
@@ -26,27 +28,47 @@ function validateWeek(week: number) {
 }
 
 /** Live auto-filled data: results to date, this week's score, next week's commitments. */
-function buildAuto(h: DbHandles, cycleId: number, week: number) {
+function buildAuto(h: DbHandles, cycleId: number, week: number): WamAutoDto {
   const cycle = requireCycle(h, cycleId);
-  const scores = scoringService.getCycleScores(h, cycleId);
-  const overview = measuresService.getMeasuresOverview(h, cycleId);
+  const scores = scoringService.getCycleScores(h, cycleId, weekEnd(cycle.startDate, week));
+  const lagRows = executionRepo.listLagLogs(h, cycleId).filter((log) => log.weekNumber <= week);
   const tacticRows = planRepo.listTacticsByCycle(h, cycleId);
-  const nextWeek = Math.min(week + 1, WEEKS_IN_CYCLE);
-  return {
+  const auto = {
     cycleName: cycle.name,
     weekNumber: week,
     weekScore: scores.weeks[week - 1] ?? null,
     averageScore: scores.averageScore,
-    goals: overview.goals.map((g) => ({
-      title: g.goal.title,
-      lagLatest: g.latestLag,
-      lagUnit: g.goal.lagUnit,
-      leadThisWeek: g.leadMeasures.map((m) => ({ name: m.name, thisWeek: m.thisWeek, weeklyTarget: m.weeklyTarget })),
+    goals: planRepo.listGoals(h, cycleId).map((goal) => ({
+      title: goal.title,
+      lagLatest:
+        lagRows
+          .filter((log) => log.goalId === goal.id)
+          .sort((a, b) => b.weekNumber - a.weekNumber)[0]?.value ?? null,
+      lagUnit: goal.lagUnit,
+      leadThisWeek: h.db
+        .select()
+        .from(leadMeasures)
+        .where(eq(leadMeasures.goalId, goal.id))
+        .all()
+        .map((measure) => ({
+          name: measure.name,
+          thisWeek:
+            h.db
+              .select()
+              .from(leadLogs)
+              .where(and(eq(leadLogs.leadMeasureId, measure.id), eq(leadLogs.weekNumber, week)))
+              .get()?.value ?? null,
+          weeklyTarget: measure.weeklyTarget,
+        })),
     })),
-    nextWeekCommitments: tacticRows
-      .filter((t) => dueForWeek(toTacticLike(t), nextWeek) > 0)
-      .map((t) => t.text),
+    nextWeekCommitments:
+      week === WEEKS_IN_CYCLE
+        ? []
+        : tacticRows
+            .filter((t) => dueForWeek(toTacticLike(t), week + 1) > 0)
+            .map((t) => t.text),
   };
+  return WAM_AUTO_DTO.parse(auto);
 }
 
 export function getWam(h: DbHandles, cycleId: number, week: number) {
@@ -57,9 +79,10 @@ export function getWam(h: DbHandles, cycleId: number, week: number) {
     .from(wamReports)
     .where(and(eq(wamReports.cycleId, cycleId), eq(wamReports.weekNumber, week)))
     .get();
+  const reportDto = report ? toDto(report) : null;
   return {
-    report: report ? toDto(report) : null,
-    auto: buildAuto(h, cycleId, week),
+    report: reportDto,
+    auto: reportDto?.auto ?? buildAuto(h, cycleId, week),
   };
 }
 
@@ -71,24 +94,23 @@ export function saveWam(
   today = todayIso(),
 ) {
   validateWeek(week);
-  requireCycle(h, cycleId);
+  requireMutableCycle(h, cycleId);
   for (const value of [input.blockers, input.whatWorked, input.encouragement]) {
     if (value !== undefined && value.length > MAX_TEXT) throw invalid(`Free-text fields are limited to ${MAX_TEXT} characters.`);
   }
-  const auto = buildAuto(h, cycleId, week);
   const existing = h.db
     .select()
     .from(wamReports)
     .where(and(eq(wamReports.cycleId, cycleId), eq(wamReports.weekNumber, week)))
     .get();
   if (existing) {
+    parseStoredAuto(existing.autoJson);
     const row = h.db
       .update(wamReports)
       .set({
         blockers: input.blockers ?? existing.blockers,
         whatWorked: input.whatWorked ?? existing.whatWorked,
         encouragement: input.encouragement ?? existing.encouragement,
-        autoJson: JSON.stringify(auto),
         updatedAt: today,
       })
       .where(eq(wamReports.id, existing.id))
@@ -96,6 +118,7 @@ export function saveWam(
       .get()!;
     return toDto(row);
   }
+  const auto = buildAuto(h, cycleId, week);
   const row = h.db
     .insert(wamReports)
     .values({
@@ -118,12 +141,26 @@ function toDto(row: WamRow) {
     id: row.id,
     cycleId: row.cycleId,
     weekNumber: row.weekNumber,
-    auto: JSON.parse(row.autoJson) as unknown,
+    auto: parseStoredAuto(row.autoJson),
     blockers: row.blockers,
     whatWorked: row.whatWorked,
     encouragement: row.encouragement,
     updatedAt: row.updatedAt,
   };
+}
+
+function parseStoredAuto(autoJson: string): WamAutoDto {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(autoJson);
+  } catch {
+    throw new RuleError(500, "Corrupted WAM snapshot in database.");
+  }
+  const result = WAM_AUTO_DTO.safeParse(parsed);
+  if (!result.success) {
+    throw new RuleError(500, "Corrupted WAM snapshot in database.", { issues: result.error.issues });
+  }
+  return result.data;
 }
 
 /** Standalone Markdown report to bring to a peer group. */
