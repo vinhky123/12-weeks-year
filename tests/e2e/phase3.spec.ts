@@ -83,6 +83,10 @@ test.describe("Phase 3 E2E (Antigravity UI Verification)", () => {
     // Visit review for archived cycle id 1 (seeded full review)
     await page.goto("/review?id=1");
 
+    // Completed archived reviews resume at Reload; the saved steps remain available for read-only review.
+    await expect(page.getByRole("heading", { name: /(Step 6: Reload|Bước 6: Tái khởi động)/ })).toBeVisible({ timeout: 20_000 });
+    await page.getByRole("button", { name: /(Celebrate|Ăn mừng)/ }).click();
+
     // 1. Step 1: Celebrate
     // A cold dev server compiles three review API routes on this first visit and
     // Fast Refresh reloads the page twice, so allow for compilation here.
