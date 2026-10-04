@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import type { ActiveCycleInfoDto } from "../../lib/contracts";
 import { cycleWeekNumber, daysRemainingInExecution, nextMonday, todayIso, weekAndDayLabel } from "../cycleMath";
 import type { DbHandles } from "../db/index";
 import { settings as settingsTable } from "../db/schema";
@@ -60,17 +61,24 @@ export function phaseFor(today: string, startDate: string): CyclePhase {
   return "post";
 }
 
-export function getActiveCycleInfo(h: DbHandles, today = todayIso()) {
-  const cycle = cyclesRepo.findActiveCycle(h);
-  if (!cycle) return null;
-  const weekNumber = cycleWeekNumber(today, cycle.startDate);
+function cycleInfo(cycle: cyclesRepo.CycleRow, today: string) {
   return {
     cycle,
-    weekNumber,
+    weekNumber: cycleWeekNumber(today, cycle.startDate),
     weekLabel: weekAndDayLabel(today, cycle.startDate),
     daysRemaining: daysRemainingInExecution(today, cycle.startDate),
     phase: phaseFor(today, cycle.startDate),
   };
+}
+
+export function getCycleInfo(h: DbHandles, cycleId: number, today = todayIso()): ActiveCycleInfoDto {
+  return cycleInfo(getCycle(h, cycleId), today) as ActiveCycleInfoDto;
+}
+
+export function getActiveCycleInfo(h: DbHandles, today = todayIso()) {
+  const cycle = cyclesRepo.findActiveCycle(h);
+  if (!cycle) return null;
+  return cycleInfo(cycle, today);
 }
 
 export function getCycleDetail(h: DbHandles, id: number) {
