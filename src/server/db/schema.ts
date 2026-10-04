@@ -160,6 +160,8 @@ export const cycleReviews = sqliteTable(
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     cycleId: integer("cycle_id").notNull().references(() => cycles.id),
+    // draft | complete. Saved answers stay a draft until the owner explicitly finalizes them.
+    status: text("status", { enum: ["draft", "complete"] }).notNull().default("draft"),
     resultsJson: text("results_json").notNull().default("[]"),
     qolJson: text("qol_json").notNull().default("[]"),
     disciplinesJson: text("disciplines_json").notNull().default("[]"),

@@ -128,6 +128,7 @@ reviewService.saveReview(h, oldCycle.id, {
   breakthroughs: "Working ON the system Sunday nights changed everything. The valley (weeks 3-4) was survived by rhythm, not motivation.",
   nextCycleNotes: "Protect the strategic block like a dentist appointment. Books goal achieved — replace with writing.",
 }, addDays(oldStart, 84));
+reviewService.finalizeReview(h, oldCycle.id, addDays(oldStart, 84));
 // goals resolved honestly: books achieved, 10K missed
 planService.updateGoal(h, oldG1.id, { status: "achieved" });
 planService.updateGoal(h, oldG2.id, { status: "missed" });

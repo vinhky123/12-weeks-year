@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
+import { CYCLE_REVIEW_STATUSES } from "../../lib/contracts";
 import { todayIso } from "../cycleMath";
 import type { DbHandles } from "../db";
 import * as schema from "../db/schema";
@@ -45,6 +46,24 @@ function resolveDbPath(h: DbHandles): string {
   return (h.sqlite as unknown as { name?: string }).name ?? "data/app.db";
 }
 
+/**
+ * v1 backups written before review finalization carry no status on their cycle_reviews rows. Those reviews
+ * were already finished, so they import as complete. An explicit draft or complete is kept; any other value is
+ * refused. Returns new rows — the caller's payload is not modified.
+ */
+function withReviewStatus(row: Record<string, unknown>): Record<string, unknown> {
+  if (row.status === undefined) return { ...row, status: "complete" };
+  if (!(CYCLE_REVIEW_STATUSES as readonly unknown[]).includes(row.status)) {
+    throw new RuleError(422, `Unsupported review status in backup: ${JSON.stringify(row.status)} (expected "draft" or "complete").`);
+  }
+  return row;
+}
+
+function withReviewStatuses(data: BackupEnvelope["data"]): BackupEnvelope["data"] {
+  const reviews = data.cycle_reviews;
+  return Array.isArray(reviews) ? { ...data, cycle_reviews: reviews.map(withReviewStatus) } : data;
+}
+
 export function exportAll(h: DbHandles): BackupEnvelope {
   const data: Record<string, Record<string, unknown>[]> = {};
   for (const entry of TABLE_ORDER) {
@@ -70,7 +89,8 @@ export function importAll(h: DbHandles, payload: unknown, options: { confirm: bo
   if (envelope.version !== BACKUP_VERSION) {
     throw new RuleError(422, `Unsupported backup version: ${String(envelope.version)} (supported: ${BACKUP_VERSION}).`);
   }
-  const data = envelope.data ?? {};
+  // Validated up front: a rejected status must leave the database untouched and write no pre-import backup.
+  const data = withReviewStatuses(envelope.data ?? {});
 
   writeAutoBackup(h, "pre-import");
 

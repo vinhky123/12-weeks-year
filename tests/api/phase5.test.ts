@@ -21,6 +21,7 @@ const weeksRoute = await import("../../src/app/api/cycles/[id]/weeks/[week]/rout
 const generateRoute = await import("../../src/app/api/cycles/[id]/weeks/[week]/generate/route");
 const closeRoute = await import("../../src/app/api/week-plans/[id]/close/route");
 const reviewRoute = await import("../../src/app/api/cycles/[id]/review/route");
+const finalizeRoute = await import("../../src/app/api/cycles/[id]/review/finalize/route");
 const archiveRoute = await import("../../src/app/api/cycles/[id]/archive/route");
 const nextRoute = await import("../../src/app/api/cycles/[id]/next/route");
 const modelWeekRoute = await import("../../src/app/api/model-week/route");
@@ -128,7 +129,7 @@ describe("guide journey (Phase 5 contract)", () => {
     expect(jMonday.steps.find((s: any) => s.id === "execute_today").status).toBe("current");
   });
 
-  it("week 13 → write_review; then archive → start_next_cycle; then successor → foundation again", async () => {
+  it("week 13 → write_review (a saved draft keeps it open) → finalize → archive_cycle; then archive → start_next_cycle; then successor → foundation again", async () => {
     const active = await json(await (await import("../../src/app/api/cycles/active/route")).GET(req("GET", "/api/cycles/active")));
     const week13 = addDays(active.cycle.startDate, 84);
     const j13 = await journey(week13);
@@ -150,6 +151,23 @@ describe("guide journey (Phase 5 contract)", () => {
       }, week13),
       ctx({ id: active.cycle.id }),
     );
+
+    // Every section is answered, but saved answers are only a draft: the journey still asks for the review.
+    const jDraft = await journey(week13);
+    expect(jDraft.nextAction).toEqual({ id: "write_review" });
+    expect(jDraft.steps.find((s: any) => s.id === "write_review").status).toBe("current");
+
+    // Only the owner's explicit finalization finishes it.
+    const finalized = await finalizeRoute.POST(
+      req("POST", `/api/cycles/${active.cycle.id}/review/finalize`, undefined, week13),
+      ctx({ id: active.cycle.id }),
+    );
+    expect(finalized.status).toBe(200);
+    expect((await json(finalized)).review.status).toBe("complete");
+    const jFinalized = await journey(week13);
+    expect(jFinalized.nextAction).toEqual({ id: "archive_cycle" });
+    expect(jFinalized.steps.find((s: any) => s.id === "write_review").status).toBe("done");
+
     await archiveRoute.POST(req("POST", `/api/cycles/${active.cycle.id}/archive`, undefined, week13), ctx({ id: active.cycle.id }));
 
     const jArchived = await journey(week13);

@@ -22,10 +22,12 @@ export function listCycles(h: DbHandles, today = todayIso()) {
       startDate: cycle.startDate,
       archivedAt: cycle.archivedAt,
       averageScore: scores.averageScore,
-      scoredWeeks: scores.weeks.filter((w) => w !== null).length,
+      // Only closed weeks are final scores; open weeks are projected progress.
+      scoredWeeks: scores.weeks.filter((w) => w?.closed).length,
       goalsCompleted: goals.filter((g) => g.status === "achieved").length,
       goalsTotal: goals.length,
-      hasReview: review !== undefined,
+      // A saved draft is not a finished review; only an explicitly finalized one counts.
+      hasReview: review?.status === "complete",
     };
   });
 }
@@ -69,9 +71,10 @@ export function getInsights(h: DbHandles, today = todayIso()) {
     (bestSoFar, c) => (bestSoFar === null || (c.averageScore ?? 0) > (bestSoFar.averageScore ?? 0) ? c : bestSoFar),
     null,
   );
+  // Quality-of-life movement compares finalized reviews only; drafts are not final answers.
   const reviews = cycles
     .map((cycle) => h.db.select().from(cycleReviews).where(eq(cycleReviews.cycleId, cycle.id)).get())
-    .filter((r): r is NonNullable<typeof r> => r !== undefined)
+    .filter((r): r is NonNullable<typeof r> => r !== undefined && r.status === "complete")
     .map((r) => JSON.parse(r.qolJson) as { area: string; rating: number }[]);
   const qolAverage = (entries: { area: string; rating: number }[]) =>
     entries.length === 0 ? null : Math.round(entries.reduce((s, e) => s + e.rating, 0) / entries.length);
@@ -88,6 +91,7 @@ export function getInsights(h: DbHandles, today = todayIso()) {
 
 function reviewToJson(row: typeof cycleReviews.$inferSelect) {
   return {
+    status: row.status,
     results: JSON.parse(row.resultsJson) as unknown,
     qol: JSON.parse(row.qolJson) as unknown,
     disciplines: JSON.parse(row.disciplinesJson) as unknown,

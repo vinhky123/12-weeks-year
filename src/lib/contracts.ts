@@ -484,9 +484,16 @@ export const WAM_SAVE_SCHEMA = z.object({
 });
 export type WamSave = z.infer<typeof WAM_SAVE_SCHEMA>;
 
+/** Must mirror the `cycle_reviews.status` enum in src/server/db/schema.ts — sync-tested. */
+export const CYCLE_REVIEW_STATUSES = ["draft", "complete"] as const;
+export type CycleReviewStatus = (typeof CYCLE_REVIEW_STATUSES)[number];
+export const CYCLE_REVIEW_STATUS_SCHEMA = z.enum(CYCLE_REVIEW_STATUSES);
+
 export const CYCLE_REVIEW_DTO = z.object({
   id: z.number().int(),
   cycleId: z.number().int(),
+  /** "draft" until the owner explicitly finalizes it; any later edit reopens it as a draft. */
+  status: CYCLE_REVIEW_STATUS_SCHEMA,
   results: z.array(
     z.object({
       goalId: z.number().int(),
@@ -512,6 +519,10 @@ export const CYCLE_REVIEW_DTO = z.object({
 });
 export type CycleReviewDto = z.infer<typeof CYCLE_REVIEW_DTO>;
 
+/**
+ * PUT /api/cycles/:id/review — answers only. There is no status field: saving always leaves (or reopens) a
+ * draft, and only POST /api/cycles/:id/review/finalize completes a review. A `status` sent here is ignored.
+ */
 export const REVIEW_SAVE_SCHEMA = z.object({
   results: z
     .array(
@@ -540,6 +551,26 @@ export const REVIEW_SAVE_SCHEMA = z.object({
   nextCycleNotes: z.string().optional(),
 });
 export type ReviewSave = z.infer<typeof REVIEW_SAVE_SCHEMA>;
+
+/** POST /api/cycles/:id/review/finalize — no request body; answers with the finalized review (repeating it is safe). */
+export const REVIEW_FINALIZE_RESULT_DTO = z.object({ review: CYCLE_REVIEW_DTO });
+export type ReviewFinalizeResultDto = z.infer<typeof REVIEW_FINALIZE_RESULT_DTO>;
+
+/** Sections whose answers can block finalization; breakthroughs and next-cycle notes may deliberately stay empty. */
+export const REVIEW_FINALIZE_SECTIONS = ["results", "qol", "disciplines"] as const;
+export type ReviewFinalizeSection = (typeof REVIEW_FINALIZE_SECTIONS)[number];
+export const REVIEW_FINALIZE_ISSUE_DTO = z.object({
+  section: z.enum(REVIEW_FINALIZE_SECTIONS),
+  message: z.string(),
+});
+export type ReviewFinalizeIssue = z.infer<typeof REVIEW_FINALIZE_ISSUE_DTO>;
+
+/**
+ * `details` of the 422 that refuses to finalize an unfinished review (the 409s for a missing review or an
+ * archived cycle carry no details). Nothing is written when finalization is refused.
+ */
+export const REVIEW_FINALIZE_ERROR_DETAILS_DTO = z.object({ issues: z.array(REVIEW_FINALIZE_ISSUE_DTO).min(1) });
+export type ReviewFinalizeErrorDetails = z.infer<typeof REVIEW_FINALIZE_ERROR_DETAILS_DTO>;
 
 export const CELEBRATION_DTO = z.object({
   cycleId: z.number().int(),

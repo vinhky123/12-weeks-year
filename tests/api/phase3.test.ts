@@ -20,6 +20,7 @@ const tacticsRoute = await import("../../src/app/api/goals/[id]/tactics/route");
 const wamRoute = await import("../../src/app/api/cycles/[id]/wam/[week]/route");
 const wamExportRoute = await import("../../src/app/api/cycles/[id]/wam/[week]/export/route");
 const reviewRoute = await import("../../src/app/api/cycles/[id]/review/route");
+const finalizeRoute = await import("../../src/app/api/cycles/[id]/review/finalize/route");
 const celebrationRoute = await import("../../src/app/api/cycles/[id]/review/celebration/route");
 const nextRoute = await import("../../src/app/api/cycles/[id]/next/route");
 const commitmentRoute = await import("../../src/app/api/cycles/[id]/commitment/route");
@@ -109,6 +110,31 @@ describe("phase 3: week-13 review & next cycle", () => {
     expect(savedReview.review.results[0].grade).toBeGreaterThanOrEqual(1);
     expect(savedReview.review.qol).toHaveLength(2);
     expect(savedReview.review.breakthroughs).toContain("Work ON");
+    expect(savedReview.review.status).toBe("draft"); // saved answers are a draft until the owner finalizes them
+
+    // History does not count a draft as a finished review, and finalizing needs every defined section
+    const draftHistory = await json(await historyRoute.GET());
+    expect(draftHistory.find((c: any) => c.id === cycleId)).toMatchObject({ hasReview: false });
+    const unfinished = await finalizeRoute.POST(req("POST"), ctx({ id: cycleId }));
+    expect(unfinished.status).toBe(422); // only two areas and two disciplines are answered
+
+    await reviewRoute.PUT(
+      req("PUT", {
+        qol: [
+          { area: "Spiritual", rating: 6 }, { area: "Spouse/Key Relationship", rating: 7 }, { area: "Family", rating: 7 },
+          { area: "Business", rating: 6 }, { area: "Personal", rating: 6 }, { area: "Physical", rating: 7 },
+        ],
+        disciplines: [
+          { name: "Vision", rating: 8 }, { name: "12-Week Planning", rating: 7 },
+          { name: "Weekly Routine (Score · Plan · WAM)", rating: 7 }, { name: "Performance Time (Blocks)", rating: 6 },
+          { name: "Key Measures", rating: 6 },
+        ],
+      }),
+      ctx({ id: cycleId }),
+    );
+    const finalized = await json(await finalizeRoute.POST(req("POST"), ctx({ id: cycleId })));
+    expect(finalized.review.status).toBe("complete");
+    expect(finalized.review.breakthroughs).toContain("Work ON"); // finalizing manufactures and drops nothing
 
     // commitment
     await commitmentRoute.PUT(req("PUT", { costs: "Early mornings", statement: "I choose to execute the vital few daily." }), ctx({ id: cycleId }));

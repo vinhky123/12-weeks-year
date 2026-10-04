@@ -26,6 +26,20 @@ afterEach(() => {
   for (const suffix of ["", "-wal", "-shm"]) fs.rmSync(tmpPath + suffix, { force: true });
 });
 
+const AREAS = ["Spiritual", "Spouse/Key Relationship", "Family", "Business", "Personal", "Physical"];
+const DISCIPLINES = ["Vision", "12-Week Planning", "Weekly Routine (Score · Plan · WAM)", "Performance Time (Blocks)", "Key Measures"];
+
+/** A review only counts as finished once every section is defined and the owner finalizes it, before archiving. */
+function finishReview(cycleId: number, ratings: Record<string, number>) {
+  reviewService.saveReview(
+    h,
+    cycleId,
+    { qol: AREAS.map((area) => ({ area, rating: ratings[area]! })), disciplines: DISCIPLINES.map((name) => ({ name, rating: 7 })) },
+    TODAY,
+  );
+  return reviewService.finalizeReview(h, cycleId, TODAY);
+}
+
 function setup(today = TODAY) {
   const cycle = cycleService.createCycle(h, { name: "Q4", startDate: today }, today);
   cycleService.startCycle(h, cycle.id);
@@ -107,6 +121,7 @@ describe("week-13 review (F11)", () => {
     expect(review.results).toHaveLength(1); // auto results for the 1 goal
     expect(review.results[0]!.grade).toBeGreaterThan(0);
     expect(review.breakthroughs).toContain("Work ON");
+    expect(review.status).toBe("draft"); // saved answers stay a draft until finalized
   });
 
   it("startNextCycle requires archive, carries goals, enforces max 3", () => {
@@ -132,21 +147,21 @@ describe("history & insights (F13)", () => {
     expect(list[0]).toMatchObject({ id: cycle.id, status: "active", hasReview: false, goalsTotal: 1 });
   });
 
-  it("insights compute best cycle and QoL movement across reviews", () => {
+  it("insights compute best cycle and QoL movement across finalized reviews", () => {
     const { cycle } = setup();
+    // The first year's review is finalized before the cycle is archived (archived cycles are immutable).
+    finishReview(cycle.id, { Spiritual: 5, "Spouse/Key Relationship": 5, Family: 6, Business: 5, Personal: 5, Physical: 4 });
     cycleService.archiveCycle(h, cycle.id, TODAY);
     const second = reviewService.startNextCycle(h, cycle.id, { name: "Q1", startDate: "2027-01-04" }, TODAY);
     cycleService.startCycle(h, second.id);
     const g2 = planService.addGoal(h, second.id, { title: "G2", why: "Why", lagMetricName: "M", lagUnit: "u", lagStart: 0, lagTarget: 10 }, TODAY);
     void g2;
-
-    reviewService.saveReview(h, cycle.id, { qol: [{ area: "Physical", rating: 4 }, { area: "Family", rating: 6 }] }, TODAY);
-    reviewService.saveReview(h, second.id, { qol: [{ area: "Physical", rating: 7 }, { area: "Family", rating: 8 }] }, TODAY);
+    finishReview(second.id, { Spiritual: 8, "Spouse/Key Relationship": 8, Family: 8, Business: 8, Personal: 9, Physical: 7 });
 
     const insights = historyService.getInsights(h, TODAY);
     expect(insights.cycles).toHaveLength(2);
     expect(insights.totalGoalsAchieved).toBe(0);
-    expect(insights.qualityOfLifeMovement).toEqual({ first: 5, latest: 8 }); // avg(4,6) -> avg(7,8)
+    expect(insights.qualityOfLifeMovement).toEqual({ first: 5, latest: 8 }); // avg of six areas: 5 -> 8
   });
 
   it("commitment upserts and validates (F12)", () => {

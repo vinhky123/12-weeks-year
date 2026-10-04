@@ -102,7 +102,8 @@ export function getJourney(h: DbHandles, today = todayIso()) {
         .from(wamReports)
         .where(and(eq(wamReports.cycleId, cycle.id), eq(wamReports.weekNumber, lastClosedWeek)))
         .get(),
-    hasReview: !!h.db.select().from(cycleReviews).where(eq(cycleReviews.cycleId, cycle.id)).get(),
+    // Only an explicitly finalized review finishes write_review; a saved draft is still unfinished.
+    hasReview: h.db.select().from(cycleReviews).where(eq(cycleReviews.cycleId, cycle.id)).get()?.status === "complete",
     hasArchivedHistory: cyclesRepo.listCycles(h).some((c) => c.status === "archived"),
   };
 
