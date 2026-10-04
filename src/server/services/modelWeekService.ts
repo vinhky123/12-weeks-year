@@ -4,6 +4,7 @@ import type { DbHandles } from "../db/index";
 import { blockTemplates } from "../db/schema";
 import { RuleError, invalid } from "../ruleError";
 import { validateModelWeek, type BlockTypeLike } from "../modelWeekRules";
+import { requireMutableCycle } from "./cycleMutationPolicy";
 
 export type BlockRow = typeof blockTemplates.$inferSelect;
 
@@ -49,14 +50,17 @@ export function updateBlock(
 ): BlockRow {
   const block = h.db.select().from(blockTemplates).where(eq(blockTemplates.id, id)).get();
   if (!block) throw new RuleError(404, "Block not found.");
+  if (block.cycleId !== null) requireMutableCycle(h, block.cycleId);
   const merged = { ...block, ...patch };
   validateBlockInput(merged);
   return h.db.update(blockTemplates).set({ ...patch, label: patch.label?.trim() || null }).where(eq(blockTemplates.id, id)).returning().get()!;
 }
 
 export function removeBlock(h: DbHandles, id: number): void {
-  const result = h.db.delete(blockTemplates).where(eq(blockTemplates.id, id)).run();
-  if (result.changes === 0) throw new RuleError(404, "Block not found.");
+  const block = h.db.select().from(blockTemplates).where(eq(blockTemplates.id, id)).get();
+  if (!block) throw new RuleError(404, "Block not found.");
+  if (block.cycleId !== null) requireMutableCycle(h, block.cycleId);
+  h.db.delete(blockTemplates).where(eq(blockTemplates.id, id)).run();
 }
 
 function validateBlockInput(input: { type: string; dayOfWeek: number; startMinute: number; durationMinutes: number }) {

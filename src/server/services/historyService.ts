@@ -7,6 +7,7 @@ import * as executionRepo from "../db/repositories/execution";
 import * as planRepo from "../db/repositories/plan";
 import { invalid, notFound } from "../ruleError";
 import * as cycleService from "./cycleService";
+import { requireMutableCycle } from "./cycleMutationPolicy";
 import * as scoringService from "./scoringService";
 
 export function listCycles(h: DbHandles, today = todayIso()) {
@@ -110,7 +111,7 @@ export function getCommitment(h: DbHandles, cycleId: number) {
 }
 
 export function setCommitment(h: DbHandles, cycleId: number, input: { costs: string; statement: string }, today = todayIso()) {
-  requireCycle(h, cycleId);
+  requireMutableCycle(h, cycleId);
   if (!input.costs?.trim()) throw invalid("Count the costs — what will this commitment cost you in comfort and pleasure?");
   if (!input.statement?.trim()) throw invalid('Write your commitment: "I choose to…".');
   const values = { costs: input.costs.trim(), statement: input.statement.trim() };

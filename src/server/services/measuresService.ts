@@ -5,7 +5,8 @@ import { cycles as cyclesTable, leadLogs as leadLogsTable, leadMeasures as leadM
 import * as executionRepo from "../db/repositories/execution";
 import * as planRepo from "../db/repositories/plan";
 import { diagnosisFor, lagProgress } from "../measuresRules";
-import { RuleError, invalid, notFound } from "../ruleError";
+import { invalid, notFound } from "../ruleError";
+import { requireMutableCycle } from "./cycleMutationPolicy";
 import { getCycleScores } from "./scoringService";
 
 export type LeadMeasureRow = typeof import("../db/schema").leadMeasures.$inferSelect;
@@ -14,6 +15,7 @@ export type LeadLogRow = typeof import("../db/schema").leadLogs.$inferSelect;
 export function addLeadMeasure(h: DbHandles, goalId: number, input: { name: string; weeklyTarget: number }, today = todayIso()) {
   const goal = planRepo.getGoal(h, goalId);
   if (!goal) throw notFound("Goal");
+  requireMutableCycle(h, goal.cycleId);
   if (!input.name?.trim()) throw invalid("Lead measure name is required.");
   if (!Number.isInteger(input.weeklyTarget) || input.weeklyTarget < 1) throw invalid("weeklyTarget must be a whole number ≥ 1.");
   return h.db.insert(leadMeasuresTable).values({ goalId, name: input.name.trim(), weeklyTarget: input.weeklyTarget, createdAt: today }).returning().get()!;
@@ -21,6 +23,7 @@ export function addLeadMeasure(h: DbHandles, goalId: number, input: { name: stri
 
 export function updateLeadMeasure(h: DbHandles, id: number, patch: { name?: string; weeklyTarget?: number }) {
   const measure = getLeadMeasure(h, id);
+  requireMutableMeasure(h, measure);
   const updates: Record<string, unknown> = {};
   if (patch.name !== undefined) {
     if (!patch.name.trim()) throw invalid("Lead measure name is required.");
@@ -35,9 +38,10 @@ export function updateLeadMeasure(h: DbHandles, id: number, patch: { name?: stri
 }
 
 export function removeLeadMeasure(h: DbHandles, id: number): void {
+  const measure = getLeadMeasure(h, id);
+  requireMutableMeasure(h, measure);
   h.db.delete(leadLogsTable).where(eq(leadLogsTable.leadMeasureId, id)).run();
-  const result = h.db.delete(leadMeasuresTable).where(eq(leadMeasuresTable.id, id)).run();
-  if (result.changes === 0) throw new RuleError(404, "Lead measure not found.");
+  h.db.delete(leadMeasuresTable).where(eq(leadMeasuresTable.id, id)).run();
 }
 
 export function getLeadMeasure(h: DbHandles, id: number) {
@@ -49,6 +53,7 @@ export function getLeadMeasure(h: DbHandles, id: number) {
 /** Upsert one weekly lead value. */
 export function logLead(h: DbHandles, input: { leadMeasureId: number; weekNumber: number; value: number }, today = todayIso()) {
   const measure = getLeadMeasure(h, input.leadMeasureId);
+  requireMutableMeasure(h, measure);
   if (!Number.isInteger(input.weekNumber) || input.weekNumber < 1 || input.weekNumber > WEEKS_IN_CYCLE) {
     throw invalid("weekNumber must be 1-12.");
   }
@@ -62,6 +67,12 @@ export function logLead(h: DbHandles, input: { leadMeasureId: number; weekNumber
     return h.db.update(leadLogsTable).set({ value: input.value, loggedAt: today }).where(eq(leadLogsTable.id, existing.id)).returning().get()!;
   }
   return h.db.insert(leadLogsTable).values({ leadMeasureId: measure.id, weekNumber: input.weekNumber, value: input.value, loggedAt: today }).returning().get()!;
+}
+
+function requireMutableMeasure(h: DbHandles, measure: LeadMeasureRow) {
+  const goal = planRepo.getGoal(h, measure.goalId);
+  if (!goal) throw notFound("Goal");
+  requireMutableCycle(h, goal.cycleId);
 }
 
 function requireCycle(h: DbHandles, cycleId: number) {
