@@ -56,6 +56,8 @@ test.describe("UI workspace browser contracts", () => {
 
     await expect(page.getByText("Wednesday priority", { exact: true })).toBeVisible();
     await expect(page.getByText("Admin follow-up", { exact: true })).toBeVisible();
+    await expect(page.getByText("Extra task · unscored", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Mark complete: Admin follow-up" })).toBeEnabled();
     await expect(page.getByText("Monday carryover", { exact: true })).toBeVisible();
     await expect(page.getByText("Tuesday completed", { exact: true })).toBeHidden();
     await expect(page.getByText("Friday future", { exact: true })).toBeHidden();

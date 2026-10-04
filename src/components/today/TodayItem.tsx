@@ -19,7 +19,7 @@ export default function TodayItem({ item, isClosed, onIncrement, onDecrement, is
   const isMulti = item.plannedCount > 1;
   const isComplete = item.done >= item.plannedCount;
   const isExtraTask = item.tacticId === null;
-  const isLocked = isClosed || isExtraTask;
+  const isLocked = isClosed;
   const controlsDisabled = isLocked || isMutating;
   const completionName = isComplete
     ? locale === "vi" ? `Hủy hoàn thành: ${item.label}` : `Undo completion: ${item.label}`
@@ -55,7 +55,7 @@ export default function TodayItem({ item, isClosed, onIncrement, onDecrement, is
         </button>
         <div className="min-w-0 flex-1">
           <p className={`min-w-0 [overflow-wrap:anywhere] text-[15px] font-medium leading-6 ${isComplete ? "text-zinc-500 line-through dark:text-zinc-400" : "text-zinc-900 dark:text-zinc-100"}`}>{item.label}</p>
-          {isExtraTask && <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{locale === "vi" ? "Việc thêm · không thể theo dõi hoàn thành" : "Extra task · completion tracking unavailable"}</p>}
+          {isExtraTask && <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{locale === "vi" ? "Việc thêm · không tính điểm" : "Extra task · unscored"}</p>}
           {item.goal && (
             <details open={showGoal} className="mt-2 min-w-0 max-w-full">
               <summary

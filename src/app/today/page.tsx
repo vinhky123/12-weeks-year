@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import type { TodayDto, CompletionResultDto, WeekPlanItemDto } from "@/lib/contracts";
+import type { TodayDto, CompletionResultDto, WeekPlanDetailDto, WeekPlanItemDto } from "@/lib/contracts";
 import { apiFetch, ClientApiError } from "@/components/common/api";
 import PrincipleLine from "@/components/today/PrincipleLine";
 import DaySection from "@/components/today/DaySection";
@@ -76,7 +76,7 @@ export default function TodayPage() {
   }, [fetchToday]);
 
   const handleIncrement = async (item: WeekPlanItemDto) => {
-    if (!data || mutationPendingRef.current || item.tacticId === null || item.done >= item.plannedCount) return;
+    if (!data || mutationPendingRef.current || item.done >= item.plannedCount) return;
 
     mutationPendingRef.current = true;
     setMutatingItemId(item.id);
@@ -94,6 +94,27 @@ export default function TodayPage() {
     });
 
     try {
+      if (item.tacticId === null) {
+        const res = await apiFetch<WeekPlanDetailDto>(`/api/week-plans/${item.weekPlanId}/items/${item.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ done: item.done + 1 }),
+        });
+        const canonicalItem = res.items.find((candidate) => candidate.id === item.id);
+        if (!canonicalItem) throw new Error("Updated item missing from week plan response.");
+        setData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            days: prev.days.map((day) => ({
+              ...day,
+              items: day.items.map((candidate) => candidate.id === item.id ? { ...candidate, done: canonicalItem.done } : candidate),
+            })),
+            projectedScore: res.score,
+          };
+        });
+        return;
+      }
+
       const res = await apiFetch<CompletionResultDto>("/api/completions", {
         method: "POST",
         body: JSON.stringify({
@@ -121,7 +142,7 @@ export default function TodayPage() {
       if (err instanceof ClientApiError) {
         showToast(err.message);
       } else {
-        showToast(locale === "vi" ? "Không thể ghi nhận hoàn thành." : "Failed to record completion.");
+        showToast(localeRef.current === "vi" ? "Không thể ghi nhận hoàn thành." : "Failed to record completion.");
       }
     } finally {
       mutationPendingRef.current = false;
@@ -130,7 +151,7 @@ export default function TodayPage() {
   };
 
   const handleDecrement = async (item: WeekPlanItemDto) => {
-    if (!data || mutationPendingRef.current || item.tacticId === null || item.done <= 0) return;
+    if (!data || mutationPendingRef.current || item.done <= 0) return;
 
     mutationPendingRef.current = true;
     setMutatingItemId(item.id);
@@ -148,6 +169,27 @@ export default function TodayPage() {
     });
 
     try {
+      if (item.tacticId === null) {
+        const res = await apiFetch<WeekPlanDetailDto>(`/api/week-plans/${item.weekPlanId}/items/${item.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ done: Math.max(0, item.done - 1) }),
+        });
+        const canonicalItem = res.items.find((candidate) => candidate.id === item.id);
+        if (!canonicalItem) throw new Error("Updated item missing from week plan response.");
+        setData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            days: prev.days.map((day) => ({
+              ...day,
+              items: day.items.map((candidate) => candidate.id === item.id ? { ...candidate, done: canonicalItem.done } : candidate),
+            })),
+            projectedScore: res.score,
+          };
+        });
+        return;
+      }
+
       const res = await apiFetch<CompletionResultDto>("/api/completions", {
         method: "DELETE",
         body: JSON.stringify({
@@ -175,7 +217,7 @@ export default function TodayPage() {
       if (err instanceof ClientApiError) {
         showToast(err.message);
       } else {
-        showToast(locale === "vi" ? "Không thể hủy hoàn thành." : "Failed to remove completion.");
+        showToast(localeRef.current === "vi" ? "Không thể hủy hoàn thành." : "Failed to remove completion.");
       }
     } finally {
       mutationPendingRef.current = false;
