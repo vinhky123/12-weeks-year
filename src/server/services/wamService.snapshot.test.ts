@@ -10,6 +10,7 @@ import * as measuresService from "./measuresService";
 import * as planService from "./planService";
 import * as scoringService from "./scoringService";
 import * as wamService from "./wamService";
+import * as weekPlanService from "./weekPlanService";
 
 const START = "2026-01-05";
 const WEEK_1_DATE = "2026-01-05";
@@ -56,6 +57,8 @@ describe("WAM auto snapshots", () => {
     logLag(goal.id, 1, 10, WEEK_1_DATE);
     measuresService.logLead(h, { leadMeasureId: lead.id, weekNumber: 1, value: 4 }, WEEK_1_DATE);
     scoringService.logCompletion(h, { tacticId: tactic.id, weekNumber: 1 }, WEEK_1_DATE);
+    const week1 = weekPlanService.generateWeekPlan(h, cycle.id, 1, WEEK_1_DATE);
+    weekPlanService.closeWeek(h, week1.id, {}, WEEK_1_DATE);
     wamService.saveWam(h, cycle.id, 1, { blockers: "Original blocker", whatWorked: "Original win" }, WEEK_1_DATE);
 
     const storedBefore = h.sqlite
@@ -97,6 +100,8 @@ describe("WAM auto snapshots", () => {
     measuresService.logLead(h, { leadMeasureId: lead.id, weekNumber: 1, value: 4 }, WEEK_1_DATE);
     measuresService.logLead(h, { leadMeasureId: lead.id, weekNumber: 2, value: 9 }, WEEK_2_DATE);
     scoringService.logCompletion(h, { tacticId: tactic.id, weekNumber: 1 }, WEEK_1_DATE);
+    const week1 = weekPlanService.generateWeekPlan(h, cycle.id, 1, WEEK_1_DATE);
+    weekPlanService.closeWeek(h, week1.id, {}, WEEK_1_DATE);
 
     const result = wamService.getWam(h, cycle.id, 1);
 

@@ -10,6 +10,7 @@ import * as planService from "./planService";
 import * as reviewService from "./reviewService";
 import * as scoringService from "./scoringService";
 import * as wamService from "./wamService";
+import * as weekPlanService from "./weekPlanService";
 
 const TODAY = "2026-10-05";
 let tmpPath: string;
@@ -163,7 +164,8 @@ describe("history & insights (F13)", () => {
 describe("valley guardrail on the dashboard (F12)", () => {
   it("appears in weeks 3-6 with a low average and nowhere else", () => {
     const { cycle, tactic } = setup();
-    // week 1: execute fully so avg is high at week 4... simpler: check directly at week 4 with no completions
+    const week1 = weekPlanService.generateWeekPlan(h, cycle.id, 1, TODAY);
+    weekPlanService.closeWeek(h, week1.id, {}, TODAY);
     const midCycle = addDays(TODAY, 21); // week 4, day 1
     const dash = scoringService.buildDashboard(h, midCycle);
     expect(dash.valleyGuidance).not.toBeNull();

@@ -297,7 +297,7 @@ export const CLOSE_WEEK_SCHEMA = z.object({
 });
 export type CloseWeek = z.infer<typeof CLOSE_WEEK_SCHEMA>;
 
-export const COMPLETION_SCHEMA = z.object({ tacticId: z.number().int(), weekNumber: z.number().int().min(1).max(12) });
+export const COMPLETION_SCHEMA = z.object({ tacticId: z.number().int(), weekNumber: z.number().int().min(1).max(12), date: z.string().optional() });
 
 export const LAG_LOG_CREATE_SCHEMA = z.object({
   goalId: z.number().int(),

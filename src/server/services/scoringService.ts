@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { cycleWeekNumber, diffDays, todayIso, weekAndDayLabel, weekStart, WEEKS_IN_CYCLE } from "../cycleMath";
+import { cycleWeekNumber, diffDays, REVIEW_WEEK, todayIso, toUtcMs, weekAndDayLabel, weekEnd, weekStart, WEEKS_IN_CYCLE } from "../cycleMath";
 import type { DbHandles } from "../db/index";
 import { settings as settingsTable } from "../db/schema";
 import * as cyclesRepo from "../db/repositories/cycles";
@@ -25,34 +25,40 @@ const DAILY_PRINCIPLES = [
 
 /** Log one honest completion. Caps at due — no extra credit. */
 export function logCompletion(h: DbHandles, input: { tacticId: number; weekNumber: number; date?: string }, today = todayIso()) {
-  const { tactic, cycle } = requireLoggable(h, input, today);
+  const { tactic, cycle, currentWeek } = requireCompletionContext(h, input, today);
+  const date = completionDate(input.date, today, cycle.startDate, input.weekNumber, currentWeek, "log");
   const existing = executionRepo.listCompletionsForTacticWeek(h, tactic.id, input.weekNumber);
   const due = weekScore([toTacticLike(tactic)], new Map(), input.weekNumber);
   const dueCount = due?.due ?? 0;
   if (existing.length >= dueCount) {
     throw conflict(`Already complete for week ${input.weekNumber} (${existing.length}/${dueCount}) — over-completion earns no extra credit.`);
   }
-  const completion = executionRepo.insertCompletion(h, {
-    tacticId: tactic.id,
-    cycleWeek: input.weekNumber,
-    date: input.date ?? today,
-    createdAt: today,
-  });
-  syncItemDone(h, cycle.id, input.weekNumber, tactic.id, existing.length + 1);
+  h.sqlite.transaction(() => {
+    executionRepo.insertCompletion(h, {
+      tacticId: tactic.id,
+      cycleWeek: input.weekNumber,
+      date,
+      createdAt: today,
+    });
+    syncItemDone(h, cycle.id, input.weekNumber, tactic.id, existing.length + 1);
+  })();
   return resultFor(h, cycle.id, tactic.id, input.weekNumber, today);
 }
 
 /** Remove the most recent completion for a tactic-week (the honest undo). */
-export function unlogCompletion(h: DbHandles, input: { tacticId: number; weekNumber: number }, today = todayIso()) {
-  const { tactic, cycle } = requireLoggable(h, input, today);
+export function unlogCompletion(h: DbHandles, input: { tacticId: number; weekNumber: number; date?: string }, today = todayIso()) {
+  const { tactic, cycle, currentWeek } = requireCompletionContext(h, input, today);
   const existing = executionRepo.listCompletionsForTacticWeek(h, tactic.id, input.weekNumber);
   if (existing.length === 0) throw notFound("Completion to remove");
-  executionRepo.deleteCompletion(h, existing[0]!.id);
-  syncItemDone(h, cycle.id, input.weekNumber, tactic.id, existing.length - 1);
+  completionDate(input.date, today, cycle.startDate, input.weekNumber, currentWeek, "undo", existing[0]!.date);
+  h.sqlite.transaction(() => {
+    executionRepo.deleteCompletion(h, existing[0]!.id);
+    syncItemDone(h, cycle.id, input.weekNumber, tactic.id, existing.length - 1);
+  })();
   return resultFor(h, cycle.id, tactic.id, input.weekNumber, today);
 }
 
-function requireLoggable(h: DbHandles, input: { tacticId: number; weekNumber: number }, today: string) {
+function requireCompletionContext(h: DbHandles, input: { tacticId: number; weekNumber: number }, today: string) {
   if (!Number.isInteger(input.weekNumber) || input.weekNumber < 1 || input.weekNumber > WEEKS_IN_CYCLE) {
     throw invalid("weekNumber must be 1-12 — week 13 is review, never scored.");
   }
@@ -62,15 +68,53 @@ function requireLoggable(h: DbHandles, input: { tacticId: number; weekNumber: nu
   if (!goal) throw notFound("Goal");
   const cycle = cyclesRepo.getCycle(h, goal.cycleId);
   if (!cycle) throw notFound("Cycle");
-  if (cycle.status !== "active") throw conflict("Completions only count in an active cycle.");
-  const currentWeek = cycleWeekNumber(today, cycle.startDate);
-  if (currentWeek < 1 || currentWeek > WEEKS_IN_CYCLE) {
-    throw conflict("Today is outside this cycle's execution weeks.");
-  }
-  if (input.weekNumber > currentWeek) throw conflict("You can't log completions for a future week.");
   const plan = executionRepo.findWeekPlan(h, cycle.id, input.weekNumber);
+  if (cycle.status === "archived") throw conflict("This cycle is archived — archived cycles are immutable.");
   if (plan?.status === "closed") throw conflict(`Week ${input.weekNumber} is closed — closed weeks are immutable.`);
-  return { tactic, cycle };
+  const currentWeek = cycleWeekNumber(today, cycle.startDate);
+  if (currentWeek >= 1 && currentWeek <= WEEKS_IN_CYCLE) {
+    if (cycle.status !== "active") throw conflict("Completions only count in an active cycle during execution weeks.");
+    if (input.weekNumber > currentWeek) throw conflict("You can't log completions for a future week.");
+    return { tactic, cycle, currentWeek };
+  }
+  if (currentWeek === REVIEW_WEEK) {
+    if (cycle.status !== "active" && cycle.status !== "review") {
+      throw conflict("Week 13 catch-up requires an active or review cycle.");
+    }
+    if (input.weekNumber !== WEEKS_IN_CYCLE) throw conflict("Week 13 catch-up is allowed only for week 12.");
+    if (!plan || plan.status !== "draft") throw conflict("Week 13 catch-up requires an actual draft week 12 plan.");
+    return { tactic, cycle, currentWeek };
+  }
+  throw conflict("Today is outside this cycle's execution and week 13 catch-up window.");
+}
+
+function completionDate(
+  requested: string | undefined,
+  today: string,
+  cycleStart: string,
+  weekNumber: number,
+  currentWeek: number,
+  operation: "log" | "undo",
+  existingDate?: string,
+) {
+  let date = requested;
+  if (!date) {
+    if (currentWeek === REVIEW_WEEK) throw invalid("Week 13 catch-up requires an explicit date within week 12.");
+    if (weekNumber === currentWeek) date = today;
+    else if (operation === "undo" && existingDate) date = existingDate;
+    else throw invalid("Past-week completions require an explicit date within the requested week.");
+  }
+  let dateMs: number;
+  try {
+    dateMs = toUtcMs(date);
+  } catch {
+    throw invalid("date must be a valid YYYY-MM-DD calendar date.");
+  }
+  if (dateMs > toUtcMs(today)) throw invalid("Completion date cannot be after today.");
+  if (dateMs < toUtcMs(weekStart(cycleStart, weekNumber)) || dateMs > toUtcMs(weekEnd(cycleStart, weekNumber))) {
+    throw invalid(`Completion date must belong to execution week ${weekNumber}.`);
+  }
+  return date;
 }
 
 function syncItemDone(h: DbHandles, cycleId: number, weekNumber: number, tacticId: number, done: number) {
@@ -108,13 +152,13 @@ export function getCycleScores(h: DbHandles, cycleId: number, today = todayIso()
     const score = weekScore(tacticLikes, completionsByWeek.get(week) ?? new Map(), week);
     const plan = plans.find((p) => p.weekNumber === week);
     return score
-      ? { ...score, closed: plan?.status === "closed", projected: week === currentWeek && plan?.status !== "closed" }
+      ? { ...score, closed: plan?.status === "closed", projected: plan?.status !== "closed" }
       : null;
   });
   return {
     currentWeek,
     weeks,
-    averageScore: cycleAverageScore(weeks),
+    averageScore: cycleAverageScore(weeks.map((week) => (week?.closed ? week : null))),
     goals: planRepo.listGoals(h, cycleId).map((goal) => ({
       goalId: goal.id,
       title: goal.title,

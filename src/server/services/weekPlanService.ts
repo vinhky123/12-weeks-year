@@ -89,7 +89,7 @@ export function weekScoreFor(h: DbHandles, cycleId: number, week: number, today 
   return {
     ...score,
     closed: plan?.status === "closed",
-    projected: week === cycleWeekNumber(today, cycle.startDate) && plan?.status !== "closed",
+    projected: plan?.status !== "closed",
   };
 }
 
