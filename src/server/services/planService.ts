@@ -5,7 +5,9 @@ import { cycles as cyclesTable } from "../db/schema";
 import * as executionRepo from "../db/repositories/execution";
 import * as planRepo from "../db/repositories/plan";
 import { validateNewGoal, validateNewTactic, type GoalInput, type TacticInput } from "../planRules";
-import { RuleError, invalid, notFound } from "../ruleError";
+import { conflict, RuleError, invalid, notFound } from "../ruleError";
+import { dueForWeek, type TacticLike } from "../scoring";
+import { requireMutableCycle } from "./cycleMutationPolicy";
 import { parseDuePattern } from "./cycleService";
 
 export function toTacticLike(row: planRepo.TacticRow) {
@@ -23,6 +25,7 @@ export function listTacticLikes(h: DbHandles, cycleId: number) {
 }
 
 export function addGoal(h: DbHandles, cycleId: number, input: GoalInput, today = todayIso()) {
+  requireMutableCycle(h, cycleId);
   const errors = validateNewGoal(planRepo.countActiveGoals(h, cycleId), input);
   if (errors.length > 0) throw invalid(errors.map((e) => e.message).join(" "), { errors });
   const order = planRepo.listGoals(h, cycleId).length;
@@ -39,6 +42,7 @@ export function addGoal(h: DbHandles, cycleId: number, input: GoalInput, today =
 export function updateGoal(h: DbHandles, id: number, patch: Partial<GoalInput> & { status?: string }) {
   const goal = planRepo.getGoal(h, id);
   if (!goal) throw notFound("Goal");
+  requireMutableCycle(h, goal.cycleId);
   const merged = { ...goal, ...cleanUndefined(patch) };
   const othersActive = planRepo.countActiveGoals(h, goal.cycleId) - (goal.status === "active" ? 1 : 0);
   const errors = validateNewGoal(othersActive, {
@@ -58,27 +62,49 @@ export function updateGoal(h: DbHandles, id: number, patch: Partial<GoalInput> &
 export function dropGoal(h: DbHandles, id: number, today = todayIso()) {
   const goal = planRepo.getGoal(h, id);
   if (!goal) throw notFound("Goal");
-  const dropped = planRepo.updateGoal(h, id, { status: "dropped" });
+  requireMutableCycle(h, goal.cycleId);
   const currentWeek = currentWeekOfCycle(h, goal.cycleId, today);
-  for (const tactic of planRepo.listTacticsByGoal(h, id)) {
+  const tactics = planRepo.listTacticsByGoal(h, id);
+  for (const tactic of tactics) {
     if (tactic.deactivatedAtWeek === null) {
-      planRepo.updateTactic(h, tactic.id, { deactivatedAtWeek: currentWeek });
+      assertClosedDueUnchanged(h, goal.cycleId, toTacticLike(tactic), {
+        ...toTacticLike(tactic),
+        deactivatedAtWeek: currentWeek,
+      });
     }
   }
-  return dropped;
+  return h.sqlite.transaction(() => {
+    const dropped = planRepo.updateGoal(h, id, { status: "dropped" });
+    for (const tactic of tactics) {
+      if (tactic.deactivatedAtWeek === null) {
+        planRepo.updateTactic(h, tactic.id, { deactivatedAtWeek: currentWeek });
+      }
+    }
+    return dropped;
+  })();
 }
 
 export function addTactic(h: DbHandles, goalId: number, input: TacticInput, today = todayIso()) {
   const goal = planRepo.getGoal(h, goalId);
   if (!goal) throw notFound("Goal");
+  requireMutableCycle(h, goal.cycleId);
   const errors = validateNewTactic(input);
   if (errors.length > 0) throw invalid(errors.map((e) => e.message).join(" "), { errors });
+  const activeFromWeek = currentWeekOfCycle(h, goal.cycleId, today);
+  const proposed: TacticLike = {
+    id: 0,
+    goalId,
+    duePattern: input.duePattern,
+    activeFromWeek,
+    deactivatedAtWeek: null,
+  };
+  assertClosedDueUnchanged(h, goal.cycleId, { ...proposed, activeFromWeek: 13 }, proposed);
   const row = planRepo.createTactic(h, {
     goalId,
     text: input.text.trim(),
     duePattern: JSON.stringify(input.duePattern),
     keystone: 0,
-    activeFromWeek: currentWeekOfCycle(h, goal.cycleId, today),
+    activeFromWeek,
     deactivatedAtWeek: null,
     createdAt: today,
   });
@@ -93,6 +119,9 @@ export function toTacticDto(row: planRepo.TacticRow) {
 export function updateTactic(h: DbHandles, id: number, patch: { text?: string; duePattern?: TacticInput["duePattern"]; keystone?: boolean }) {
   const tactic = planRepo.getTactic(h, id);
   if (!tactic) throw notFound("Tactic");
+  const goal = planRepo.getGoal(h, tactic.goalId);
+  if (!goal) throw notFound("Goal");
+  requireMutableCycle(h, goal.cycleId);
   const updates: Record<string, unknown> = {};
   if (patch.text !== undefined) {
     const errors = validateNewTactic({ text: patch.text, duePattern: parseDuePattern(tactic.duePattern) });
@@ -122,8 +151,12 @@ export function deactivateTactic(h: DbHandles, id: number, fromWeek?: number, to
   const tactic = planRepo.getTactic(h, id);
   if (!tactic) throw notFound("Tactic");
   const goal = planRepo.getGoal(h, tactic.goalId);
-  const effective = fromWeek ?? currentWeekOfCycle(h, goal!.cycleId, today);
+  if (!goal) throw notFound("Goal");
+  requireMutableCycle(h, goal.cycleId);
+  const effective = fromWeek ?? currentWeekOfCycle(h, goal.cycleId, today);
   if (effective < 1 || effective > 12) throw invalid("fromWeek must be between 1 and 12.");
+  const oldTactic = toTacticLike(tactic);
+  assertClosedDueUnchanged(h, goal.cycleId, oldTactic, { ...oldTactic, deactivatedAtWeek: effective });
   return toTacticDto(planRepo.updateTactic(h, id, { deactivatedAtWeek: effective }));
 }
 
@@ -138,6 +171,15 @@ function cycleHasClosedWeeks(h: DbHandles, goalId: number): boolean {
   const goal = planRepo.getGoal(h, goalId);
   if (!goal) return false;
   return executionRepo.listWeekPlans(h, goal.cycleId).some((p) => p.status === "closed");
+}
+
+function assertClosedDueUnchanged(h: DbHandles, cycleId: number, oldTactic: TacticLike, proposedTactic: TacticLike) {
+  for (const plan of executionRepo.listWeekPlans(h, cycleId)) {
+    if (plan.status !== "closed") continue;
+    if (dueForWeek(oldTactic, plan.weekNumber) !== dueForWeek(proposedTactic, plan.weekNumber)) {
+      throw conflict(`Week ${plan.weekNumber} is closed — changing its due count would rewrite a closed score.`);
+    }
+  }
 }
 
 function cleanUndefined<T extends object>(obj: T): Partial<T> {
