@@ -3,18 +3,19 @@ import { cycleWeekNumber, todayIso, weekEnd, weekStart, WEEKS_IN_CYCLE } from ".
 import type { DbHandles } from "../db/index";
 import { cycles as cyclesTable } from "../db/schema";
 import * as executionRepo from "../db/repositories/execution";
+import type { WeekPlanItemRow } from "../db/repositories/execution";
 import * as planRepo from "../db/repositories/plan";
 import { generateWeekPlanItems } from "../planRules";
 import { conflict, invalid, notFound } from "../ruleError";
 import * as scoringModule from "../scoring";
 import { writeAutoBackup } from "./backupService";
+import { requireMutableCycle } from "./cycleMutationPolicy";
 import { toTacticLike } from "./planService";
 
 /** The weekly plan is generated fresh from the 12-Week Plan — never copy-pasted. */
 export function generateWeekPlan(h: DbHandles, cycleId: number, week: number, today = todayIso()) {
   if (!Number.isInteger(week) || week < 1 || week > WEEKS_IN_CYCLE) throw invalid("Week must be 1-12.");
-  const cycle = h.db.select().from(cyclesTable).where(eq(cyclesTable.id, cycleId)).get();
-  if (!cycle) throw notFound("Cycle");
+  const cycle = requireMutableCycle(h, cycleId);
   const currentWeek = cycleWeekNumber(today, cycle.startDate);
   if (week > currentWeek + 1) throw conflict(`Week ${week} is too far ahead — you can plan at most one week ahead (current: week ${Math.max(currentWeek, 0)}).`);
 
@@ -95,6 +96,7 @@ export function weekScoreFor(h: DbHandles, cycleId: number, week: number, today 
 function requireDraftPlan(h: DbHandles, planId: number) {
   const plan = executionRepo.getWeekPlan(h, planId);
   if (!plan) throw notFound("Week plan");
+  requireMutableCycle(h, plan.cycleId);
   if (plan.status === "closed") throw conflict("This week is closed — closed weeks are immutable.");
   return plan;
 }
@@ -105,6 +107,17 @@ export function moveItem(h: DbHandles, planId: number, itemId: number, patch: { 
   if (!item || item.weekPlanId !== planId) throw notFound("Item");
   if (patch.dayOfWeek !== undefined && (patch.dayOfWeek < 0 || patch.dayOfWeek > 6)) throw invalid("dayOfWeek must be 0 (Mon) - 6 (Sun).");
   return executionRepo.updateWeekPlanItem(h, itemId, cleanUndefined(patch));
+}
+
+export function setExtraItemDone(h: DbHandles, planId: number, itemId: number, done: number): WeekPlanItemRow {
+  requireDraftPlan(h, planId);
+  const item = executionRepo.getWeekPlanItem(h, itemId);
+  if (!item || item.weekPlanId !== planId) throw notFound("Item");
+  if (item.tacticId !== null) throw invalid("Only extra plan items can be completed directly.");
+  if (!Number.isInteger(done) || done < 0 || done > item.plannedCount) {
+    throw invalid(`done must be an integer from 0 to ${item.plannedCount}.`);
+  }
+  return executionRepo.updateWeekPlanItem(h, itemId, { done });
 }
 
 /** Ad-hoc items enter only as explicit plan revisions (process-control discipline). */

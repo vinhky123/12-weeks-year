@@ -279,11 +279,17 @@ export const ADD_PLAN_ITEM_SCHEMA = z.object({
   confirmPlanRevision: z.boolean(),
 });
 
-export const ITEM_PATCH_SCHEMA = z.object({
-  dayOfWeek: z.number().int().min(0).max(6).optional(),
-  sortOrder: z.number().int().optional(),
-  label: z.string().min(1).optional(),
-});
+export const ITEM_PATCH_SCHEMA = z.union([
+  z
+    .object({
+      dayOfWeek: z.number().int().min(0).max(6).optional(),
+      sortOrder: z.number().int().optional(),
+      label: z.string().min(1).optional(),
+    })
+    .strict()
+    .refine((patch) => Object.keys(patch).length > 0, { message: "At least one item field is required." }),
+  z.object({ done: z.number().int().nonnegative() }).strict(),
+]);
 
 export const CLOSE_WEEK_SCHEMA = z.object({
   reflection: z.string().optional(),

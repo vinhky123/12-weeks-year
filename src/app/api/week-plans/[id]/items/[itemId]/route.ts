@@ -9,7 +9,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   return handle(async (h) => {
     const planId = await numericParam(params, "id", "plan id");
     const itemId = await numericParam(params, "itemId", "item id");
-    weekPlanService.moveItem(h, planId, itemId, await body(req, ITEM_PATCH_SCHEMA));
+    const patch = await body(req, ITEM_PATCH_SCHEMA);
+    if ("done" in patch) weekPlanService.setExtraItemDone(h, planId, itemId, patch.done);
+    else weekPlanService.moveItem(h, planId, itemId, patch);
     return detailFor(h, planId, todayFrom(req));
   });
 }
