@@ -30,15 +30,17 @@ describe("tacticsDueInWeek", () => {
 });
 
 describe("generateWeekPlanItems", () => {
-  it("creates one item per due tactic, Monday default, in received order", () => {
+  it("creates one item per due occurrence, Monday default, in received order", () => {
     const tactics = [
       tactic({ id: 7, goalId: 1, duePattern: { type: "EVERY_WEEK", timesPerWeek: 3 }, }),
       tactic({ id: 8, goalId: 2, duePattern: { type: "SPECIFIC_WEEKS", weeks: [2] } }),
     ];
     const items = generateWeekPlanItems(tactics, 2);
     expect(items).toEqual([
-      { label: expect.any(String), tacticId: 7, dayOfWeek: 0, plannedCount: 3, sortOrder: 0 },
-      { label: expect.any(String), tacticId: 8, dayOfWeek: 0, plannedCount: 1, sortOrder: 1 },
+      { label: expect.any(String), tacticId: 7, dayOfWeek: 0, plannedCount: 1, sortOrder: 0 },
+      { label: expect.any(String), tacticId: 7, dayOfWeek: 0, plannedCount: 1, sortOrder: 1 },
+      { label: expect.any(String), tacticId: 7, dayOfWeek: 0, plannedCount: 1, sortOrder: 2 },
+      { label: expect.any(String), tacticId: 8, dayOfWeek: 0, plannedCount: 1, sortOrder: 3 },
     ]);
   });
   it("labels come from tactic text", () => {

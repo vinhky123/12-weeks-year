@@ -19,22 +19,22 @@ export function tacticsDueInWeek(
     .filter((entry) => entry.dueCount > 0);
 }
 
-/**
- * One week-plan item per due tactic. Default day is Monday (0) — the user
- * redistributes from there; placement is UI concern, dues are not.
- */
+/** One Monday-default item per due occurrence; the user can place each independently. */
 export function generateWeekPlanItems(
   tactics: TacticLike[],
   week: number,
   textById?: Map<TacticLike["id"], string>,
 ): { label: string; tacticId: TacticLike["id"]; dayOfWeek: 0; plannedCount: number; sortOrder: number }[] {
-  return tacticsDueInWeek(tactics, week).map((entry, index) => ({
-    label: textById?.get(entry.tactic.id) ?? `Tactic ${String(entry.tactic.id)}`,
-    tacticId: entry.tactic.id,
-    dayOfWeek: 0 as const,
-    plannedCount: entry.dueCount,
-    sortOrder: index,
-  }));
+  let sortOrder = 0;
+  return tacticsDueInWeek(tactics, week).flatMap((entry) =>
+    Array.from({ length: entry.dueCount }, () => ({
+      label: textById?.get(entry.tactic.id) ?? `Tactic ${String(entry.tactic.id)}`,
+      tacticId: entry.tactic.id,
+      dayOfWeek: 0 as const,
+      plannedCount: 1,
+      sortOrder: sortOrder++,
+    })),
+  );
 }
 
 export interface GoalInput {

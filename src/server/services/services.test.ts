@@ -97,14 +97,15 @@ describe("plan builder rules", () => {
 });
 
 describe("weekly plan generation", () => {
-  it("generates one item per due tactic with planned counts, Monday default", () => {
+  it("generates one Monday-default item per due occurrence", () => {
     const { cycle, goal } = makeActiveCycleWithGoal();
     planService.addTactic(h, goal.id, { text: "Train", duePattern: { type: "EVERY_WEEK", timesPerWeek: 3 } }, TODAY);
     planService.addTactic(h, goal.id, { text: "Weigh in", duePattern: { type: "SPECIFIC_WEEKS", weeks: [1] } }, TODAY);
     weekPlanService.generateWeekPlan(h, cycle.id, 1, TODAY);
     const detail = weekPlanService.getWeekPlanDetail(h, cycle.id, 1, TODAY);
-    expect(detail.items).toHaveLength(2);
-    expect(detail.items.map((i) => i.plannedCount).sort()).toEqual([1, 3]);
+    expect(detail.items).toHaveLength(4);
+    expect(detail.items.map((i) => i.plannedCount).sort()).toEqual([1, 1, 1, 1]);
+    expect(detail.items.filter((i) => i.label === "Train")).toHaveLength(3);
     expect(detail.items.every((i) => i.dayOfWeek === 0)).toBe(true);
   });
 

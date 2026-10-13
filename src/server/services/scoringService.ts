@@ -24,7 +24,7 @@ const DAILY_PRINCIPLES = [
 ];
 
 /** Log one honest completion. Caps at due — no extra credit. */
-export function logCompletion(h: DbHandles, input: { tacticId: number; weekNumber: number; date?: string }, today = todayIso()) {
+export function logCompletion(h: DbHandles, input: CompletionRequest, today = todayIso()) {
   const { tactic, cycle, currentWeek } = requireCompletionContext(h, input, today);
   const date = completionDate(input.date, today, cycle.startDate, input.weekNumber, currentWeek, "log");
   const existing = executionRepo.listCompletionsForTacticWeek(h, tactic.id, input.weekNumber);
@@ -33,30 +33,44 @@ export function logCompletion(h: DbHandles, input: { tacticId: number; weekNumbe
   if (existing.length >= dueCount) {
     throw conflict(`Already complete for week ${input.weekNumber} (${existing.length}/${dueCount}) — over-completion earns no extra credit.`);
   }
+  const target = completionOccurrence(h, cycle.id, input.weekNumber, tactic.id, input.weekPlanItemId, "complete");
   h.sqlite.transaction(() => {
     executionRepo.insertCompletion(h, {
       tacticId: tactic.id,
+      weekPlanItemId: target?.id ?? null,
       cycleWeek: input.weekNumber,
       date,
       createdAt: today,
     });
-    syncItemDone(h, cycle.id, input.weekNumber, tactic.id, existing.length + 1);
+    if (target) executionRepo.updateWeekPlanItem(h, target.id, { done: target.done + 1 });
   })();
   return resultFor(h, cycle.id, tactic.id, input.weekNumber, today);
 }
 
 /** Remove the most recent completion for a tactic-week (the honest undo). */
-export function unlogCompletion(h: DbHandles, input: { tacticId: number; weekNumber: number; date?: string }, today = todayIso()) {
+export function unlogCompletion(h: DbHandles, input: CompletionRequest, today = todayIso()) {
   const { tactic, cycle, currentWeek } = requireCompletionContext(h, input, today);
   const existing = executionRepo.listCompletionsForTacticWeek(h, tactic.id, input.weekNumber);
   if (existing.length === 0) throw notFound("Completion to remove");
-  completionDate(input.date, today, cycle.startDate, input.weekNumber, currentWeek, "undo", existing[0]!.date);
+  const target = input.weekPlanItemId === undefined
+    ? undefined
+    : completionOccurrence(h, cycle.id, input.weekNumber, tactic.id, input.weekPlanItemId, "undo");
+  const completion = input.weekPlanItemId !== undefined
+    ? executionRepo.listCompletionsForOccurrence(h, input.weekPlanItemId)[0] ?? existing.find((item) => item.weekPlanItemId === null)
+    : existing[0]!;
+  if (!completion || (input.weekPlanItemId !== undefined && !target)) throw notFound("Completion to remove");
+  completionDate(input.date, today, cycle.startDate, input.weekNumber, currentWeek, "undo", completion.date);
   h.sqlite.transaction(() => {
-    executionRepo.deleteCompletion(h, existing[0]!.id);
-    syncItemDone(h, cycle.id, input.weekNumber, tactic.id, existing.length - 1);
+    executionRepo.deleteCompletion(h, completion.id);
+    const completedItem = completion.weekPlanItemId !== null
+      ? executionRepo.getWeekPlanItem(h, completion.weekPlanItemId)
+      : target ?? latestUnlinkedCompletedOccurrence(h, cycle.id, input.weekNumber, tactic.id);
+    if (completedItem) executionRepo.updateWeekPlanItem(h, completedItem.id, { done: Math.max(0, completedItem.done - 1) });
   })();
   return resultFor(h, cycle.id, tactic.id, input.weekNumber, today);
 }
+
+type CompletionRequest = { tacticId: number; weekNumber: number; date?: string; weekPlanItemId?: number };
 
 function requireCompletionContext(h: DbHandles, input: { tacticId: number; weekNumber: number }, today: string) {
   if (!Number.isInteger(input.weekNumber) || input.weekNumber < 1 || input.weekNumber > WEEKS_IN_CYCLE) {
@@ -117,13 +131,50 @@ function completionDate(
   return date;
 }
 
-function syncItemDone(h: DbHandles, cycleId: number, weekNumber: number, tacticId: number, done: number) {
+function completionOccurrence(
+  h: DbHandles,
+  cycleId: number,
+  weekNumber: number,
+  tacticId: number,
+  requestedItemId: number | undefined,
+  operation: "complete" | "undo",
+) {
   const plan = executionRepo.findWeekPlan(h, cycleId, weekNumber);
-  if (!plan) return;
-  const item = executionRepo
-    .listWeekPlanItems(h, plan.id)
-    .find((i) => i.tacticId === tacticId);
-  if (item) executionRepo.updateWeekPlanItem(h, item.id, { done: Math.max(0, done) });
+  if (!plan) {
+    if (requestedItemId !== undefined) throw notFound("Occurrence");
+    return null;
+  }
+  const items = executionRepo.listWeekPlanItems(h, plan.id).filter((item) => item.tacticId === tacticId);
+  if (requestedItemId === undefined) {
+    return operation === "complete"
+      ? items.find((item) => item.done < item.plannedCount) ?? null
+      : null;
+  }
+
+  const item = executionRepo.getWeekPlanItem(h, requestedItemId);
+  if (!item) throw notFound("Occurrence");
+  if (item.weekPlanId !== plan.id || item.tacticId !== tacticId) {
+    throw invalid("weekPlanItemId must identify an occurrence for the requested tactic and week.");
+  }
+  if (operation === "complete" && item.done >= item.plannedCount) {
+    throw conflict("This occurrence is already complete.");
+  }
+  if (operation === "undo" && item.done <= 0) {
+    throw notFound("Completion to remove");
+  }
+  return item;
+}
+
+function latestUnlinkedCompletedOccurrence(h: DbHandles, cycleId: number, weekNumber: number, tacticId: number) {
+  const plan = executionRepo.findWeekPlan(h, cycleId, weekNumber);
+  if (!plan) return undefined;
+  const linkedIds = new Set(
+    executionRepo.listCompletionsForTacticWeek(h, tacticId, weekNumber)
+      .flatMap((completion) => completion.weekPlanItemId === null ? [] : [completion.weekPlanItemId]),
+  );
+  return executionRepo.listWeekPlanItems(h, plan.id)
+    .filter((item) => item.tacticId === tacticId && item.done > 0 && !linkedIds.has(item.id))
+    .at(-1);
 }
 
 function resultFor(h: DbHandles, cycleId: number, tacticId: number, weekNumber: number, today: string) {

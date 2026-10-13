@@ -1,6 +1,6 @@
-# The 12 Week Year — Complete Book Content & System Reference
+# The 12 Week Year — Verified Methodology Reference & App Mapping
 
-> **Purpose of this document:** This is a deep, build-ready reference of the book *The 12 Week Year* by Brian P. Moran & Michael Lennington. It captures the author's ideas in full detail — the philosophy, the plan structure, the numbers, the rhythms, and the rules — so that a web planning application can be built that faithfully implements the system. A final section maps every book concept to suggested app features and a data model.
+> **Scope and limits:** This is a secondary summary and implementation reference for *The 12 Week Year*, not the book's full text or a substitute for a specific edition. It combines the authors' framework, editorial explanation, and app-specific suggestions; those are labeled separately where relevant. Chapter titles are checked against the 2013 book's published table of contents. Numerical recommendations and memorable claims should be treated as the authors' or guide's heuristics unless a source is cited; they are not guarantees of results.
 
 - **Book:** *The 12 Week Year: Get More Done in 12 Weeks than Others Do in 12 Months*
 - **Authors:** Brian P. Moran & Michael Lennington
@@ -25,7 +25,7 @@ The traditional 12-month goal cycle silently sabotages execution:
 2. **Delayed feedback.** Annual goals give you effectively **one feedback moment** (end of year). By the time you know you're off track, the year is gone. Fast feedback loops drive correction.
 3. **Spectator phenomenon.** Early in the year, the deadline is so distant that goals feel optional; you watch the year happen instead of driving it.
 4. **Sprawling, unfocused plans.** Annual plans accumulate too many objectives, so none get the concentrated effort they need.
-5. Resolutions famously collapse — most people abandon annual goals within the first few weeks (some data cited around the book community: January 14 is nicknamed "Quitters' Day").
+5. The book's argument is about the long delay between setting annual intentions and receiving useful feedback. Popular claims about a specific "Quitters' Day" or the share of people who abandon resolutions are not needed to establish that argument and are omitted here because this reference did not verify a suitable primary source.
 
 ### 1.2 The Redefinition: A Year = 12 Weeks
 
@@ -49,7 +49,7 @@ The book borrows **periodization** from sports training: athletes don't train ge
 The book separates the **head** from the **heart** of performance:
 
 - **The thinking model (the head / system):** Vision → Plan → Process Control → Measurement. The structural machinery that directs action.
-- **The doing model (the heart / beliefs):** **Your beliefs drive your actions.** Lasting behavior change cannot be forced at the action level alone; it must reach the beliefs and emotional commitment underneath. A strong vision works here — it rewires what you believe is possible ("the neurons that fire in your brain when you visualize are the same neurons that fire when you act").
+- **The doing model (the heart / beliefs):** the authors emphasize that beliefs and emotional commitment influence action. Vision is intended to make a future feel meaningful and attainable. Neuroscience comparisons about visualization and action need their own primary evidence; this reference does not present them as established fact.
 
 **Takeaway for the app:** a planning tool that only manages tasks (head) misses half the system; it must also surface the user's *why* (vision, goal reasons, commitments) at the moments of execution and scoring.
 
@@ -71,7 +71,7 @@ The entire methodology is called **The Execution System**, made of **eight eleme
 7. **Commitment** — keeping the promises you make to yourself, especially when inconvenient
 8. **Greatness in the Moment** — greatness is a series of present-moment choices, not a future event
 
-**Important: it is a *closed system*.** The elements are interdependent — measurement without vision is aimless; vision without process control is fantasy. The book is explicit that partial adoption breaks the correction mechanisms; the system works as a whole.
+**The authors describe this as a *closed system*.** The elements are meant to reinforce one another: vision gives direction, planning identifies actions, process control supports execution, measurement enables correction, and time use protects the work. This is the authors' model; the practical effect of adopting only some parts depends on the person and context.
 
 ---
 
@@ -83,11 +83,11 @@ The entire methodology is called **The Execution System**, made of **eight eleme
 
 | Horizon | Timeframe | Content |
 |---|---|---|
-| **Long-term vision** | Lifetime / 5–15+ years | Your biggest aspirations for life and career, unconstrained |
-| **Mid-term vision** | ~3 years (36 months) | Concrete intermediate milestones that bridge toward the long-term vision |
-| **Short-term vision** | The next 12 weeks | What must be true at the end of this cycle to be on course for the mid-term vision |
+| **Aspirational / long-term vision** | Not time-bound | What you want to create or become in life; broad and personally meaningful |
+| **Three-year vision** | 3 years | Specific personal and professional progress toward the aspirational vision |
+| **12-month vision** | Optional | An intermediate annual picture, useful when annual performance matters |
 
-Each layer must **connect**: 12-week goals exist because of the 3-year vision; the 3-year vision exists because of the long-term dream. If the connection is missing, daily actions lose meaning.
+The horizons should connect, but the **12-week plan is separate from the vision horizons**: its goals define near-term outcomes and tactics for the next cycle, in service of the three-year and aspirational visions. The Field Guide explicitly treats the 12-month vision as optional and then introduces 12-week goals and tactics in the plan chapter.
 
 ### 3.2 Personal Vision Anchors Business Vision
 
@@ -242,7 +242,7 @@ Every week, the same three beats:
 Execution Score % = (tactics completed this week) ÷ (tactics due this week) × 100
 ```
 
-- **85% is the benchmark.** Score **≥85% weekly** and you will very likely hit your 12-week goals. **65–75%** is functional but suboptimal (goals at risk). **Consistently below that** → the honest response is to revise the plan (fewer/humbler tactics) rather than keep failing at them.
+- **85% is the system's benchmark.** Treat it as a planning and execution guideline from the authors, not a statistically validated probability of reaching a goal. The bands below 85% used by this app are product heuristics; they are not evidence that a person will or will not achieve an outcome.
 - Aim for **consistency, not perfection** — nobody scores 100 every week; sustained 85+ wins.
 - Scorekeeping measures **only achievements**: "It is not concerned with effort or intentions." No partial credit for trying hard.
 
@@ -250,7 +250,7 @@ Execution Score % = (tactics completed this week) ÷ (tactics due this week) × 
 
 - The score is a **mirror**, not a judge. Measuring weekly forces you to *confront the truth* about your execution — most people overestimate their own follow-through, and the data breaks that illusion.
 - The discomfort this creates is **productive tension**: the gap between where you are and where you committed to be is exactly what fuels corrective action. Hide the score and the system dies.
-- Frequent measurement also **diagnoses the failure type**: if execution is 90%+ but lag results are poor → *strategy* problem (change the tactics/plan). If execution is 60% → *execution* problem (process control, commitment, time). Annual thinking never gives you this diagnosis in time.
+- Frequent measurement can help **investigate the failure type**: high execution with weak lag results may point toward the strategy, while low execution may point toward execution barriers. These comparisons are prompts to review the evidence, not diagnoses from one score or a guarantee that the cause is known.
 
 ---
 
@@ -264,9 +264,9 @@ The tool is **time blocking**, installed via a **model work week** (a standing w
 
 | Block | Amount | Purpose |
 |---|---|---|
-| **Strategic Block** | **3 hours, 1× per week**, uninterrupted (no phone, email, people) | Your most important work: executing 12-Week Plan tactics. Pre-planned, so zero minutes are spent deciding what to do. *(One implementation breakdown: 5–10 min reconnect with vision, 10–15 min review the 12-week plan, 10–20 min assess performance breakdowns, remaining ~2–2.5 hours executing tactics.)* |
+| **Strategic Block** | Commonly described as a substantial, uninterrupted block (this reference uses 3 hours) | Your most important work: executing 12-Week Plan tactics. Treat the duration as a recommended template that may need to fit the person's role and schedule. |
 | **Buffer Blocks** | **30–60 min per day** (e.g., 11:00–12:00 and/or 4:00–5:00) | Containment for the unavoidable low-value noise: email, voicemail, admin, interruptions. Batching them here keeps them from shredding the whole day. |
-| **Breakout Block** | **3+ hours, away from all work** | Full disengagement — family, hobby, nature, rest. This is what makes sustained 12-week intensity possible; you return recharged. Skipped breakouts → burnout by week 8. |
+| **Breakout Block** | A substantial block away from work (this reference uses 3+ hours) | Full disengagement — family, hobby, nature, rest. The duration is a recommendation, not a guarantee against burnout or a universal requirement. |
 
 ### 7.2 The Model Week
 
@@ -322,15 +322,15 @@ Supporting practices: learn to **say no**; **delay gratification**; **go all in*
 
 ## 12. The Emotional Cycle of Change (Expect the Dip)
 
-Change follows a predictable emotional curve (the Kelley & Connor model the book teaches). Knowing the stages keeps you from quitting at the bottom:
+The book presents an emotional cycle of change to help readers anticipate that enthusiasm may fall as the effort becomes real. The stages below summarize that model; the exact timing and sequence should not be treated as a universal empirical schedule:
 
 1. **Uninformed optimism** — excitement about imagined benefits; you start, riding on novelty
 2. **Informed pessimism** — reality arrives; the work is harder/slower than imagined; negative emotions grow
-3. **Valley of despair** — the lowest point; progress invisible, costs visible. **This is where most people quit.** The way through is commitment devices, the WAM, and the vision — not motivation
+3. **Valley of despair** — a period when progress may feel invisible while the costs are clear. The book warns that people may quit here; commitment, peer support, and vision are offered as supports.
 4. **Informed optimism** — skills build, benefits start appearing; confidence returns, now grounded in evidence
 5. **Success and fulfillment** — the change pays off; the new behavior becomes identity
 
-**Design implication:** a 12-week app should warn/encourage around weeks 3–6 (the typical valley) rather than treating the cycle as emotionally flat.
+**App-specific suggestion:** the app may offer a check-in during the middle of a cycle, but a fixed week-3-to-6 warning is a design heuristic, not a prediction about every user's emotions.
 
 ---
 
@@ -357,19 +357,44 @@ The book's implementation sequence (this is the flow an app onboarding should mi
 3. **Build the 12-Week Plan** — brainstorm tactics per goal, cut to the vital few, assign week dues ("every week" or week N)
 4. **Design the model week** — place the strategic block, buffer blocks, breakout blocks, weekly planning slot, WAM slot
 5. **Run the weekly loop** — score → plan → WAM; execute daily; keep the execution score visible
-6. **Expect the valley** (weeks ~3–6); rely on commitment + WAM, not feelings
+6. **Expect resistance may arise** during a change; the often-repeated weeks 3–6 timing is an app/reference heuristic, not a fixed schedule established for every person
 7. **Week 13** — review, celebrate, adjust imbalance, build next plan
 8. **Commit fully — don't dabble.** The first cycle is the hardest (new habits, new honesty) and the most important; partial adoption of the system is the most common failure mode because the elements are interdependent.
 
 ---
 
-## 15. Book Chapter Map (for reference)
+## 15. Chapter-by-Chapter Lessons
 
-**Part 1 — Unleash Your Greatness (the concepts):**
-1. The Challenge · 2. Redefining the Year · 3. The Emotional Connection · 4. Throw Out the Annual Plan · 5. One Week at a Time · 6. Confronting the Truth · 7. Intentionality · 8. Accountability as Ownership · 9. Interest vs. Commitment · 10. Greatness in the Moment · 11. Intentional Imbalance
+The chapter titles below match the published 2013 table of contents. The lesson notes are concise paraphrases synthesized from this reference and checked against the available book/Field Guide contents; they are not chapter-by-chapter quotations or a replacement for the full book.
 
-**Part 2 — The Execution System (the practice):**
-12. The Execution System (3 principles + 5 disciplines) · 13. Establish Your Vision · 14. Develop Your 12 Week Plan · 15. Install Process Control (weekly plan + WAM) · 16. Keep Score (lead/lag + execution score) · 17. Take Back Control of Your Day (time blocking) · 18. Take Ownership · 19. 12 Week Commitments · 20. Your First 12 Weeks · 21. Final Thoughts (the 13th week & review)
+### Part I — Unleash Your Greatness
+
+1. **The Challenge** — The central challenge is the knowing-doing gap. The practical question is how to make important actions happen consistently, not how to collect more advice.
+2. **Redefining the Year** — Treat 12 weeks as a complete execution cycle to make time feel consequential and create earlier feedback. The cycle is a planning device, not a promise to compress a year's worth of work into three months.
+3. **The Emotional Connection** — Connect goals to a personally meaningful vision so the reason for acting remains available when effort becomes uncomfortable.
+4. **Throw Out the Annual Plan** — Annual plans can postpone urgency and collect too many objectives. Replace the execution plan with a focused set of near-term goals while keeping a longer vision for direction.
+5. **One Week at a Time** — Translate the 12-week plan into a weekly plan containing the tactics due now. Use it to choose and schedule the week's critical work rather than to collect every task.
+6. **Confronting the Truth** — Measure what was completed and compare it with the plan. Use the gap as information for adjustment; effort and intention are not the same as completion.
+7. **Intentionality** — Decide in advance what deserves time, what can wait, and what should be declined. Time blocking and a model week are tools for protecting priority work.
+8. **Accountability as Ownership** — Take ownership of one's choices and next actions instead of relying on blame or external pressure. Ownership means asking what can be done now, while recognizing that not every circumstance is controllable.
+9. **Interest versus Commitment** — Interest depends on convenience and mood; commitment is a deliberate promise that can guide action when motivation fluctuates.
+10. **Greatness in the Moment** — Excellence is practiced through present choices and repeated actions; the result later reflects the quality of those moments.
+11. **Intentional Imbalance** — Equal attention to every life area at every moment is unrealistic. Choose priorities deliberately for a season and review the trade-offs so temporary focus does not become permanent neglect.
+
+### Part II — Putting It All Together
+
+12. **The Execution System** — Combine the five disciplines (vision, planning, process control, measurement, time use) with the three principles (accountability, commitment, greatness in the moment). The chapter also introduces the emotional cycle of change and describes the elements as a closed system.
+13. **Establish Your Vision** — Write an aspirational vision and concrete intermediate visions, then use them to guide cycle goals. The Field Guide identifies a three-year personal/business vision and an optional 12-month vision; 12-week goals belong to the plan, not to the vision horizons.
+14. **Develop Your 12 Week Plan** — Set specific, measurable 12-week outcomes that advance the vision. Identify the critical few tactics for each goal and assign when they are due; keep the plan simple enough to execute.
+15. **Installing Process Control** — Make execution repeatable with weekly plans, peer support and a weekly routine. The related Field Guide also describes practices such as daily huddles, cycle themes and celebrations.
+16. **Keeping Score** — Track both execution (lead actions / tactics completed) and outcomes (lag measures / results). These are complementary views: the execution score measures adherence to planned actions, while lag measures show whether the intended results are moving. The book's 85% mark is a benchmark, not a statistical guarantee; it does not define a single blended process-plus-outcome score.
+17. **Take Back Control of Your Day** — Protect focused performance time, batch interruptions into buffer time, and schedule time away from work. Model the week as a guide and adapt the blocks to the person's real obligations.
+18. **Taking Ownership** — Turn the accountability principle into daily choices and actions. Notice excuses or victim thinking, then identify the next action that is genuinely within one's control.
+19. **12 Week Commitments** — Consider what a commitment means for oneself and for other people, what it will cost, and what actions will honor it. A short cycle makes the promise bounded enough to review and renew.
+20. **Your First 12 Weeks** — Start with a plan, then work through the cycle's early enthusiasm, middle resistance and final execution. The chapter addresses common barriers such as immediate gratification, too many goals and old habits, and leads into the 13th-week review.
+21. **Final Thoughts and the 13th Week** — Close the cycle by recognizing progress, reviewing results and execution, learning from the experience, and preparing the next plan. Week 13 is a review/reload period, separate from the 12 scored execution weeks.
+
+**Interpretation boundary:** chapter lessons summarize the method. The database entities, UI flows, thresholds, notifications, and app invariants in §18 are product design proposals derived from the method, not requirements stated by the authors.
 
 ---
 
@@ -380,17 +405,17 @@ The book's implementation sequence (this is the flow an app onboarding should mi
 | Length of a "year" | **12 weeks** (+ week 13 for review/reload) |
 | Goals per cycle | **2–3** (rarely more; every goal must trace to vision) |
 | Execution score formula | completed ÷ due tactics, per week |
-| Execution score benchmark | **85%+** (65–75% = at risk; below → revise plan) |
+| Execution score benchmark | **85%+** is the authors' benchmark; lower score bands and “revise” prompts are app heuristics, not outcome predictions |
 | Weekly planning time | **15–20 min/week** + **5 min/day** |
 | Strategic block | **3 h/week**, uninterrupted, plan-tactic work |
 | Buffer blocks | **30–60 min/day** for email/admin noise |
 | Breakout block | **3+ h/week** fully away from work |
-| WAM | Weekly, **2–4 people**, supportive tone, report results/score/intentions |
+| WAM | Weekly peer accountability; group size is a practical implementation choice |
 | Weekly loop | Score → Plan next week → WAM |
 | Week 13 | Celebrate + ~2 h structured review + build next plan |
-| Vision layers | Long-term (5–15 yr+) → 3-year → this 12 weeks |
+| Vision layers | Aspirational (not time-bound) → three-year → optional 12-month; 12-week goals are a separate plan |
 | Quality-of-life areas | Spiritual, Spouse/key relationship, Family, Business, Personal, Physical |
-| Emotional dip | "Valley of despair" ≈ weeks 3–6 of a new change |
+| Emotional dip | The book's change model includes a “valley of despair”; exact timing varies and should not be presented as a fixed 3–6 week prediction |
 
 ---
 
@@ -453,12 +478,18 @@ This section is *derived from* the book's system (not the author's words) — a 
 
 ---
 
-## 19. Research Sources
+## 19. Reader Feedback and Research Sources
 
-- [Dan Silvestre — The 12 Week Year summary](https://dansilvestre.com/summaries/12-week-year)
-- [Bagerbach — The 12 Week Year notes](https://bagerbach.com/books/the-12-week-year)
-- [ReadFineBooks — chapter-by-chapter summary](https://readfinebooks.com/2023/01/18/the-12-week-year)
-- [ReadingGraphics — book summary](https://readingraphics.com/book-summary-the-12-week-year)
-- [Shortform — lead/lag measures excerpt](https://www.shortform.com)
-- [Medium (Ahead Achiever) — summary & quotes](https://medium.com/@aheadachiever/the-12-week-year-book-summary-and-favourite-quotes-f92ccf1cfbe6)
+### 19.1 Reader and practitioner feedback (anecdotal)
+
+Public forum posts and independent reviews describe both benefits and friction. Some users say the short cycle and weekly check-ins help them keep goals visible and build focus. Others report that setup and tracking take discipline, that it is easy to over-track or keep recalibrating, and that the system can feel rigid when work or life needs flexibility. One user described retaining weekly check-ins while separating habit-like trackables from flexible project tasks. These reports are useful as design signals, but they are self-selected anecdotes, not representative user research or evidence that the method causes better outcomes.
+
+An independent review frames the system as most useful when the goal is already clear and execution is the main problem; it cautions that exploratory work may be forced into premature weekly tactics and that the process can feel repetitive for people already using quarterly planning. Treat these as reviewer opinions, not findings established by controlled studies.
+
+- **Primary book contents:** [The 12 Week Year (2013) — table of contents](https://www.oreilly.com/library/view/the-12-week/9781118616420/xhtml/contents.html), published by O’Reilly for Wiley.
+- **Author-created workbook:** [The 12 Week Year Field Guide — Chapter 1: Becoming a Visionary](https://www.oreilly.com/library/view/the-12-week/9781119475248/c01.xhtml) and [Chapter 2: Establishing Your Goals and Building Your Plan](https://www.oreilly.com/library/view/the-12-week/9781119475248/c02.xhtml). These confirm the aspirational/three-year/optional 12-month vision structure and distinguish it from 12-week goals.
+- **Author training material:** [The Weekly Routine](https://academy.12weekyear.com/lessons/the-weekly-routine/) describes weekly planning, scoring and accountability as parts of the execution routine.
+- **Independent reader review:** [The 12 Week Year Review — Filip Konecny](https://filipkonecny.com/blog/the-12-week-year-review/). Opinion/review, not an efficacy study.
+- **Independent practitioner assessment:** [Does the 12 Week Year Work? — Pilot](https://www.withpilot.io/blog/does-the-12-week-year-work). Opinion/practice-based assessment; it explicitly characterizes evidence for efficacy as anecdotal and discusses fit limits.
+- **Community experiences:** [r/productivity discussion: “Why isn't The 12 Week Year more popular?”](https://www.reddit.com/r/productivity/comments/1obsu1c/why_isnt_the_12_week_year_more_popular/) and [r/productivity discussion: “Anyone Using the 12-Week Year for Planning?”](https://www.reddit.com/r/productivity/comments/1i39g3s/anyone_using_the_12week_year_for_planning_how_do/). Individual reports only; not representative samples.
 - [Official site — 12weekyear.com](https://12weekyear.com)

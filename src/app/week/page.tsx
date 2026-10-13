@@ -6,8 +6,10 @@ import Link from "next/link";
 import type {
   ActiveCycleInfoDto,
   WeekPlanDetailDto,
+  WeekPlanItemDto,
   CycleDetailDto,
   CloseWeek,
+  CompletionResultDto,
 } from "@/lib/contracts";
 import { apiFetch, ClientApiError } from "@/components/common/api";
 import { getBandBadgeStyles } from "@/components/common/scoreUtils";
@@ -15,6 +17,7 @@ import WeekBoard from "@/components/week/WeekBoard";
 import AddItemModal from "@/components/week/AddItemModal";
 import CloseWeekModal from "@/components/week/CloseWeekModal";
 import { useSettings } from "@/context/SettingsContext";
+import { completionRequestForOccurrence, withOccurrenceDone } from "@/lib/occurrenceUiRules";
 
 function normalizeWeek(value: string | null, fallback: number): number {
   if (!value) return fallback;
@@ -28,6 +31,13 @@ function weekRange(startDate: string, weekNumber: number): string {
   const end = new Date(start);
   end.setUTCDate(end.getUTCDate() + 6);
   return `${start.toISOString().slice(0, 10)} → ${end.toISOString().slice(0, 10)}`;
+}
+
+function localTodayIso(): string {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${today.getFullYear()}-${month}-${day}`;
 }
 
 function WeekPageInner() {
@@ -280,6 +290,39 @@ function WeekPageInner() {
         if (selectionRef.current === selectionKey) setPlanDetail(res);
       } catch (err: unknown) {
         throw actionError(err, "Không thể chuyển công việc sang ngày khác.", "Could not move the task to another day.", selectionKey);
+      }
+    });
+  };
+
+  const handleToggleComplete = async (item: WeekPlanItemDto, date?: string) => {
+    return withMutationLock(async () => {
+      const plan = actionablePlan();
+      if (!plan) throw new Error(locale === "vi" ? "Kế hoạch tuần đang được tải lại." : "The weekly plan is reloading.");
+      const selectionKey = selectionRef.current;
+      const isComplete = item.done >= item.plannedCount;
+      try {
+        if (item.tacticId === null) {
+          const updated = await apiFetch<WeekPlanDetailDto>(`/api/week-plans/${plan.plan.id}/items/${item.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ done: isComplete ? 0 : 1 }),
+          });
+          if (selectionRef.current === selectionKey) setPlanDetail(updated);
+          return;
+        }
+
+        const result = await apiFetch<CompletionResultDto>("/api/completions", {
+          method: isComplete ? "DELETE" : "POST",
+          body: JSON.stringify(completionRequestForOccurrence(item, plan.plan.weekNumber, date)),
+        });
+        if (selectionRef.current === selectionKey) {
+          setPlanDetail((prev) => prev ? {
+            ...prev,
+            items: withOccurrenceDone(prev.items, item.id, isComplete ? Math.max(0, item.done - 1) : item.done + 1),
+            score: result.projectedScore,
+          } : prev);
+        }
+      } catch (err: unknown) {
+        throw actionError(err, "Không thể cập nhật trạng thái công việc.", "Could not update task completion.", selectionKey);
       }
     });
   };
@@ -586,12 +629,15 @@ function WeekPageInner() {
       ) : currentPlan ? (
         <WeekBoard
           weekStart={currentPlan.weekStart}
+          todayDate={localTodayIso()}
+          completionDateRequired={selectedWeek < activeCycle.weekNumber || (activeCycle.weekNumber === 13 && selectedWeek === 12)}
           items={currentPlan.items}
           isClosed={isClosed}
           mutationPending={mutationPending}
           onMoveDay={handleMoveDay}
           onRename={handleRename}
           onRemove={handleRemove}
+          onToggleComplete={handleToggleComplete}
         />
       ) : null}
 

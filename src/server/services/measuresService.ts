@@ -89,6 +89,10 @@ export function getMeasuresOverview(h: DbHandles, cycleId: number, today = today
   const cycle = requireCycle(h, cycleId);
   const currentWeek = cycleWeekNumber(today, cycle.startDate);
   const scores = getCycleScores(h, cycleId, today);
+  const closedExecution = scores.weeks.flatMap((score) =>
+    score?.closed ? [{ week: score.week, scorePct: score.scorePct }] : [],
+  );
+  const closedWeeks = new Set(closedExecution.map((observation) => observation.week));
   const lagLogs = executionRepo.listLagLogs(h, cycleId);
 
   const goals = planRepo.listGoals(h, cycleId).map((goal) => {
@@ -98,6 +102,9 @@ export function getMeasuresOverview(h: DbHandles, cycleId: number, today = today
     });
     const latestLag = [...lagSeries].reverse().find((point) => point !== null)?.value ?? null;
     const progress = latestLag === null ? null : lagProgress(goal.lagStart, goal.lagTarget, latestLag);
+    const closedLag = lagLogs
+      .filter((log) => log.goalId === goal.id && closedWeeks.has(log.weekNumber))
+      .map((log) => ({ week: log.weekNumber, value: log.value }));
     const measures = h.db.select().from(leadMeasuresTable).where(eq(leadMeasuresTable.goalId, goal.id)).all();
     const leadSeries = new Map<number, { week: number; value: number }[]>();
     for (const measure of measures) {
@@ -131,7 +138,7 @@ export function getMeasuresOverview(h: DbHandles, cycleId: number, today = today
         thisWeek: leadSeries.get(m.id)?.find((p) => p.week === Math.min(Math.max(currentWeek, 1), WEEKS_IN_CYCLE))?.value ?? null,
       })),
       currentWeekScore: goalScore,
-      diagnosis: diagnosisFor(goalScore?.scorePct ?? scores.averageScore, progress),
+      diagnosis: diagnosisFor(closedExecution, closedLag, goal.lagStart, goal.lagTarget),
     };
   });
 

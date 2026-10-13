@@ -9,22 +9,30 @@ interface DayColumnProps {
   dayOfWeek: number;
   dayName: string;
   dateStr: string;
+  weekStart: string;
+  todayDate: string;
+  completionDateRequired: boolean;
   items: WeekPlanItemDto[];
   isClosed: boolean;
   mutationPending?: boolean;
   onMoveDay: (itemId: number, newDay: number) => Promise<void>;
   onRename: (itemId: number, newLabel: string) => Promise<void>;
   onRemove: (itemId: number) => Promise<void>;
+  onToggleComplete: (item: WeekPlanItemDto, date?: string) => Promise<void>;
 }
 export default function DayColumn({
   dayName,
   dateStr,
+  weekStart,
+  todayDate,
+  completionDateRequired,
   items,
   isClosed,
   mutationPending = false,
   onMoveDay,
   onRename,
   onRemove,
+  onToggleComplete,
 }: DayColumnProps) {
   const { locale } = useSettings();
   const completed = items.filter((item) => item.done >= item.plannedCount).length;
@@ -57,11 +65,15 @@ export default function DayColumn({
             <PlanItemCard
               key={item.id}
               item={item}
+              weekStart={weekStart}
+              todayDate={todayDate}
+              completionDateRequired={completionDateRequired}
               isClosed={isClosed}
               mutationPending={mutationPending}
               onMoveDay={onMoveDay}
               onRename={onRename}
               onRemove={onRemove}
+              onToggleComplete={onToggleComplete}
             />
           ))
         )}

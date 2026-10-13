@@ -6,6 +6,7 @@ import { todayIso } from "../cycleMath";
 import type { DbHandles } from "../db";
 import * as schema from "../db/schema";
 import { RuleError } from "../ruleError";
+import { normalizeDraftPlanOccurrences } from "./occurrenceMigration";
 
 const BACKUP_FORMAT = "12-week-year-local-backup";
 const BACKUP_VERSION = 1;
@@ -104,6 +105,7 @@ export function importAll(h: DbHandles, payload: unknown, options: { confirm: bo
         h.db.insert(entry.table()).values(rows as never).run();
       }
     }
+    normalizeDraftPlanOccurrences(h);
   })();
 
   return { counts: Object.fromEntries(TABLE_ORDER.map((e) => [e.name, (data[e.name] ?? []).length])) };

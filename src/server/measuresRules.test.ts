@@ -21,17 +21,50 @@ describe("lagProgress", () => {
   });
 });
 
-describe("diagnosisFor (strategy vs execution)", () => {
-  it("high execution + flat lag = strategy problem (change tactics)", () => {
-    expect(diagnosisFor(90, 0.1)).toBe("STRATEGY_PROBLEM");
+describe("diagnosisFor (closed evidence)", () => {
+  const execution = (a: number, b: number) => [
+    { week: 1, scorePct: a },
+    { week: 2, scorePct: b },
+  ];
+  const lag = (a: number, b: number) => [
+    { week: 1, value: a },
+    { week: 2, value: b },
+  ];
+
+  it("requires at least two closed execution and lag observations", () => {
+    expect(diagnosisFor([], lag(10, 20), 0, 100).status).toBe("INSUFFICIENT_DATA");
+    expect(diagnosisFor(execution(90, 90), [{ week: 1, value: 20 }], 0, 100).status).toBe("INSUFFICIENT_DATA");
   });
-  it("low execution = execution problem (process control)", () => {
-    expect(diagnosisFor(60, 0.1)).toBe("EXECUTION_PROBLEM");
-    expect(diagnosisFor(30, 0.9)).toBe("EXECUTION_PROBLEM");
+
+  it("reports an execution concern when the latest two scores average below 65%", () => {
+    expect(diagnosisFor(execution(50, 60), lag(10, 20), 0, 100).status).toBe("EXECUTION_CONCERN");
   });
-  it("healthy execution + moving lag = no diagnosis", () => {
-    expect(diagnosisFor(85, 0.5)).toBeNull();
-    expect(diagnosisFor(75, 0.6)).toBeNull();
-    expect(diagnosisFor(null, null)).toBeNull();
+
+  it("keeps an average of exactly 65% in review status", () => {
+    expect(diagnosisFor(execution(60, 70), lag(10, 20), 0, 100).status).toBe("REVIEW");
+  });
+
+  it("reports a strategy concern at exactly 85% when lag progress is flat", () => {
+    const result = diagnosisFor(execution(80, 90), lag(50, 50), 0, 100);
+    expect(result.status).toBe("STRATEGY_CONCERN");
+    expect(result.execution).toEqual(execution(80, 90));
+    expect(result.lag).toEqual(lag(50, 50));
+  });
+
+  it("reports a strategy concern when normalized lag progress declines", () => {
+    expect(diagnosisFor(execution(85, 90), lag(40, 30), 0, 100).status).toBe("STRATEGY_CONCERN");
+  });
+
+  it("keeps increasing lag progress in review status", () => {
+    expect(diagnosisFor(execution(90, 90), lag(40, 50), 0, 100).status).toBe("REVIEW");
+  });
+
+  it("compares normalized progress for descending targets", () => {
+    expect(diagnosisFor(execution(90, 90), lag(175, 174), 180, 170).status).toBe("REVIEW");
+    expect(diagnosisFor(execution(90, 90), lag(175, 176), 180, 170).status).toBe("STRATEGY_CONCERN");
+  });
+
+  it("does not flag a goal that has already met its target", () => {
+    expect(diagnosisFor(execution(90, 90), lag(100, 100), 0, 100).status).toBe("REVIEW");
   });
 });

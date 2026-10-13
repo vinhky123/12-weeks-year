@@ -25,7 +25,6 @@ export function generateWeekPlan(h: DbHandles, cycleId: number, week: number, to
     return existing;
   }
 
-  const plan = executionRepo.createWeekPlan(h, { cycleId, weekNumber: week, status: "draft", createdAt: today });
   const tacticRows = planRepo.listTacticsByCycle(h, cycleId);
   const textById = new Map(tacticRows.map((t) => [t.id, t.text] as const));
   const items = generateWeekPlanItems(
@@ -33,13 +32,25 @@ export function generateWeekPlan(h: DbHandles, cycleId: number, week: number, to
     week,
     textById,
   );
+  const completedByTactic = new Map<number, number>();
+  for (const tactic of tacticRows) {
+    const completed = executionRepo.listCompletionsForTacticWeek(h, tactic.id, week).length;
+    const due = items.filter((item) => item.tacticId === tactic.id).length;
+    if (completed > due) throw conflict(`Week ${week} already has ${completed} completion(s); the current due count is ${due}.`);
+    completedByTactic.set(tactic.id, completed);
+  }
+  const insertedByTactic = new Map<number, number>();
+  const plan = executionRepo.createWeekPlan(h, { cycleId, weekNumber: week, status: "draft", createdAt: today });
   for (const item of items) {
+    const tacticId = item.tacticId as number;
+    const index = insertedByTactic.get(tacticId) ?? 0;
+    insertedByTactic.set(tacticId, index + 1);
     executionRepo.insertWeekPlanItem(h, {
       weekPlanId: plan.id,
       label: item.label,
-      tacticId: item.tacticId as number, // DB tactic ids are integers
+      tacticId, // DB tactic ids are integers
       dayOfWeek: item.dayOfWeek,
-      done: 0,
+      done: index < (completedByTactic.get(tacticId) ?? 0) ? 1 : 0,
       plannedCount: item.plannedCount,
       sortOrder: item.sortOrder,
     });
@@ -144,6 +155,9 @@ export function removeItem(h: DbHandles, planId: number, itemId: number) {
   requireDraftPlan(h, planId);
   const item = executionRepo.getWeekPlanItem(h, itemId);
   if (!item || item.weekPlanId !== planId) throw notFound("Item");
+  if (item.tacticId !== null && (item.done > 0 || executionRepo.listCompletionsForOccurrence(h, itemId).length > 0)) {
+    throw conflict("Completed tactic occurrences cannot be removed.");
+  }
   executionRepo.deleteWeekPlanItem(h, itemId);
 }
 

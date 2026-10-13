@@ -297,7 +297,12 @@ export const CLOSE_WEEK_SCHEMA = z.object({
 });
 export type CloseWeek = z.infer<typeof CLOSE_WEEK_SCHEMA>;
 
-export const COMPLETION_SCHEMA = z.object({ tacticId: z.number().int(), weekNumber: z.number().int().min(1).max(12), date: z.string().optional() });
+export const COMPLETION_SCHEMA = z.object({
+  tacticId: z.number().int(),
+  weekNumber: z.number().int().min(1).max(12),
+  date: z.string().optional(),
+  weekPlanItemId: z.number().int().positive().optional(),
+});
 
 export const LAG_LOG_CREATE_SCHEMA = z.object({
   goalId: z.number().int(),
@@ -397,7 +402,11 @@ export const LEAD_LOG_CREATE_SCHEMA = z.object({
 });
 export type LeadLogCreate = z.infer<typeof LEAD_LOG_CREATE_SCHEMA>;
 
-export const DIAGNOSIS_SCHEMA = z.enum(["STRATEGY_PROBLEM", "EXECUTION_PROBLEM"]);
+export const DIAGNOSIS_SCHEMA = z.object({
+  status: z.enum(["INSUFFICIENT_DATA", "EXECUTION_CONCERN", "STRATEGY_CONCERN", "REVIEW"]),
+  execution: z.array(z.object({ week: z.number().int(), scorePct: z.number().int() })),
+  lag: z.array(z.object({ week: z.number().int(), value: z.number() })),
+});
 
 export const MEASURES_OVERVIEW_DTO = z.object({
   cycleId: z.number().int(),
@@ -427,7 +436,7 @@ export const MEASURES_OVERVIEW_DTO = z.object({
         }),
       ),
       currentWeekScore: GOAL_SCORE_DTO.nullable(),
-      diagnosis: DIAGNOSIS_SCHEMA.nullable(),
+      diagnosis: DIAGNOSIS_SCHEMA,
     }),
   ),
 });

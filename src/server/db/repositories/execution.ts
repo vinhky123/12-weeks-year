@@ -74,6 +74,15 @@ export function listCompletionsForTacticWeek({ db }: DbHandles, tacticId: number
     .all();
 }
 
+export function listCompletionsForOccurrence({ db }: DbHandles, weekPlanItemId: number): CompletionRow[] {
+  return db
+    .select()
+    .from(completions)
+    .where(eq(completions.weekPlanItemId, weekPlanItemId))
+    .orderBy(desc(completions.id))
+    .all();
+}
+
 export function insertCompletion({ db }: DbHandles, values: typeof completions.$inferInsert): CompletionRow {
   return db.insert(completions).values(values).returning().get()!;
 }

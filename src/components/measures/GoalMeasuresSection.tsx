@@ -84,8 +84,7 @@ export function GoalMeasuresSection({ goalData, currentWeek }: GoalMeasuresSecti
         )}
       </div>
 
-      {/* Diagnosis Banner (verbatim copy) */}
-      {diagnosis && <DiagnosisBanner diagnosis={diagnosis} />}
+      <DiagnosisBanner diagnosis={diagnosis} lagMetricName={goal.lagMetricName} lagUnit={goal.lagUnit} />
 
       {/* Lag Indicator Component */}
       <LagChart

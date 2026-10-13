@@ -1,7 +1,14 @@
-// Pure measurement rules: lag progress and the book's
-// strategy-vs-execution diagnosis ("confronting the truth").
+// Pure measurement rules. Diagnosis thresholds are app heuristics, not book rules.
 
-export type Diagnosis = "STRATEGY_PROBLEM" | "EXECUTION_PROBLEM" | null;
+export type DiagnosisStatus = "INSUFFICIENT_DATA" | "EXECUTION_CONCERN" | "STRATEGY_CONCERN" | "REVIEW";
+export type ExecutionObservation = { week: number; scorePct: number };
+export type LagObservation = { week: number; value: number };
+
+export interface DiagnosisResult {
+  status: DiagnosisStatus;
+  execution: ExecutionObservation[];
+  lag: LagObservation[];
+}
 
 /**
  * Signed progress toward the target, direction-agnostic (weight down, revenue
@@ -16,14 +23,34 @@ export function lagProgress(start: number, target: number, current: number | nul
   return Math.min(1, Math.max(0, raw));
 }
 
-/**
- * The book's diagnosis: if you're executing (≥85) but the lag isn't moving,
- * the strategy is wrong — change tactics. If execution itself is low (<65),
- * it's an execution problem — process control, not planning.
- */
-export function diagnosisFor(averageScore: number | null, progress: number | null): Diagnosis {
-  if (averageScore === null) return null;
-  if (averageScore < 65) return "EXECUTION_PROBLEM";
-  if (averageScore >= 85 && progress !== null && progress < 0.5) return "STRATEGY_PROBLEM";
-  return null;
+/** Interpret only the latest two closed observations for execution and lag. */
+export function diagnosisFor(
+  executionObservations: ExecutionObservation[],
+  lagObservations: LagObservation[],
+  start: number,
+  target: number,
+): DiagnosisResult {
+  const execution = [...executionObservations].sort((a, b) => a.week - b.week).slice(-2);
+  const lag = [...lagObservations].sort((a, b) => a.week - b.week).slice(-2);
+
+  if (execution.length < 2 || lag.length < 2) {
+    return { status: "INSUFFICIENT_DATA", execution: [], lag: [] };
+  }
+
+  const averageExecution = execution.reduce((sum, observation) => sum + observation.scorePct, 0) / execution.length;
+  if (averageExecution < 65) return { status: "EXECUTION_CONCERN", execution, lag };
+
+  const previousProgress = lagProgress(start, target, lag[0]!.value);
+  const latestProgress = lagProgress(start, target, lag[1]!.value);
+  if (
+    averageExecution >= 85 &&
+    previousProgress !== null &&
+    latestProgress !== null &&
+    latestProgress < 1 &&
+    latestProgress <= previousProgress
+  ) {
+    return { status: "STRATEGY_CONCERN", execution, lag };
+  }
+
+  return { status: "REVIEW", execution, lag };
 }

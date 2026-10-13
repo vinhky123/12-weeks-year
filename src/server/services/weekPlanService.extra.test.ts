@@ -72,6 +72,16 @@ function executionSnapshot(cycleId: number, planId: number) {
 }
 
 describe("extra week-plan item completion", () => {
+  it("rejects deleting a completed tactic occurrence without changing completion history", () => {
+    const { cycle, tactic, plan, scoredItem } = setupPlan();
+    scoringService.logCompletion(h, { tacticId: tactic.id, weekNumber: 1 }, TODAY);
+    const before = executionSnapshot(cycle.id, plan.id);
+
+    expectRuleError(() => weekPlanService.removeItem(h, plan.id, scoredItem.id), 409);
+
+    expect(executionSnapshot(cycle.id, plan.id)).toEqual(before);
+  });
+
   it.each([-1, 0.5, 2])("rejects done=%s outside the extra item's integer range without writes", (done) => {
     const { cycle, plan, extraItem } = setupPlan();
     const before = executionSnapshot(cycle.id, plan.id);

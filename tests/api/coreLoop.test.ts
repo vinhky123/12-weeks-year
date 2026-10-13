@@ -89,14 +89,14 @@ describe("core loop happy path (the Phase 1 exit criteria)", () => {
 
     // 4. generate week 1 — seven due tactic-completions become plan items
     const week1 = await json(await generateRoute.POST(req("POST", `/api/cycles/${created.id}/weeks/1/generate`), ctx({ id: created.id, week: 1 })));
-    expect(week1.items).toHaveLength(4); // one item per due tactic (multi-count inside plannedCount)
+    expect(week1.items).toHaveLength(7); // one item per due completion
     expect(week1.items.reduce((s: number, i: any) => s + i.plannedCount, 0)).toBe(7);
     expect(week1.score).toMatchObject({ due: 7, completed: 0, scorePct: 0, projected: true });
 
     // 5. log 6 of 7 completions -> 86% ON_TRACK (outreach slipped)
     const items = week1.items as any[];
-    const meals = items.find((i) => i.goal?.id === g1.id && i.plannedCount === 1)!;
-    const articles = items.find((i) => i.goal?.id === g2.id && i.plannedCount === 2)!;
+    const meals = items.find((i) => i.goal?.id === g1.id && i.label === "Log meals in the food app daily")!;
+    const articles = items.find((i) => i.goal?.id === g2.id && i.label === "Publish one portfolio article")!;
     for (let i = 0; i < 3; i++) {
       await completionsRoute.POST(req("POST", "/api/completions", { tacticId: t1.id, weekNumber: 1 }));
     }
@@ -182,7 +182,7 @@ describe("core loop happy path (the Phase 1 exit criteria)", () => {
 
     // completion cap: a 3x/week tactic can't take a 4th (time-travel to week 2, still open)
     const detail = await json(await weekRoute.GET(req("GET", `/api/cycles/${cycleId}/weeks/1`), ctx({ id: cycleId, week: 1 })));
-    const workouts = (detail.items as any[]).find((i) => i.plannedCount === 3)!;
+    const workouts = (detail.items as any[]).find((i) => i.label === "Perform 30-min strength training")!;
     const inWeek2 = (partial: [string, string, unknown?]) => req(partial[0], partial[1], partial[2], "2026-10-12");
     for (let i = 0; i < 3; i++) {
       await completionsRoute.POST(inWeek2(["POST", "/api/completions", { tacticId: workouts.tacticId, weekNumber: 2 }]));

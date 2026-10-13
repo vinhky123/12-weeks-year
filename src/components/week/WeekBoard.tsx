@@ -10,21 +10,27 @@ const VI_DAYS = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu
 
 interface WeekBoardProps {
   weekStart: string;
+  todayDate: string;
+  completionDateRequired: boolean;
   items: WeekPlanItemDto[];
   isClosed: boolean;
   mutationPending?: boolean;
   onMoveDay: (itemId: number, newDay: number) => Promise<void>;
   onRename: (itemId: number, newLabel: string) => Promise<void>;
   onRemove: (itemId: number) => Promise<void>;
+  onToggleComplete: (item: WeekPlanItemDto, date?: string) => Promise<void>;
 }
 export default function WeekBoard({
   weekStart,
+  todayDate,
+  completionDateRequired,
   items,
   isClosed,
   mutationPending = false,
   onMoveDay,
   onRename,
   onRemove,
+  onToggleComplete,
 }: WeekBoardProps) {
   const { locale } = useSettings();
   const startDate = new Date(`${weekStart}T00:00:00Z`);
@@ -58,12 +64,16 @@ export default function WeekBoard({
               dayOfWeek={dayIndex}
               dayName={dayName}
               dateStr={getDayDate(dayIndex)}
+              weekStart={weekStart}
+              todayDate={todayDate}
+              completionDateRequired={completionDateRequired}
               items={dayItems}
               isClosed={isClosed}
               mutationPending={mutationPending}
               onMoveDay={onMoveDay}
               onRename={onRename}
               onRemove={onRemove}
+              onToggleComplete={onToggleComplete}
             />
           );
         })}

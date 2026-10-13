@@ -8,6 +8,8 @@ import * as planService from "./planService";
 import * as measuresService from "./measuresService";
 import * as modelWeekService from "./modelWeekService";
 import * as visionService from "./visionService";
+import * as scoringService from "./scoringService";
+import * as weekPlanService from "./weekPlanService";
 
 const TODAY = "2026-10-05";
 let tmpPath: string;
@@ -124,7 +126,7 @@ describe("measures (F8) — lead measures, logs, diagnosis", () => {
     expect(() => measuresService.getLeadMeasure(h, m.id)).toThrow(/not found/i);
   });
 
-  it("overview computes lag progress and the book's diagnosis", () => {
+  it("overview computes lag progress and waits for closed diagnosis evidence", () => {
     const { cycle, goal } = setup();
     const m = measuresService.addLeadMeasure(h, goal.id, { name: "Workouts completed", weeklyTarget: 3 }, TODAY);
     measuresService.logLead(h, { leadMeasureId: m.id, weekNumber: 1, value: 3 }, TODAY);
@@ -135,8 +137,51 @@ describe("measures (F8) — lead measures, logs, diagnosis", () => {
     expect(g.latestLag).toBe(179.5);
     expect(g.lagProgress).toBeCloseTo(0.05);
     expect(g.leadMeasures[0]!.series).toEqual([{ week: 1, value: 3 }]);
-    // week 1 has no score yet (nothing closed) -> diagnosis falls back to average -> null
-    expect(g.diagnosis).toBeNull();
+    // An open week with lag data is not enough evidence for a categorical diagnosis.
+    expect(g.diagnosis.status).toBe("INSUFFICIENT_DATA");
+  });
+
+  it("diagnosis returns evidence from closed weeks and ignores an open high-score week", () => {
+    const { cycle, goal } = setup("2026-09-21");
+    const tactic = planService.addTactic(
+      h,
+      goal.id,
+      { text: "Follow the plan", duePattern: { type: "EVERY_WEEK", timesPerWeek: 1 } },
+      "2026-09-21",
+    );
+
+    for (const [week, date] of [[1, "2026-09-21"], [2, "2026-09-28"]] as const) {
+      const plan = weekPlanService.generateWeekPlan(h, cycle.id, week, TODAY);
+      scoringService.logCompletion(h, { tacticId: tactic.id, weekNumber: week, date }, TODAY);
+      weekPlanService.closeWeek(h, plan.id, { lagValues: [{ goalId: goal.id, value: 179 }] }, TODAY);
+    }
+
+    weekPlanService.generateWeekPlan(h, cycle.id, 3, TODAY);
+    scoringService.logCompletion(h, { tacticId: tactic.id, weekNumber: 3, date: TODAY }, TODAY);
+    execution_repo_upsertLag(h, goal.id, 3, 179);
+
+    const diagnosis = measuresService.getMeasuresOverview(h, cycle.id, TODAY).goals[0]!.diagnosis;
+    expect(diagnosis.status).toBe("STRATEGY_CONCERN");
+    expect(diagnosis.execution.map(({ week }) => week)).toEqual([1, 2]);
+    expect(diagnosis.lag.map(({ week }) => week)).toEqual([1, 2]);
+  });
+
+  it("reports insufficient evidence when scores and lag values exist only in an open week", () => {
+    const { cycle, goal } = setup();
+    const tactic = planService.addTactic(
+      h,
+      goal.id,
+      { text: "Follow the plan", duePattern: { type: "EVERY_WEEK", timesPerWeek: 1 } },
+      TODAY,
+    );
+    weekPlanService.generateWeekPlan(h, cycle.id, 1, TODAY);
+    scoringService.logCompletion(h, { tacticId: tactic.id, weekNumber: 1, date: TODAY }, TODAY);
+    execution_repo_upsertLag(h, goal.id, 1, 179);
+
+    const diagnosis = measuresService.getMeasuresOverview(h, cycle.id, TODAY).goals[0]!.diagnosis;
+    expect(diagnosis.status).toBe("INSUFFICIENT_DATA");
+    expect(diagnosis.execution).toEqual([]);
+    expect(diagnosis.lag).toEqual([]);
   });
 
   it("rejects bad lead inputs", () => {

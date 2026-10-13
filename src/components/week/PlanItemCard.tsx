@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { WeekPlanItemDto } from "@/lib/contracts";
 import { useSettings } from "@/context/SettingsContext";
+import { occurrenceCompletionDate, occurrenceWeekEnd } from "@/lib/occurrenceUiRules";
 
 const EN_DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const VI_DAY_NAMES = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
@@ -12,27 +13,37 @@ let focusMoveSelectFor: number | null = null;
 
 interface PlanItemCardProps {
   item: WeekPlanItemDto;
+  weekStart: string;
+  todayDate: string;
+  completionDateRequired: boolean;
   isClosed: boolean;
   mutationPending?: boolean;
   onMoveDay: (itemId: number, newDay: number) => Promise<void>;
   onRename: (itemId: number, newLabel: string) => Promise<void>;
   onRemove: (itemId: number) => Promise<void>;
+  onToggleComplete: (item: WeekPlanItemDto, date?: string) => Promise<void>;
 }
-type Mutation = "move" | "rename" | "remove" | null;
+type Mutation = "move" | "rename" | "remove" | "complete" | null;
 
 export default function PlanItemCard({
   item,
+  weekStart,
+  todayDate,
+  completionDateRequired,
   isClosed,
   mutationPending = false,
   onMoveDay,
   onRename,
   onRemove,
+  onToggleComplete,
 }: PlanItemCardProps) {
   const { locale } = useSettings();
   const [isEditing, setIsEditing] = useState(false);
   const [draftLabel, setDraftLabel] = useState(item.label);
   const [mutation, setMutation] = useState<Mutation>(null);
   const [error, setError] = useState("");
+  const latestCompletionDate = occurrenceWeekEnd(weekStart) < todayDate ? occurrenceWeekEnd(weekStart) : todayDate;
+  const [completionDate, setCompletionDate] = useState(() => occurrenceCompletionDate(weekStart, item.dayOfWeek, latestCompletionDate));
 
   const isComplete = item.done >= item.plannedCount;
   const isPlanRevision = item.tacticId === null;
@@ -50,6 +61,10 @@ export default function PlanItemCard({
   useEffect(() => {
     if (!isEditing) setDraftLabel(item.label);
   }, [isEditing, item.label]);
+
+  useEffect(() => {
+    setCompletionDate(occurrenceCompletionDate(weekStart, item.dayOfWeek, latestCompletionDate));
+  }, [item.dayOfWeek, latestCompletionDate, weekStart]);
 
   useEffect(() => {
     if (focusMoveSelectFor === item.id) {
@@ -124,6 +139,18 @@ export default function PlanItemCard({
     }
   };
 
+  const handleToggleComplete = async () => {
+    if (!beginMutation("complete")) return;
+    setError("");
+    try {
+      await onToggleComplete(item, completionDateRequired ? completionDate : undefined);
+    } catch {
+      setError(failureMessage);
+    } finally {
+      finishMutation();
+    }
+  };
+
   const startRename = () => {
     if (mutationPending || mutationRef.current !== null) return;
     setError("");
@@ -174,9 +201,25 @@ export default function PlanItemCard({
           </p>
         )}
 
-        <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-          {item.done}/{item.plannedCount}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="rounded-full bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            {item.done}/{item.plannedCount}
+          </span>
+          {!isClosed ? (
+            <button
+              type="button"
+              onClick={() => void handleToggleComplete()}
+              disabled={cardWritePending || (completionDateRequired && !completionDate)}
+              aria-pressed={isComplete}
+              aria-label={locale === "vi"
+                ? `${isComplete ? "Đánh dấu chưa hoàn thành" : "Đánh dấu hoàn thành"}: ${item.label}`
+                : `${isComplete ? "Mark incomplete" : "Mark complete"}: ${item.label}`}
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-300 text-lg font-bold text-zinc-700 hover:bg-zinc-100 disabled:cursor-wait disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {isComplete ? "✓" : "○"}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {item.goal ? (
@@ -185,6 +228,25 @@ export default function PlanItemCard({
         <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
           {locale === "vi" ? "Điều chỉnh kế hoạch" : "Plan revision"}
         </p>
+      ) : null}
+
+      {!isClosed && completionDateRequired && !isPlanRevision ? (
+        <div>
+          <label htmlFor={`completion-date-${item.id}`} className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+            {locale === "vi" ? "Ngày thực hiện" : "Completion date"}
+          </label>
+          <input
+            id={`completion-date-${item.id}`}
+            type="date"
+            required
+            min={weekStart}
+            max={latestCompletionDate}
+            value={completionDate}
+            onChange={(event) => setCompletionDate(event.target.value)}
+            disabled={cardWritePending}
+            className="min-h-10 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+          />
+        </div>
       ) : null}
 
       {!isClosed ? (
@@ -241,15 +303,17 @@ export default function PlanItemCard({
             >
               {locale === "vi" ? "Đổi tên" : "Rename"}
             </button>
-            <button
-              type="button"
-              onClick={() => void handleRemove()}
-              aria-disabled={cardWritePending || undefined}
-              aria-label={locale === "vi" ? `Xóa ${item.label}` : `Remove ${item.label}`}
-              className="min-h-10 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-rose-900 dark:hover:bg-rose-950/30 dark:hover:text-rose-300"
-            >
-              {mutation === "remove" ? (locale === "vi" ? "Đang xóa…" : "Removing…") : locale === "vi" ? "Xóa" : "Remove"}
-            </button>
+            {isPlanRevision || !isComplete ? (
+              <button
+                type="button"
+                onClick={() => void handleRemove()}
+                aria-disabled={cardWritePending || undefined}
+                aria-label={locale === "vi" ? `Xóa ${item.label}` : `Remove ${item.label}`}
+                className="min-h-10 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-rose-900 dark:hover:bg-rose-950/30 dark:hover:text-rose-300"
+              >
+                {mutation === "remove" ? (locale === "vi" ? "Đang xóa…" : "Removing…") : locale === "vi" ? "Xóa" : "Remove"}
+              </button>
+            ) : null}
           </div>
         )
       ) : null}

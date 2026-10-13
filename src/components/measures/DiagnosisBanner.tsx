@@ -1,47 +1,52 @@
 "use client";
 
+import type { MeasuresOverviewDto } from "@/lib/contracts";
+import { useI18n } from "@/context/SettingsContext";
+
+type Diagnosis = MeasuresOverviewDto["goals"][number]["diagnosis"];
+
 interface DiagnosisBannerProps {
-  diagnosis: "STRATEGY_PROBLEM" | "EXECUTION_PROBLEM" | null;
+  diagnosis: Diagnosis;
+  lagMetricName: string;
+  lagUnit: string;
 }
 
-export function DiagnosisBanner({ diagnosis }: DiagnosisBannerProps) {
-  if (!diagnosis) return null;
-
-  if (diagnosis === "STRATEGY_PROBLEM") {
-    return (
-      <div className="rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/20 p-4 text-amber-950 dark:text-amber-200 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white font-bold text-xs">
-            !
-          </div>
-          <div>
-            <p className="font-semibold text-xs uppercase tracking-wider text-amber-800 dark:text-amber-300">
-              Vấn đề về chiến lược
-            </p>
-            <p className="mt-1 text-sm font-medium">
-              Bạn đang thực thi tốt, nhưng chỉ số kết quả vẫn không tiến triển. Chiến lược đang có vấn đề — hãy thay đổi chiến thuật, không phải nỗ lực mù quáng.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+export function DiagnosisBanner({ diagnosis, lagMetricName, lagUnit }: DiagnosisBannerProps) {
+  const { t } = useI18n();
+  const copyByStatus = {
+    INSUFFICIENT_DATA: ["measures.diagnosis.insufficient_title", "measures.diagnosis.insufficient_body"],
+    REVIEW: ["measures.diagnosis.review_title", "measures.diagnosis.review_body"],
+    EXECUTION_CONCERN: ["measures.diagnosis.execution_title", "measures.diagnosis.execution_body"],
+    STRATEGY_CONCERN: ["measures.diagnosis.strategy_title", "measures.diagnosis.strategy_body"],
+  } as const;
+  const [titleKey, bodyKey] = copyByStatus[diagnosis.status];
+  const tone =
+    diagnosis.status === "STRATEGY_CONCERN"
+      ? "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/20 dark:text-amber-200"
+      : diagnosis.status === "EXECUTION_CONCERN"
+        ? "border-rose-300 bg-rose-50 text-rose-950 dark:border-rose-800/60 dark:bg-rose-950/20 dark:text-rose-200"
+        : "border-zinc-200 bg-zinc-50 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-200";
+  const executionEvidence = diagnosis.execution
+    .map(({ week, scorePct }) => t("measures.diagnosis.execution_item", { week, score: scorePct }))
+    .join(" · ");
+  const lagEvidence = diagnosis.lag
+    .map(({ week, value }) => t("measures.diagnosis.lag_item", { week, value, unit: lagUnit }))
+    .join(" · ");
 
   return (
-    <div className="rounded-xl border border-rose-300 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/20 p-4 text-rose-950 dark:text-rose-200 shadow-sm">
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-500 text-white font-bold text-xs">
-          !
-        </div>
-        <div>
-          <p className="font-semibold text-xs uppercase tracking-wider text-rose-800 dark:text-rose-300">
-            Vấn đề về thực thi
-          </p>
-          <p className="mt-1 text-sm font-medium">
-            Thực thi đang là điểm nghẽn. Hãy thu hẹp kế hoạch về mức bạn thực sự sẽ hoàn thành — kiểm soát quy trình luôn chiến thắng động lực nhất thời.
-          </p>
-        </div>
-      </div>
+    <div role="status" className={`rounded-xl border p-4 shadow-sm ${tone}`}>
+      <p className="font-semibold text-xs uppercase tracking-wider">{t(titleKey)}</p>
+      <p className="mt-1 text-sm">{t(bodyKey)}</p>
+      {executionEvidence && (
+        <p className="mt-3 text-xs">
+          <span className="font-semibold">{t("measures.diagnosis.execution_evidence", { items: executionEvidence })}</span>
+        </p>
+      )}
+      {lagEvidence && (
+        <p className="mt-1 text-xs">
+          {t("measures.diagnosis.lag_evidence", { metric: lagMetricName, items: lagEvidence })}
+        </p>
+      )}
     </div>
   );
 }

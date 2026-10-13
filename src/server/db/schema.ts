@@ -50,6 +50,7 @@ export const tactics = sqliteTable("tactics", {
 export const completions = sqliteTable("completions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   tacticId: integer("tactic_id").notNull().references(() => tactics.id),
+  weekPlanItemId: integer("week_plan_item_id").references(() => weekPlanItems.id, { onDelete: "restrict" }),
   cycleWeek: integer("cycle_week").notNull(), // 1-12
   date: text("date").notNull(),
   createdAt: text("created_at").notNull(),

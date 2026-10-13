@@ -9,6 +9,7 @@ import DaySection from "@/components/today/DaySection";
 import ProjectedScoreBar from "@/components/today/ProjectedScoreBar";
 import { useSettings } from "@/context/SettingsContext";
 import { t } from "@/lib/i18n";
+import { completionRequestForOccurrence, withOccurrenceDone } from "@/lib/occurrenceUiRules";
 
 /** Earlier-day items still unfinished when Today loads; they keep their section until the next load. */
 function unfinishedEarlierIds(today: TodayDto): ReadonlySet<number> {
@@ -86,9 +87,7 @@ export default function TodayPage() {
       if (!prev) return prev;
       const newDays = prev.days.map((d) => ({
         ...d,
-        items: d.items.map((i) =>
-          i.id === item.id ? { ...i, done: i.done + 1 } : i,
-        ),
+        items: withOccurrenceDone(d.items, item.id, item.done + 1),
       }));
       return { ...prev, days: newDays };
     });
@@ -117,19 +116,14 @@ export default function TodayPage() {
 
       const res = await apiFetch<CompletionResultDto>("/api/completions", {
         method: "POST",
-        body: JSON.stringify({
-          tacticId: item.tacticId,
-          weekNumber: data.weekNumber,
-        }),
+        body: JSON.stringify(completionRequestForOccurrence(item, data.weekNumber)),
       });
 
       setData((prev) => {
         if (!prev) return prev;
         const newDays = prev.days.map((d) => ({
           ...d,
-          items: d.items.map((i) =>
-            i.tacticId === item.tacticId ? { ...i, done: res.done } : i,
-          ),
+          items: withOccurrenceDone(d.items, item.id, item.done + 1),
         }));
         return {
           ...prev,
@@ -161,9 +155,7 @@ export default function TodayPage() {
       if (!prev) return prev;
       const newDays = prev.days.map((d) => ({
         ...d,
-        items: d.items.map((i) =>
-          i.id === item.id ? { ...i, done: Math.max(0, i.done - 1) } : i,
-        ),
+        items: withOccurrenceDone(d.items, item.id, Math.max(0, item.done - 1)),
       }));
       return { ...prev, days: newDays };
     });
@@ -192,19 +184,14 @@ export default function TodayPage() {
 
       const res = await apiFetch<CompletionResultDto>("/api/completions", {
         method: "DELETE",
-        body: JSON.stringify({
-          tacticId: item.tacticId,
-          weekNumber: data.weekNumber,
-        }),
+        body: JSON.stringify(completionRequestForOccurrence(item, data.weekNumber)),
       });
 
       setData((prev) => {
         if (!prev) return prev;
         const newDays = prev.days.map((d) => ({
           ...d,
-          items: d.items.map((i) =>
-            i.tacticId === item.tacticId ? { ...i, done: res.done } : i,
-          ),
+          items: withOccurrenceDone(d.items, item.id, Math.max(0, item.done - 1)),
         }));
         return {
           ...prev,

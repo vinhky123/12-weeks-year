@@ -5,6 +5,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { todayIso } from "../cycleMath";
 import * as schema from "./schema";
+import { normalizeDraftPlanOccurrences } from "../services/occurrenceMigration";
 
 export const DEFAULT_DB_PATH = "data/app.db";
 
@@ -21,6 +22,7 @@ export function createDb(dbPath = process.env.TWY_DB_PATH ?? DEFAULT_DB_PATH): D
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  normalizeDraftPlanOccurrences({ sqlite, db });
   db.insert(schema.settings)
     .values({ id: 1, locale: "vi", createdAt: todayIso() })
     .onConflictDoNothing()
